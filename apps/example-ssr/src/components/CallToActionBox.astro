@@ -1,0 +1,21 @@
+---
+import Debug from "./Debug.astro";
+import PortableText from "./PortableText.astro";
+const {node} = Astro.props;
+---
+<div class="callToActionBox">
+  <PortableText value={node.description} />
+  <a href={node.url}> {node.linkText} </a>
+</div>
+
+<style>
+  .callToActionBox {
+    font-family: monospace;
+    font-weight: bold;
+    text-transform: uppercase;
+    background-color: blanchedalmond;
+    max-width: 50ch;
+    margin: auto;
+    padding: 1rem;
+  }
+</style>
