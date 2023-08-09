@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "vite build --watch",
     "build": "rimraf dist && vite build",
-    "release": "semantic-release || semantic-release --dry-run --debug",
+    "release": "semantic-release --dry-run --debug",
     "prepublishOnly": "npm run build"
   },
   "main": "./dist/sanity-astro.js",
@@ -19,6 +19,11 @@
       "import": "./dist/sanity-astro.mjs",
       "require": "./dist/sanity-astro.js"
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/sanity-io/sanity-astro.git",
+    "directory": "packages/sanity-astro"
   },
   "author": "Sanity.io <hello@sanity.io>",
   "homepage": "https://github.com/sanity-io/sanity-astro",
