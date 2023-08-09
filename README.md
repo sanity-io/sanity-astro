@@ -4,13 +4,15 @@ Official Sanity Astro integration
 
 ## Installation
 
+In your Astro project, run the following command to install the Sanity Astro integration:
+
 ```bash
-npm install @sanity/astro
+npx astro add @sanity/astro
 ```
 
 ## Usage in Astro
 
-Configure the integration in your `astro.config.{ts|js|mjs}` file
+Configure the integration in your `astro.config.mjs` file. The configuration options are the same as for @sanity/client.
 
 ```typescript
 import sanityIntegration from '@sanity/astro';
