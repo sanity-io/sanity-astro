@@ -1,6 +1,6 @@
 {
   "name": "example",
-  "type": "private",
+  "private": true,
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",

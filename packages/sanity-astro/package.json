@@ -45,6 +45,10 @@
   "dependencies": {
     "@sanity/client": "^6.4.4"
   },
+  "release": {
+    "extends": "@sanity/semantic-release-preset",
+    "branches": ["main"]
+  },  
   "publishConfig": {
     "access": "public",
     "provenance": true

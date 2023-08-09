@@ -50,6 +50,8 @@ jobs:
       - run: npm ci
       - run: npm run lint
         if: github.event.inputs.test != 'false'
+      - run: npm run build
+        if: github.event.inputs.test != 'false'
 
   test:
     needs: build
