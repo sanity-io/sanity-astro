@@ -2,3 +2,31 @@
 
 Official Sanity Astro integration
 
+## Installation
+
+```bash
+npm install @sanity/astro
+```
+
+## Usage in Astro
+
+Configure the integration in your `astro.config.{ts|js|mjs}` file
+
+```typescript
+import sanityIntegration from '@sanity/astro';
+import { defineConfig } from 'astro/config';
+
+// https://astro.build/config
+export default defineConfig({
+  integrations: [
+    sanityIntegration({
+      projectId: '3do82whm',
+      dataset: "next",
+    })
+  ]
+});
+```
+
+## Usage in Astro Components
+
+See apps/example for usage including how to render PortableText with custom blocks, and using Sanity's asset cdn to display images.
