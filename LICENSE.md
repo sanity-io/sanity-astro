@@ -1,0 +1,1 @@
+./packages/sanity-astro/LICENSE.md
