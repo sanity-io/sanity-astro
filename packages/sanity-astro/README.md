@@ -15,7 +15,7 @@ npx astro add @sanity/astro
 Configure the integration in your `astro.config.mjs` file. The configuration options are the same as for @sanity/client.
 
 ```typescript
-import { sanityIntegration } from '@sanity/astro';
+import sanityIntegration from '@sanity/astro';
 import { defineConfig } from 'astro/config';
 
 // https://astro.build/config
