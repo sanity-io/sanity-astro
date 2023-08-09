@@ -1,9 +1,6 @@
 import type { AstroIntegration } from "astro";
 import type { SanityClient, ClientConfig } from "@sanity/client";
 import { vitePluginSanityInit } from "./vite-plugin-sanity-init";
-import imageUrlBuilder from "@sanity/image-url";
-import { ImageUrlBuilder } from "@sanity/image-url/lib/types/builder";
-
 declare global {
   var sanityClientInstance: SanityClient;
 }
@@ -15,19 +12,17 @@ export function useSanityClient(): SanityClient {
   return globalThis.sanityClientInstance;
 }
 
-export function useSanityImageUrlBuilder(): ImageUrlBuilder {
-  const builder = imageUrlBuilder(useSanityClient());
-  return builder;
+export type IntegrationOptions = ClientConfig;
+
+const defaultOptions: IntegrationOptions = {
+  apiVersion: "v2021-03-25",
 }
 
-type IntegrationOptions = ClientConfig;
-
-export default function sanityIntegration(
+export function sanityIntegration(
   options: IntegrationOptions
 ): AstroIntegration {
   const resolvedOptions = {
-    useCdn: true,
-    apiVersion: "v2021-03-25",
+    ...defaultOptions,
     ...options,
   };
   return {

@@ -1,0 +1,21 @@
+---
+import imageUrlBuilder from "@sanity/image-url";
+import {useSanityClient} from "@sanity/astro"
+
+const client = useSanityClient()
+const builder = imageUrlBuilder(client)
+
+const {node} = Astro.props
+const { width = 960 } = Astro.props
+
+// See https://www.sanity.io/docs/presenting-images for general documentation on
+// presenting images, and https://www.sanity.io/docs/image-url for specifics on
+// this builder API
+const image = builder
+  .image(node)
+  .width(width)
+  .fit('max')
+  .auto('format')
+---
+
+<img src={image.url()} alt={node.alt || ""} title={node.alt} />

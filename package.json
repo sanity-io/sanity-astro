@@ -16,7 +16,7 @@
   "name": "astro",
   "packageManager": "npm@8.19.3",
   "workspaces": [
-    "apps/*",
-    "packages/*"
+    "packages/*",
+    "apps/*"
   ]
 }

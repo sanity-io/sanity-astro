@@ -3,8 +3,8 @@ import CallToActionBox from "./CallToActionBox.astro";
 import Code from "./Code.astro";
 import Debug from "./Debug.astro";
 import YouTube from "./YouTube.astro";
-import PortableTextInternal from "@sanity/astro/PortableText.astro";
-import SanityImage from "@sanity/astro/SanityImage.astro";
+import {PortableText as PortableTextInternal} from "astro-portabletext"
+import SanityImage from "./SanityImage.astro";
 import InternalLink from "./InternalLink.astro";
 
 const components = {
@@ -23,4 +23,4 @@ const components = {
 
 ---
 
-<PortableTextInternal components={components} {...Astro.props} onMissingComponent={Debug} />
+<PortableTextInternal value={Astro.props.value} components={components} />
