@@ -23,6 +23,6 @@
     {
       "matchDepTypes": ["dependencies"],
       "rangeStrategy": "bump"
-    }=
+    }
   ]
 }
