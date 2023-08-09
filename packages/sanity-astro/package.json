@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "vite build --watch",
     "build": "rimraf dist && vite build",
-    "release": "semantic-release --dry-run --debug",
+    "release": "semantic-release",
     "prepublishOnly": "npm run build"
   },
   "main": "./dist/sanity-astro.js",
@@ -47,8 +47,10 @@
   },
   "release": {
     "extends": "@sanity/semantic-release-preset",
-    "branches": ["main"]
-  },  
+    "branches": [
+      "main"
+    ]
+  },
   "publishConfig": {
     "access": "public",
     "provenance": true
