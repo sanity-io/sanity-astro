@@ -4,7 +4,9 @@
   "description": "Official Sanity Astro integration",
   "scripts": {
     "dev": "vite build --watch",
-    "build": "vite build"
+    "build": "rimraf dist && vite build",
+    "release": "semantic-release || semantic-release --dry-run --debug",
+    "prepublishOnly": "npm run build"
   },
   "main": "./dist/sanity-astro.js",
   "module": "./dist/sanity-astro.mjs",
@@ -25,7 +27,10 @@
   },
   "license": "MIT",
   "devDependencies": {
+    "@sanity/semantic-release-preset": "^4.1.3",
     "astro": "^2.10.3",
+    "rimraf": "^5.0.1",
+    "semantic-release": "^21.0.7",
     "vite": "^4.4.9",
     "vite-plugin-dts": "^3.5.1"
   },
@@ -34,5 +39,9 @@
   ],
   "dependencies": {
     "@sanity/client": "^6.4.4"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }
