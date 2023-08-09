@@ -39,4 +39,5 @@ We recommend using [astro-portabletext](https://github.com/theisel/astro-portabl
 We recommend using [@sanity/image-url](https://www.sanity.io/docs/image-url) to help you generate URLs for presenting Sanity images in your Astro app. See an example of this in [apps/example/src/components/SanityImage.astro](../../apps/example/src/components/SanityImage.astro)
 
 ### Learning
+
 Please see our [guided tutorial](https://www.sanity.io/guides/sanity-astro-blog) on how to create a blog with Sanity content in Astro to get started from scratch with both Sanity and Astro.
