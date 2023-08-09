@@ -46,5 +46,3 @@ export function sanityIntegration(
     },
   };
 }
-
-// export * from "./types";

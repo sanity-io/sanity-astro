@@ -24,11 +24,16 @@ export default defineConfig({
     sanityIntegration({
       projectId: '3do82whm',
       dataset: "next",
+      useCdn: true
     })
   ]
 });
 ```
 
-## Usage in Astro Components
+## PortableText
 
-See apps/example for usage including how to render PortableText with custom blocks, and using Sanity's asset cdn to display images.
+We recommend using [astro-portabletext](https://github.com/theisel/astro-portabletext) to render your PortableText fields in Astro. See an example of this in apps/example/src/components/PortableText.astro, including using custom components to render custom blocks and annotations.
+
+## Presenting images
+
+We recommend using [@sanity/image-url](https://www.sanity.io/docs/image-url) to help you generate URLs for presenting Sanity images in your Astro app. See an example of this in apps/example/src/components/SanityImage.astro
