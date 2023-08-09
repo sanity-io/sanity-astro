@@ -1,0 +1,43 @@
+{
+  "name": "@sanity/astro",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "vite build"
+  },
+  "main": "./dist/sanity-astro.js",
+  "module": "./dist/sanity-astro.mjs",
+  "types": "./dist/types/index.d.ts",
+  "files": [
+    "dist",
+    "PortableText.astro",
+    "SanityImage.astro"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/sanity-astro.mjs",
+      "require": "./dist/sanity-astro.js"
+    },
+    "./PortableText.astro": "./PortableText.astro",
+    "./SanityImage.astro": "./SanityImage.astro"
+  },
+  "author": "Rune Botten",
+  "license": "ISC",
+  "devDependencies": {
+    "astro": "^2.10.3",
+    "vite": "^4.4.9",
+    "vite-plugin-dts": "^3.5.1"
+  },
+  "keywords": [
+    "astro",
+    "sanity",
+    "astro-component"
+  ],
+  "dependencies": {
+    "@sanity/client": "^6.4.4",
+    "@sanity/image-url": "^1.0.2",
+    "astro-portabletext": "^0.9.1"
+  }
+}

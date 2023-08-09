@@ -1,0 +1,26 @@
+---
+import CallToActionBox from "./CallToActionBox.astro";
+import Code from "./Code.astro";
+import Debug from "./Debug.astro";
+import YouTube from "./YouTube.astro";
+import PortableTextInternal from "@sanity/astro/PortableText.astro";
+import SanityImage from "@sanity/astro/SanityImage.astro";
+import InternalLink from "./InternalLink.astro";
+
+const components = {
+  type: {
+    youtube: YouTube,
+    muxVideo: Debug,
+    callToActionBox: CallToActionBox,
+    callToAction: Debug,
+    image: SanityImage,
+    code: Code,
+  },
+  mark: {
+    internalLink: InternalLink
+  }
+};
+
+---
+
+<PortableTextInternal components={components} {...Astro.props} onMissingComponent={Debug} />

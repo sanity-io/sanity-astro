@@ -1,0 +1,27 @@
+---
+import { useSanityClient } from "@sanity/astro";
+
+const client = useSanityClient();
+const posts = await client.fetch(`*[_type == "post" && defined(publishedAt)] | order(publishedAt desc)`);
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Sanity.io blog</title>
+	</head>
+	<body>
+		<h1>Sanity.io blog</h1>
+		<ul>
+			{posts.map((post) => (
+				<li>,
+					<a href={'/posts/' + post.slug.current} class="post-link">
+						{post.title}
+					</a>
+				</li>
+			))}
+	</body>
+</html>
