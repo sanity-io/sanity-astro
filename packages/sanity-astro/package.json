@@ -47,8 +47,10 @@
   },
   "release": {
     "extends": "@sanity/semantic-release-preset",
-    "branches": ["main"]
-  },  
+    "branches": [
+      "main"
+    ]
+  },
   "publishConfig": {
     "access": "public",
     "provenance": true
