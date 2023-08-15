@@ -38,7 +38,7 @@
     "rimraf": "^5.0.1",
     "semantic-release": "^21.0.7",
     "vite": "^4.4.9",
-    "vite-plugin-dts": "^3.5.1"
+    "vite-plugin-dts": "^3.5.2"
   },
   "keywords": [
     "astro-integration"
