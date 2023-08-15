@@ -32,11 +32,11 @@ export default defineConfig({
 
 ## PortableText
 
-We recommend using [astro-portabletext](https://github.com/theisel/astro-portabletext) to render your PortableText fields in Astro. See an example of this in [apps/example/src/components/PortableText.astro](../../apps/example/src/components/PortableText.astro), including using custom components to render custom blocks and annotations.
+We recommend using [astro-portabletext](https://github.com/theisel/astro-portabletext) to render your PortableText fields in Astro. See an example of this in [apps/example/src/components/PortableText.astro](https://github.com/sanity-io/sanity-astro/blob/main/apps/example/src/components/PortableText.astro), including using custom components to render custom blocks and annotations.
 
 ## Presenting images
 
-We recommend using [@sanity/image-url](https://www.sanity.io/docs/image-url) to help you generate URLs for presenting Sanity images in your Astro app. See an example of this in [apps/example/src/components/SanityImage.astro](../../apps/example/src/components/SanityImage.astro)
+We recommend using [@sanity/image-url](https://www.sanity.io/docs/image-url) to help you generate URLs for presenting Sanity images in your Astro app. See an example of this in [apps/example/src/components/SanityImage.astro](https://github.com/sanity-io/sanity-astro/blob/main/apps/example/src/components/SanityImage.astro)
 
 ### Learning
 
