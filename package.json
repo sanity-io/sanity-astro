@@ -8,7 +8,7 @@
   },
   "devDependencies": {
     "@turbo/gen": "^1.10.12",
-    "eslint": "^7.32.0",
+    "eslint": "^8.47.0",
     "eslint-config-custom": "*",
     "prettier": "^3.0.1",
     "turbo": "latest"
