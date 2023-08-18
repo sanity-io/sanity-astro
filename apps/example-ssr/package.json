@@ -12,10 +12,10 @@
   "dependencies": {
     "@astro-community/astro-embed-youtube": "^0.4.0",
     "@astrojs/prism": "^2.1.2",
-    "@astrojs/vercel": "^3.8.1",
+    "@astrojs/vercel": "^3.8.2",
     "@sanity/astro": "*",
     "@sanity/image-url": "^1.0.2",
-    "astro": "^2.10.7",
+    "astro": "^2.10.12",
     "astro-portabletext": "^0.9.1"
   }
 }
