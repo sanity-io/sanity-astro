@@ -8,7 +8,9 @@ declare global {
 
 export function useSanityClient(): SanityClient {
   if (!globalThis.sanityClientInstance) {
-    console.error("sanityClientInstance has not been initialized correctly");
+    console.error(
+      "[@sanity/astro]: sanityClientInstance has not been initialized correctly"
+    );
   }
   return globalThis.sanityClientInstance;
 }
