@@ -18,8 +18,8 @@
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
-      "import": "./dist/sanity-astro.mjs",
-      "require": "./dist/sanity-astro.js"
+      "module": "./dist/sanity-astro.mjs",
+      "default": "./dist/sanity-astro.js"
     },
     "./studio/studio-route.astro": "./studio/studio-route.astro"
   },
