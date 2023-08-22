@@ -9,7 +9,7 @@ export function vitePluginSanityStudio(resolvedOptions, config): Plugin {
 
   if (!resolvedOptions.studioBasePath) {
     throw new Error(
-      "The `studioBasePath` option is required in `astro.config.mjs`. For example — `studioBasePath: '/admin'`"
+      "[@sanity/astro]: The `studioBasePath` option is required in `astro.config.mjs`. For example — `studioBasePath: '/admin'`"
     );
   }
   const virtualModuleId = "virtual:sanity-studio";
