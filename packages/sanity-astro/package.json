@@ -19,6 +19,17 @@
       "types": "./dist/types/index.d.ts",
       "import": "./dist/sanity-astro.mjs",
       "require": "./dist/sanity-astro.js"
+    },
+    "./studio/studio-route.astro": "./studio/studio-route.astro"
+  },
+  "preconstruct": {
+    "entrypoints": [
+      "index.ts"
+    ],
+    "exports": {
+      "extra": {
+        "./studio/studio-route.astro": "./studio/studio-route.astro"
+      }
     }
   },
   "repository": {
@@ -27,7 +38,7 @@
     "directory": "packages/sanity-astro"
   },
   "author": "Sanity.io <hello@sanity.io>",
-  "homepage": "https://github.com/sanity-io/sanity-astro",
+  "homepage": "https://www.sanity.io/plugins/sanity-astro",
   "bugs": {
     "url": "https://github.com/sanity-io/sanity-astro/issues"
   },
