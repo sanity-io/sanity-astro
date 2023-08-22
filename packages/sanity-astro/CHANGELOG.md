@@ -5,6 +5,12 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.1.3](https://github.com/sanity-io/sanity-astro/compare/v1.1.2...v1.1.3) (2023-08-22)
+
+### Bug Fixes
+
+- remove support for themed studio container ([#27](https://github.com/sanity-io/sanity-astro/issues/27)) ([9a1722a](https://github.com/sanity-io/sanity-astro/commit/9a1722a118f9b01d532da42602f056b5852b0f5c))
+
 ## [1.1.2](https://github.com/sanity-io/sanity-astro/compare/v1.1.1...v1.1.2) (2023-08-22)
 
 ### Bug Fixes
