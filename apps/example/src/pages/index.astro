@@ -16,7 +16,7 @@ const posts = await client.fetch(`*[_type == "post" && defined(publishedAt)] | o
 	<body>
 		<h1>Sanity.io blog</h1>
 		<ul>
-			{posts.map((post) => (
+			{posts.map((post: any) => (
 				<li>,
 					<a href={'/posts/' + post.slug.current} class="post-link">
 						{post.title}
