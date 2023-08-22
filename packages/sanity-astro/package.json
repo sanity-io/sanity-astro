@@ -12,7 +12,8 @@
   "main": "./dist/sanity-astro.js",
   "module": "./dist/sanity-astro.mjs",
   "files": [
-    "dist"
+    "dist",
+    "studio"
   ],
   "exports": {
     ".": {

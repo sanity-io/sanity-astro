@@ -1,36 +1,36 @@
-import type { Plugin } from "vite";
+import type { Plugin } from 'vite'
 
 export function vitePluginSanityStudio(resolvedOptions, config): Plugin {
-  if (config.output !== "hybrid") {
+  if (config.output !== 'hybrid' && config.output !== 'server') {
     throw new Error(
-      "[@sanity/astro]: Sanity Studio requires `output: 'hybrid'` in your Astro config"
-    );
+      "[@sanity/astro]: Sanity Studio requires `output: 'hybrid'` or `output: 'server'` in your Astro config"
+    )
   }
 
   if (!resolvedOptions.studioBasePath) {
     throw new Error(
       "[@sanity/astro]: The `studioBasePath` option is required in `astro.config.mjs`. For example — `studioBasePath: '/admin'`"
-    );
+    )
   }
-  const virtualModuleId = "virtual:sanity-studio";
-  const resolvedVirtualModuleId = virtualModuleId;
+  const virtualModuleId = 'virtual:sanity-studio'
+  const resolvedVirtualModuleId = virtualModuleId
 
   return {
-    name: "vite-plugin-sanity-studio",
+    name: 'vite-plugin-sanity-studio',
     resolveId(id: string) {
       if (id === virtualModuleId) {
-        return resolvedVirtualModuleId;
+        return resolvedVirtualModuleId
       }
-      return null;
+      return null
     },
     async load(id: string) {
-      if (id === "virtual:sanity-studio") {
-        const studioConfig = await this.resolve("/sanity.config");
+      if (id === 'virtual:sanity-studio') {
+        const studioConfig = await this.resolve('/sanity.config')
         if (!studioConfig) {
           console.error(
-            "[@sanity/astro]: Sanity Studio requires a `sanity.config.ts|js` file in your project root."
-          );
-          return null;
+            '[@sanity/astro]: Sanity Studio requires a `sanity.config.ts|js` file in your project root.'
+          )
+          return null
         }
         return `
         import config from "${studioConfig.id}";
@@ -45,9 +45,9 @@ export function vitePluginSanityStudio(resolvedOptions, config): Plugin {
           ...config,
           // override basePath from sanity.config.ts|js with plugin setting
           basePath: "/${resolvedOptions.studioBasePath}",
-        }`;
+        }`
       }
-      return null;
+      return null
     },
-  };
+  }
 }

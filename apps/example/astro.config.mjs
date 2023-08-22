@@ -1,11 +1,10 @@
 import sanityIntegration from "@sanity/astro";
 import { defineConfig } from "astro/config";
 import react from '@astrojs/react';
-
+import vercel from '@astrojs/vercel/edge'
 
 // https://astro.build/config
 export default defineConfig({
-  output: 'hybrid',
   integrations: [
     sanityIntegration({
       projectId: "3do82whm",
@@ -16,4 +15,6 @@ export default defineConfig({
     }),
     react()
   ],
+  output: 'hybrid',
+  adapter: vercel(),
 });
