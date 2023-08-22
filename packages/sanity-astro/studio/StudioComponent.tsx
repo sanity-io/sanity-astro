@@ -1,20 +1,21 @@
 import React from "react";
-import { Studio } from "sanity";
-import { useTheme } from "./useTheme";
-
 // @ts-ignore
 import config from "virtual:sanity-studio";
-import { usePrefersColorScheme } from "./usePrefersColorScheme";
+import { Studio } from "sanity";
+
+// import { useTheme } from "./useTheme";
+//import { usePrefersColorScheme } from "./usePrefersColorScheme";
 
 if (!config) {
   throw new Error(
-    "[@sanity/astro]: Can't load Sanity Studio. Check that you've configured it in `sanity.config.js|ts`.",
+    "[@sanity/astro]: Can't load Sanity Studio. Check that you've configured it in `sanity.config.js|ts`."
   );
 }
 
 export default function StudioComponent() {
-  const theme = useTheme(config);
-  const scheme = usePrefersColorScheme();
+  /* Disabled for now */
+  // const theme = useTheme(config);
+  // const scheme = usePrefersColorScheme();
 
   return (
     <div
@@ -25,9 +26,9 @@ export default function StudioComponent() {
         overscrollBehavior: "none",
         WebkitFontSmoothing: "antialiased",
         overflow: "hidden",
-        fontFamily: theme.fonts.text.family,
-        backgroundColor:
-          theme.color[scheme === "dark" ? "dark" : "light"].default.base.bg,
+        //fontFamily: theme.fonts.text.family,
+        //backgroundColor:
+        //  theme.color[scheme === "dark" ? "dark" : "light"].default.base.bg,
       }}
     >
       <Studio config={config} />;
