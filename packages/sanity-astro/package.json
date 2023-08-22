@@ -58,7 +58,8 @@
     "astro": "2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "sanity": "*"
+    "sanity": "*",
+    "styled-components": "^6.0.7"
   },
   "keywords": [
     "astro-integration",
