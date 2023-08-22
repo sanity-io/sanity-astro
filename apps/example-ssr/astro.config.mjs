@@ -10,6 +10,7 @@ export default defineConfig({
       dataset: 'next',
       // If you are doing static builds you may want opt out of the CDN
       useCdn: true,
+      studioBasePath: '/admin',
     }),
   ],
   output: 'server',

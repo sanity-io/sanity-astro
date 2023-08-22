@@ -10,12 +10,16 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astro-community/astro-embed-youtube": "^0.4.0",
+    "@astro-community/astro-embed-youtube": "^0.4.1",
     "@astrojs/prism": "^2.1.2",
+    "@astrojs/react": "^2.3.2",
     "@astrojs/vercel": "^3.8.2",
     "@sanity/astro": "*",
     "@sanity/image-url": "^1.0.2",
     "astro": "^2.10.12",
-    "astro-portabletext": "^0.9.1"
+    "astro-portabletext": "^0.9.1",
+    "@sanity/vision": "^3.15.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   }
 }
