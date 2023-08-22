@@ -66,7 +66,7 @@
   ],
   "dependencies": {
     "@sanity/client": "^6.4.9",
-    "@sanity/ui": "^1.7.8",
+    "@sanity/ui": "^1.7.9",
     "sanity": "*"
   },
   "release": {
