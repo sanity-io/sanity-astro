@@ -5,6 +5,12 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.1.4](https://github.com/sanity-io/sanity-astro/compare/v1.1.3...v1.1.4) (2023-08-22)
+
+### Bug Fixes
+
+- Remove styled components and preloaded theme support ([#29](https://github.com/sanity-io/sanity-astro/issues/29)) ([8a0f16e](https://github.com/sanity-io/sanity-astro/commit/8a0f16e94e05d6c7ac1a262cb61e18450c8bbd28))
+
 ## [1.1.3](https://github.com/sanity-io/sanity-astro/compare/v1.1.2...v1.1.3) (2023-08-22)
 
 ### Bug Fixes
