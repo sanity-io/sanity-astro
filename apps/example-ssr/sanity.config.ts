@@ -1,7 +1,7 @@
 import { visionTool } from "@sanity/vision";
 import { defineConfig } from "sanity";
 import { deskTool } from "sanity/desk";
-//import { schemaTypes } from "./schemas";
+import { schemaTypes } from "./schemas";
 
 export const projectId =
   import.meta.env.PUBLIC_SANITY_PROJECT_ID! || "3do82whm";
@@ -14,6 +14,6 @@ export default defineConfig({
   dataset,
   plugins: [deskTool(), visionTool()],
   schema: {
-    types: [],
+    types: schemaTypes,
   },
 });

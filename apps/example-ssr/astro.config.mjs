@@ -1,6 +1,7 @@
 import sanityIntegration from '@sanity/astro'
 import { defineConfig } from 'astro/config'
 import vercel from '@astrojs/vercel/edge'
+import react from '@astrojs/react';
 
 // https://astro.build/config
 export default defineConfig({
@@ -10,8 +11,9 @@ export default defineConfig({
       dataset: 'next',
       // If you are doing static builds you may want opt out of the CDN
       useCdn: true,
-      studioBasePath: '/admin',
+      studioBasePath: "/admin",
     }),
+    react(),
   ],
   output: 'server',
   adapter: vercel(),
