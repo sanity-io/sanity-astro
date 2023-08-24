@@ -9,7 +9,7 @@ declare global {
 export function useSanityClient(): SanityClient {
   if (!globalThis.sanityClientInstance) {
     console.error(
-      "[@sanity/astro]: sanityClientInstance has not been initialized correctly",
+      "[@sanity/astro]: sanityClientInstance has not been initialized correctly"
     );
   }
   return globalThis.sanityClientInstance;
@@ -22,8 +22,9 @@ export type IntegrationOptions = ClientConfig & {
 const defaultOptions: IntegrationOptions = {
   apiVersion: "v2023-08-24",
 };
+
 export default function sanityIntegration(
-  options: IntegrationOptions,
+  options: IntegrationOptions
 ): AstroIntegration {
   const resolvedOptions = {
     ...defaultOptions,
@@ -46,17 +47,20 @@ export default function sanityIntegration(
             ],
           },
         });
-        injectRoute({
-          entryPoint: "@sanity/astro/studio/studio-route.astro",
-          pattern: `/${resolvedOptions.studioBasePath}/[...params]`,
-          prerender: false,
-        });
+        // only load this route if `studioBasePath` is set
+        if (resolvedOptions.studioBasePath) {
+          injectRoute({
+            entryPoint: "@sanity/astro/studio/studio-route.astro",
+            pattern: `/${resolvedOptions.studioBasePath}/[...params]`,
+            prerender: false,
+          });
+        }
         injectScript(
           "page-ssr",
           `
           import { sanityClientInstance } from "virtual:sanity-init";
           globalThis.sanityClientInstance = sanityClientInstance;
-          `,
+          `
         );
       },
     },
