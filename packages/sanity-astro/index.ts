@@ -9,7 +9,7 @@ declare global {
 export function useSanityClient(): SanityClient {
   if (!globalThis.sanityClientInstance) {
     console.error(
-      "[@sanity/astro]: sanityClientInstance has not been initialized correctly"
+      "[@sanity/astro]: sanityClientInstance has not been initialized correctly",
     );
   }
   return globalThis.sanityClientInstance;
@@ -24,7 +24,7 @@ const defaultOptions: IntegrationOptions = {
 };
 
 export default function sanityIntegration(
-  options: IntegrationOptions
+  options: IntegrationOptions,
 ): AstroIntegration {
   const resolvedOptions = {
     ...defaultOptions,
@@ -60,7 +60,7 @@ export default function sanityIntegration(
           `
           import { sanityClientInstance } from "virtual:sanity-init";
           globalThis.sanityClientInstance = sanityClientInstance;
-          `
+          `,
         );
       },
     },
