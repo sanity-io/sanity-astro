@@ -174,11 +174,11 @@ const components = {
 
 ## Presenting images
 
-Sanity comes with [a native asset pipeline for your images and files][https://www.sanity.io/docs/image-urls]. It has on-demand transforms, automatic optimization for browsers that supports webp, and serves images from a global CDN network. When you upload images to Sanity, it will also automatically analyze the image and add [a metadata document][image-document] with information like dimensions, color palette, generate blurhash, and LQIP strings.
+Sanity comes with [a native asset pipeline for your images and files][image-urls]. It has on-demand transforms, automatic optimization for browsers that supports webp, and serves images from a global CDN network. When you upload images to Sanity, it will also automatically analyze the image and add [a metadata document][image-document] with information like dimensions, color palette, generate blurhash, and LQIP strings.
 
 We recommend using [@sanity/image-url](https://www.sanity.io/docs/image-url) to help you generate URLs for presenting Sanity images in your Astro app. See an example of this in [apps/example/src/components/SanityImage.astro](https://github.com/sanity-io/sanity-astro/blob/main/apps/example/src/components/SanityImage.astro)
 
-You can also check out community-contributed integrations like [astro-sanity-picture][astro-sanity-picture].
+You can also use community-contributed integrations like [astro-sanity-picture][astro-sanity-picture] to integrate images from Sanity into your website.
 
 ### Resources
 
@@ -201,3 +201,4 @@ You can also check out community-contributed integrations like [astro-sanity-pic
 [astro-sanity-picture]: https://github.com/otterdev-io/astro-sanity-picture
 [groq-intro]: https://egghead.io/courses/introduction-to-groq-query-language-6e9c6fc0
 [sanity-client]: https://www.sanity.io/docs/js-client
+[image-urls]: https://www.sanity.io/docs/image-urls
