@@ -1,17 +1,6 @@
 import type { Plugin } from "vite";
 
 export function vitePluginSanityStudio(resolvedOptions, config): Plugin {
-  if (config.output !== "hybrid" && config.output !== "server") {
-    throw new Error(
-      "[@sanity/astro]: Sanity Studio requires `output: 'hybrid'` or `output: 'server'` in your Astro config",
-    );
-  }
-
-  if (!resolvedOptions.studioBasePath) {
-    throw new Error(
-      "[@sanity/astro]: The `studioBasePath` option is required in `astro.config.mjs`. For example — `studioBasePath: '/admin'`",
-    );
-  }
   const virtualModuleId = "virtual:sanity-studio";
   const resolvedVirtualModuleId = virtualModuleId;
 
@@ -25,12 +14,22 @@ export function vitePluginSanityStudio(resolvedOptions, config): Plugin {
     },
     async load(id: string) {
       if (id === "virtual:sanity-studio") {
+        if (config.output !== "hybrid" && config.output !== "server") {
+          throw new Error(
+            "[@sanity/astro]: Sanity Studio requires `output: 'hybrid'` or `output: 'server'` in your Astro config"
+          );
+        }
         const studioConfig = await this.resolve("/sanity.config");
         if (!studioConfig) {
-          console.error(
-            "[@sanity/astro]: Sanity Studio requires a `sanity.config.ts|js` file in your project root.",
+          throw new Error(
+            "[@sanity/astro]: Sanity Studio requires a `sanity.config.ts|js` file in your project root."
           );
           return null;
+        }
+        if (!resolvedOptions.studioBasePath) {
+          throw new Error(
+            "[@sanity/astro]: The `studioBasePath` option is required in `astro.config.mjs`. For example — `studioBasePath: '/admin'`"
+          );
         }
         return `
         import config from "${studioConfig.id}";

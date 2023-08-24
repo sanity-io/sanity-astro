@@ -10,7 +10,7 @@ export default defineConfig({
       projectId: "3do82whm",
       dataset: "next",
       // If you are doing static builds you may want opt out of the CDN
-      useCdn: true,
+      useCdn: false,
       studioBasePath: "/admin",
     }),
     react()
