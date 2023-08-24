@@ -20,7 +20,7 @@ export type IntegrationOptions = ClientConfig & {
 };
 
 const defaultOptions: IntegrationOptions = {
-  apiVersion: "v2021-03-25",
+  apiVersion: "v2023-08-24",
 };
 export default function sanityIntegration(
   options: IntegrationOptions,
