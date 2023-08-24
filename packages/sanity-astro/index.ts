@@ -15,7 +15,9 @@ export function useSanityClient(): SanityClient {
   return globalThis.sanityClientInstance;
 }
 
-export type IntegrationOptions = ClientConfig;
+export type IntegrationOptions = ClientConfig & {
+  studioBasePath?: string;
+};
 
 const defaultOptions: IntegrationOptions = {
   apiVersion: "v2021-03-25",
