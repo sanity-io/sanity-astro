@@ -18,7 +18,7 @@
     "@sanity/image-url": "^1.0.2",
     "@sanity/vision": "^3.15.1",
     "astro": "^2.10.13",
-    "astro-portabletext": "^0.9.1",
+    "astro-portabletext": "^0.9.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "styled-components": "^5.3.11"
