@@ -1,6 +1,6 @@
 # The Official Sanity integration for Astro
 
-This integration enables the [Sanity Client][sanity-client] in your [Astro][astro] project and lets you embed Sanity Studio on a route. Astro is an all-in-one web framwork that supports a range of UI languages and can be deployed in most places.
+This integration enables the [Sanity Client][sanity-client] in your [Astro][astro] project and lets you embed Sanity Studio on a route. Astro is an all-in-one web framework that supports a range of UI languages and can be deployed in most places.
 
 - [Installation](#installation)
   - [Manual installation of dependencies](#manual-installation-of-dependencies)
