@@ -5,6 +5,12 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.3.0](https://github.com/sanity-io/sanity-astro/compare/v1.2.1...v1.3.0) (2023-09-01)
+
+### Features
+
+- add Astro 3 support ([#53](https://github.com/sanity-io/sanity-astro/issues/53)) ([8e9f976](https://github.com/sanity-io/sanity-astro/commit/8e9f976ce07dbcfaebc2ab50bc3735a432181168))
+
 ## [1.2.1](https://github.com/sanity-io/sanity-astro/compare/v1.2.0...v1.2.1) (2023-08-24)
 
 ### Bug Fixes
