@@ -5,6 +5,26 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.3.0](https://github.com/sanity-io/sanity-astro/compare/v1.2.1...v1.3.0) (2023-09-01)
+
+### Features
+
+- add Astro 3 support ([#53](https://github.com/sanity-io/sanity-astro/issues/53)) ([8e9f976](https://github.com/sanity-io/sanity-astro/commit/8e9f976ce07dbcfaebc2ab50bc3735a432181168))
+
+## [1.2.1](https://github.com/sanity-io/sanity-astro/compare/v1.2.0...v1.2.1) (2023-08-24)
+
+### Bug Fixes
+
+- **deps:** Update dependency @sanity/ui to ^1.7.10 ([#39](https://github.com/sanity-io/sanity-astro/issues/39)) ([e980ba0](https://github.com/sanity-io/sanity-astro/commit/e980ba057caaf218ba4660b0e903a81fcc99898f))
+- **deps:** update dependency @sanity/ui to ^1.7.11 ([#44](https://github.com/sanity-io/sanity-astro/issues/44)) ([5d833af](https://github.com/sanity-io/sanity-astro/commit/5d833af8dd17eca0488335bf50248be193f47036))
+
+## [1.2.0](https://github.com/sanity-io/sanity-astro/compare/v1.1.5...v1.2.0) (2023-08-24)
+
+### Features
+
+- Make studio embedding optional ([#40](https://github.com/sanity-io/sanity-astro/issues/40)) ([5690114](https://github.com/sanity-io/sanity-astro/commit/5690114eb2a0be761e695daf013e982d2cc30a85))
+- Make studio optional ([#42](https://github.com/sanity-io/sanity-astro/issues/42)) ([c90b3bf](https://github.com/sanity-io/sanity-astro/commit/c90b3bf759bb4d5aea06d6dc8a09101775e21748))
+
 ## [1.1.5](https://github.com/sanity-io/sanity-astro/compare/v1.1.4...v1.1.5) (2023-08-22)
 
 ### Bug Fixes

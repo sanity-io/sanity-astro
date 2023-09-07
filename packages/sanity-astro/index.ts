@@ -15,11 +15,14 @@ export function useSanityClient(): SanityClient {
   return globalThis.sanityClientInstance;
 }
 
-export type IntegrationOptions = ClientConfig;
+export type IntegrationOptions = ClientConfig & {
+  studioBasePath?: string;
+};
 
 const defaultOptions: IntegrationOptions = {
-  apiVersion: "v2021-03-25",
+  apiVersion: "v2023-08-24",
 };
+
 export default function sanityIntegration(
   options: IntegrationOptions,
 ): AstroIntegration {
@@ -44,11 +47,14 @@ export default function sanityIntegration(
             ],
           },
         });
-        injectRoute({
-          entryPoint: "@sanity/astro/studio/studio-route.astro",
-          pattern: `/${resolvedOptions.studioBasePath}/[...params]`,
-          prerender: false,
-        });
+        // only load this route if `studioBasePath` is set
+        if (resolvedOptions.studioBasePath) {
+          injectRoute({
+            entryPoint: "@sanity/astro/studio/studio-route.astro",
+            pattern: `/${resolvedOptions.studioBasePath}/[...params]`,
+            prerender: false,
+          });
+        }
         injectScript(
           "page-ssr",
           `
