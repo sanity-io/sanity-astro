@@ -3,6 +3,8 @@ import Layout from "../../layouts/Layout.astro";
 import { useSanityClient } from "@sanity/astro";
 import PortableText from "../../components/PortableText.astro";
 import SanityImage from "../../components/SanityImage.astro";
+import '@astrojs/prism'
+import 'prismjs/components/prism-markup-templating'
 
   const client = useSanityClient();
   const post = await client.fetch(
