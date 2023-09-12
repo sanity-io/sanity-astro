@@ -11,11 +11,16 @@ const { width = 960 } = Astro.props
 // See https://www.sanity.io/docs/presenting-images for general documentation on
 // presenting images, and https://www.sanity.io/docs/image-url for specifics on
 // this builder API
-const image = builder
-  .image(node)
-  .width(width)
-  .fit('max')
-  .auto('format')
+const image =
+  node
+    ? builder
+      .image(node)
+      .width(width)
+      .fit('max')
+      .auto('format')
+    : null
 ---
-
-<img src={image.url()} alt={node.alt || ""} title={node.alt} />
+{ image
+  ? <img src={image.url()} alt={node.alt || ""} title={node.alt}/>
+  : <h2>Missing Image!</h2>
+}
