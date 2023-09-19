@@ -50,7 +50,7 @@ export default defineConfig({
 });
 ```
 
-This enables the use of `sanityClient()` in your template files. For example:
+This enables the use of `sanityClient` in your template files. For example:
 
 ```mdx
 ---

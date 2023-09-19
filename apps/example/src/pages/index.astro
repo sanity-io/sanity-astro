@@ -1,10 +1,8 @@
 ---
 import {sanityClient}  from "sanity:client";
-import { NewsBar } from "../components/NewsBar";
 import Layout from "../layouts/Layout.astro";
 
-const client = sanityClient;
-const posts = await client.fetch(`*[_type == "post" && defined(publishedAt)] | order(publishedAt desc)`);
+const posts = await sanityClient.fetch(`*[_type == "post" && defined(publishedAt)] | order(publishedAt desc)`);
 ---
 
 <Layout title="Sanity.io blog">
