@@ -1,27 +1,21 @@
 ---
-import { useSanityClient } from "@sanity/astro";
+import {sanityClient}  from "sanity:client";
+import { NewsBar } from "../components/NewsBar";
+import Layout from "../layouts/Layout.astro";
 
-const client = useSanityClient();
+const client = sanityClient;
 const posts = await client.fetch(`*[_type == "post" && defined(publishedAt)] | order(publishedAt desc)`);
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Sanity.io blog</title>
-	</head>
-	<body>
+<Layout title="Sanity.io blog">
 		<h1>Sanity.io blog</h1>
 		<ul>
 			{posts.map((post: any) => (
-				<li>,
+				<li>
 					<a href={'/posts/' + post.slug.current} class="post-link">
 						{post.title}
 					</a>
 				</li>
 			))}
-	</body>
-</html>
+	</ul>
+</Layout>

@@ -1,11 +1,11 @@
 ---
+import { sanityClient } from "sanity:client";
 import Layout from "../../layouts/Layout.astro";
-import { useSanityClient } from "@sanity/astro";
 import PortableText from "../../components/PortableText.astro";
 import SanityImage from "../../components/SanityImage.astro";
 
 export async function getStaticPaths() {
-  const client = useSanityClient();
+  const client = sanityClient;
   const posts = await client.fetch(
     `*[_type == "post" && defined(publishedAt)] | order(publishedAt desc) {
 			...,
