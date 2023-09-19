@@ -5,8 +5,7 @@ import PortableText from "../../components/PortableText.astro";
 import SanityImage from "../../components/SanityImage.astro";
 
 export async function getStaticPaths() {
-  const client = sanityClient;
-  const posts = await client.fetch(
+  const posts = await sanityClient.fetch(
     `*[_type == "post" && defined(publishedAt)] | order(publishedAt desc) {
 			...,
 			authors[]-> {
