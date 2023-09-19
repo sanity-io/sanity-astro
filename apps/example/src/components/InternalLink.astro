@@ -1,16 +1,15 @@
 ---
-import { useSanityClient } from "@sanity/astro";
+import { sanityClient } from "sanity:client";
 const { node } = Astro.props;
 const { markDef } = node;
 
-const client = useSanityClient();
 // Only deal with posts links for this example
-const destination = markDef._ref && await client.fetch(
+const destination = markDef._ref && await sanityClient.fetch(
   `* [_type == "post" && _id == $id] {slug {current}}[0]`,
   { id: markDef._ref }
 );
 
-const linkText = node.children.map(c => c.text).join(' ')
+const linkText = node.children.map((c: any) => c.text).join(' ')
 ---
 
 {

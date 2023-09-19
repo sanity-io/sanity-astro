@@ -1,4 +1,6 @@
---- 
+---
+import { NewsBar } from '../components/NewsBar';
+
 interface Props {
 	title: string;
 }
@@ -17,6 +19,7 @@ const { title } = Astro.props;
 		<title>{title}</title>
 	</head>
 	<body>
+		<NewsBar client:only="react" />
 		<slot />
 	</body>
 </html>
