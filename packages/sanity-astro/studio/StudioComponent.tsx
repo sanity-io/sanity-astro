@@ -1,6 +1,6 @@
 import React from "react";
 // @ts-ignore
-import config from "virtual:sanity-studio";
+import { config } from "sanity:studio";
 import { Studio } from "sanity";
 
 // import { useTheme } from "./useTheme";
@@ -8,7 +8,7 @@ import { Studio } from "sanity";
 
 if (!config) {
   throw new Error(
-    "[@sanity/astro]: Can't load Sanity Studio. Check that you've configured it in `sanity.config.js|ts`.",
+    "[@sanity/astro]: Can't load Sanity Studio. Check that you've configured it in `sanity.config.js|ts`."
   );
 }
 

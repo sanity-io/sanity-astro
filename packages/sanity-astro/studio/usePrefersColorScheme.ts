@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-empty-function */
 import type { ThemeColorSchemeKey } from "@sanity/ui";
 import { useSyncExternalStore } from "react";
 
@@ -29,6 +28,6 @@ export function usePrefersColorScheme(): ThemeColorSchemeKey {
   return useSyncExternalStore(
     store.subscribe,
     store.getSnapshot,
-    store.getServerSnapshot,
+    store.getServerSnapshot
   );
 }
