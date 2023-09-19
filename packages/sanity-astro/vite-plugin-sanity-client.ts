@@ -1,12 +1,12 @@
 import type { ClientConfig } from "@sanity/client";
 import type { Plugin } from "vite";
 
-export function vitePluginSanityInit(config: ClientConfig): Plugin {
-  const virtualModuleId = "virtual:sanity-init";
-  const resolvedVirtualModuleId = "\0" + virtualModuleId;
+const virtualModuleId = "sanity:client";
+const resolvedVirtualModuleId = "\0" + virtualModuleId;
 
+export function vitePluginSanityClient(config: ClientConfig): Plugin {
   return {
-    name: "vite-plugin-sanity-init",
+    name: "vite-plugin-sanity-client",
     resolveId(id: string) {
       if (id === virtualModuleId) {
         return resolvedVirtualModuleId;
@@ -16,7 +16,7 @@ export function vitePluginSanityInit(config: ClientConfig): Plugin {
       if (id === resolvedVirtualModuleId) {
         return `
           import { createClient } from "@sanity/client";
-          export const sanityClientInstance = createClient(
+          export const sanityClient = createClient(
             ${JSON.stringify(config)}
           );
         `;

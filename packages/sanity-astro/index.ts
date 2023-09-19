@@ -1,18 +1,17 @@
 import type { AstroIntegration } from "astro";
 import type { SanityClient, ClientConfig } from "@sanity/client";
-import { vitePluginSanityInit } from "./vite-plugin-sanity-init";
+import type { Config } from "sanity";
+import { vitePluginSanityClient } from "./vite-plugin-sanity-client";
 import { vitePluginSanityStudio } from "./vite-plugin-sanity-studio";
-declare global {
-  var sanityClientInstance: SanityClient;
+
+declare module "sanity:client" {
+  // eslint-disable-next-line
+  export const sanityClient: SanityClient;
 }
 
-export function useSanityClient(): SanityClient {
-  if (!globalThis.sanityClientInstance) {
-    console.error(
-      "[@sanity/astro]: sanityClientInstance has not been initialized correctly",
-    );
-  }
-  return globalThis.sanityClientInstance;
+declare module "sanity:studio" {
+  // eslint-disable-next-line
+  export const studioConfig: Config;
 }
 
 export type IntegrationOptions = ClientConfig & {
@@ -24,7 +23,7 @@ const defaultOptions: IntegrationOptions = {
 };
 
 export default function sanityIntegration(
-  options: IntegrationOptions,
+  options: IntegrationOptions
 ): AstroIntegration {
   const resolvedOptions = {
     ...defaultOptions,
@@ -38,11 +37,12 @@ export default function sanityIntegration(
         injectRoute,
         updateConfig,
         config,
+        logger,
       }) => {
         updateConfig({
           vite: {
             plugins: [
-              vitePluginSanityInit(resolvedOptions),
+              vitePluginSanityClient(resolvedOptions),
               vitePluginSanityStudio(resolvedOptions, config),
             ],
           },
@@ -58,9 +58,9 @@ export default function sanityIntegration(
         injectScript(
           "page-ssr",
           `
-          import { sanityClientInstance } from "virtual:sanity-init";
-          globalThis.sanityClientInstance = sanityClientInstance;
-          `,
+          import { sanityClient } from "sanity:client";
+          globalThis.sanityClient = sanityClient;
+          `
         );
       },
     },
