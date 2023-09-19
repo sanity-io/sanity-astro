@@ -50,15 +50,14 @@ export default defineConfig({
 });
 ```
 
-This enables the use of `useSanityClient()` in your template files. For example:
+This enables the use of `sanityClient()` in your template files. For example:
 
 ```mdx
 ---
 // /blog/index.astro
-import { useSanityClient } from "@sanity/astro";
+import { sanityClient } from "sanity:client";
 
-const client = useSanityClient();
-const posts = await client.fetch(`*[_type == "post" && defined(slug)] | order(publishedAt desc)`);
+const posts = await sanityClient.fetch(`*[_type == "post" && defined(slug)] | order(publishedAt desc)`);
 ---
 
 <h1>Blog</h1>
@@ -114,14 +113,14 @@ You can use this configuration file to install plugins, add a schema with docume
 
 ```javascript
 // astro.config.mjs
-import sanityIntegration from "@sanity/astro";
+import sanity from "@sanity/astro";
 import { defineConfig } from "astro/config";
 import react from "@astrojs/react";
 
 export default defineConfig({
   output: "hybrid",
   integrations: [
-    sanityIntegration({
+    sanity({
       projectId: "3do82whm",
       dataset: "next",
       // Set useCdn to false if you're building statically.
