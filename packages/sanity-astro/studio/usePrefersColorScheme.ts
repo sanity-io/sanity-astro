@@ -28,6 +28,6 @@ export function usePrefersColorScheme(): ThemeColorSchemeKey {
   return useSyncExternalStore(
     store.subscribe,
     store.getSnapshot,
-    store.getServerSnapshot
+    store.getServerSnapshot,
   );
 }

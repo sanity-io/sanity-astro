@@ -16,19 +16,19 @@ export function vitePluginSanityStudio(resolvedOptions, { output }): Plugin {
       if (id === virtualModuleId) {
         if (output !== "hybrid" && output !== "server") {
           throw new Error(
-            "[@sanity/astro]: Sanity Studio requires `output: 'hybrid'` or `output: 'server'` in your Astro config"
+            "[@sanity/astro]: Sanity Studio requires `output: 'hybrid'` or `output: 'server'` in your Astro config",
           );
         }
         const studioConfig = await this.resolve("/sanity.config");
         if (!studioConfig) {
           throw new Error(
-            "[@sanity/astro]: Sanity Studio requires a `sanity.config.ts|js` file in your project root."
+            "[@sanity/astro]: Sanity Studio requires a `sanity.config.ts|js` file in your project root.",
           );
           return null;
         }
         if (!resolvedOptions.studioBasePath) {
           throw new Error(
-            "[@sanity/astro]: The `studioBasePath` option is required in `astro.config.mjs`. For example — `studioBasePath: '/admin'`"
+            "[@sanity/astro]: The `studioBasePath` option is required in `astro.config.mjs`. For example — `studioBasePath: '/admin'`",
           );
         }
         return `
