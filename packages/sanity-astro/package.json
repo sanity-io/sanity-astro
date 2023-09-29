@@ -74,7 +74,11 @@
   "release": {
     "extends": "@sanity/semantic-release-preset",
     "branches": [
-      "main"
+      "main",
+      {
+        "name": "beta",
+        "prerelease": true
+      }
     ]
   },
   "publishConfig": {
