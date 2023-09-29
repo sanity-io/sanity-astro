@@ -5,6 +5,14 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.0.1-beta.1](https://github.com/sanity-io/sanity-astro/compare/v2.0.0...v2.0.1-beta.1) (2023-09-29)
+
+### Bug Fixes
+
+- add prerelease support ([53e005d](https://github.com/sanity-io/sanity-astro/commit/53e005db5f9bcac36c2c7f4c1c3baf2f1f80627a))
+- clean up types and add module declarations ([34cf10d](https://github.com/sanity-io/sanity-astro/commit/34cf10dba261f67a58fe597051e8724d0df3d8ab))
+- update lockfile ([77c4062](https://github.com/sanity-io/sanity-astro/commit/77c406208771f547359069b10462aa62a7f05fce))
+
 ## [2.0.0](https://github.com/sanity-io/sanity-astro/compare/v1.3.0...v2.0.0) (2023-09-29)
 
 ### ⚠ BREAKING CHANGES
