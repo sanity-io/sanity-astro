@@ -23,7 +23,7 @@ const defaultOptions: IntegrationOptions = {
 };
 
 export default function sanityIntegration(
-  options: IntegrationOptions
+  options: IntegrationOptions,
 ): AstroIntegration {
   const resolvedOptions = {
     ...defaultOptions,
@@ -60,7 +60,7 @@ export default function sanityIntegration(
           `
           import { sanityClient } from "sanity:client";
           globalThis.sanityClient = sanityClient;
-          `
+          `,
         );
       },
     },
