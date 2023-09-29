@@ -72,7 +72,7 @@ const posts = await sanityClient.fetch(`*[_type == "post" && defined(slug)] | or
 </ul>
 ```
 
-[Check out this guide][guide] for a more elaborate introduction to how to integrate content from Sanity into Astro.
+[Check out this guide][guide] for a more elaborate introduction to how to integrate content from Sanity into Astro. You can also look in the `examples` folder in this repository for complete implementation examples.
 
 ### Embedding Sanity Studio on a route
 
