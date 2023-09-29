@@ -13,7 +13,8 @@
   "module": "./dist/sanity-astro.mjs",
   "files": [
     "dist",
-    "studio"
+    "studio",
+    "virtual-sanity.d.ts"
   ],
   "exports": {
     ".": {
@@ -46,13 +47,13 @@
   "license": "MIT",
   "devDependencies": {
     "@sanity/semantic-release-preset": "^4.1.4",
-    "astro": "^3.0.6",
+    "astro": "^3.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "rimraf": "^5.0.1",
+    "rimraf": "^5.0.5",
     "semantic-release": "^21.1.1",
     "vite": "^4.4.9",
-    "vite-plugin-dts": "^3.5.3"
+    "vite-plugin-dts": "^3.6.0"
   },
   "peerDependencies": {
     "astro": "^2.0.0 || ^3.0.0",
@@ -66,9 +67,9 @@
     "sanity"
   ],
   "dependencies": {
-    "@sanity/client": "^6.4.9",
+    "@sanity/client": "^6.4.12",
     "@sanity/ui": "^1.8.2",
-    "sanity": "*"
+    "sanity": "^3.16.7"
   },
   "release": {
     "extends": "@sanity/semantic-release-preset",
