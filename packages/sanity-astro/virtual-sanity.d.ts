@@ -1,9 +1,7 @@
 declare module "sanity:client" {
-  const sanityClient: import("./types").SanityClient;
-  export default sanityClient;
+  export const sanityClient: import("@sanity/client").SanityClient;
 }
 
 declare module "sanity:studio" {
-  const studioConfig: import("./types").Config;
-  export default studioConfig;
+  export const studioConfig: import("sanity").Config;
 }
