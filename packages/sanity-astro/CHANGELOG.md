@@ -5,6 +5,21 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.0.0](https://github.com/sanity-io/sanity-astro/compare/v1.3.0...v2.0.0) (2023-09-29)
+
+### ⚠ BREAKING CHANGES
+
+- This deprecates the `useSanityClient` hook and exposes `sanityClient` on the 'sanity:client' module
+
+### Features
+
+- remove hook and refactor to virtual module ([9eb2236](https://github.com/sanity-io/sanity-astro/commit/9eb2236b0df5a3ed258a3819ec8ba27fb5a9458e))
+
+### Bug Fixes
+
+- add mention of examples ([692e80e](https://github.com/sanity-io/sanity-astro/commit/692e80e48954c74c8a5ed5ffd3ccdc33e47dd0bb))
+- **readme:** update documentation for new module names ([0ece721](https://github.com/sanity-io/sanity-astro/commit/0ece721683c54710e216f3ec0a9ab13c55e3381e))
+
 ## [1.3.0](https://github.com/sanity-io/sanity-astro/compare/v1.2.1...v1.3.0) (2023-09-01)
 
 ### Features
