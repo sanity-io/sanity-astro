@@ -11,7 +11,6 @@
   "types": "./dist/types/index.d.ts",
   "main": "./dist/sanity-astro.js",
   "module": "./dist/sanity-astro.mjs",
-  "type": "module",
   "files": [
     "dist",
     "studio",
