@@ -14,7 +14,7 @@
   "files": [
     "dist",
     "studio",
-    "sanity-modules.d.ts"
+    "sanity-module.d.ts"
   ],
   "skipDiagnostics": false,
   "exports": {
@@ -23,7 +23,7 @@
       "module": "./dist/sanity-astro.mjs",
       "default": "./dist/sanity-astro.js"
     },
-    "./sanity-modules": "./sanity-modules.d.ts",
+    "./sanity-module": "./dist/types/sanity-module.d.ts",
     "./studio/studio-route.astro": "./studio/studio-route.astro"
   },
   "preconstruct": {

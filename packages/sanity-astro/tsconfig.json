@@ -1,16 +1,14 @@
 {
   "extends": "astro/tsconfigs/base",
   "$schema": "https://json.schemastore.org/tsconfig",
-  "include": ["./**/*.astro", "./**/*.ts"],
+  "include": ["./**/*.astro", "./**/*.ts", "sanity-module.d.ts"],
   "exclude": ["node_modules/*", "./vite*.ts", "dist"],
   "compilerOptions": {
     "module": "ESNext",
     "target": "ESNext",
-    "declaration": true,
-    "declarationDir": "dist",
     "strict": false,
     "baseUrl": ".",
     "jsx": "preserve",
-    "moduleResolution": "Bundler"
+    "moduleResolution": "node"
   }
 }
