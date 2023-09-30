@@ -14,14 +14,16 @@
   "files": [
     "dist",
     "studio",
-    "virtual-sanity.d.ts"
+    "sanity-modules.d.ts"
   ],
+  "skipDiagnostics": false,
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
       "module": "./dist/sanity-astro.mjs",
       "default": "./dist/sanity-astro.js"
     },
+    "./sanity-modules": "./sanity-modules.d.ts",
     "./studio/studio-route.astro": "./studio/studio-route.astro"
   },
   "preconstruct": {

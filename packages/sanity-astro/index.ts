@@ -1,7 +1,7 @@
 import type { AstroIntegration } from "astro";
 import { vitePluginSanityClient } from "./vite-plugin-sanity-client";
 import { vitePluginSanityStudio } from "./vite-plugin-sanity-studio";
-import { IntegrationOptions } from "./types";
+import type { IntegrationOptions } from "./types";
 
 const defaultOptions: IntegrationOptions = {
   apiVersion: "v2023-08-24",
