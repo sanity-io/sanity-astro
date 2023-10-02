@@ -5,6 +5,12 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.0.1-beta.12](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.11...v2.0.1-beta.12) (2023-10-02)
+
+### Bug Fixes
+
+- config fix ([43db1cd](https://github.com/sanity-io/sanity-astro/commit/43db1cd09cb6fd2d83c732f802d1f7fa64e849e2))
+
 ## [2.0.1-beta.11](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.10...v2.0.1-beta.11) (2023-10-02)
 
 ### Bug Fixes
