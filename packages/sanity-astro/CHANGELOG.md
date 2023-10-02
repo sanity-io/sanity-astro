@@ -5,6 +5,12 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.0.1-beta.11](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.10...v2.0.1-beta.11) (2023-10-02)
+
+### Bug Fixes
+
+- remove dts from files ([a5565cd](https://github.com/sanity-io/sanity-astro/commit/a5565cdf3e52b36ec024a7755dd52161638c1fb4))
+
 ## [2.0.1-beta.10](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.9...v2.0.1-beta.10) (2023-10-02)
 
 ### Bug Fixes
