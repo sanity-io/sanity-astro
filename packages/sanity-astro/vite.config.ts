@@ -8,7 +8,7 @@ export default defineConfig(() => {
   return {
     build: {
       lib: {
-        entry: path.resolve(__dirname, "index.ts"),
+        entry: path.resolve(__dirname, "/src/index.ts"),
         name: "sanityAstro",
         fileName: (format) => (format === "es" ? `${name}.mjs` : `${name}.js`),
       },
