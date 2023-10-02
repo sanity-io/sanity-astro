@@ -12,8 +12,7 @@ export default defineConfig(() => {
         entry: [path.resolve(__dirname, "src/index.ts"),
       ],
         name: "sanityAstro",
-        formats: ["es", "cjs"],
-        fileName: (format) => (format === "es" ? `${name}.mjs` : `${name}.cjs`),
+        fileName: (format) => (format === "es" ? `${name}.mjs` : `${name}.js`),
       },
     },
     plugins: [
