@@ -5,6 +5,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.0.1-beta.8](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.7...v2.0.1-beta.8) (2023-10-02)
+
+### Bug Fixes
+
+- use mjs for esm ([8af14d0](https://github.com/sanity-io/sanity-astro/commit/8af14d0a294a409dd0fab0b8820188c1c5e4780d))
+- use named export ([e3d04ef](https://github.com/sanity-io/sanity-astro/commit/e3d04effcc6711af42a3dfc5a79ea21d8bda716a))
+
 ## [2.0.1-beta.7](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.6...v2.0.1-beta.7) (2023-10-02)
 
 ### Bug Fixes
