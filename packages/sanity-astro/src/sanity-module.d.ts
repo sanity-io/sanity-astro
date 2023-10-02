@@ -1,11 +1,9 @@
 /// <reference types="astro/import-meta.d.ts" />
 
 declare module "sanity:client" {
-  const sanityClient: import("@sanity/client").SanityClient;
-  export default sanityClient;
+  export const sanityClient: import("@sanity/client").SanityClient;
 }
 
 declare module "sanity:studio" {
-  const studioConfig: import("sanity").Config;
-  export default studioConfig;
+  export const studioConfig: import("sanity").Config;
 }
