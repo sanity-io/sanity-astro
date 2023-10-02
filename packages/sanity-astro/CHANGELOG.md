@@ -5,6 +5,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.0.1-beta.9](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.8...v2.0.1-beta.9) (2023-10-02)
+
+### Bug Fixes
+
+- rename plugin ([28d25fe](https://github.com/sanity-io/sanity-astro/commit/28d25febe045fee5a7637799dffb3328109646a4))
+- trying different config ([7cb8a3c](https://github.com/sanity-io/sanity-astro/commit/7cb8a3c3231aaaabe5ff38400599908ee2bd1110))
+
 ## [2.0.1-beta.8](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.7...v2.0.1-beta.8) (2023-10-02)
 
 ### Bug Fixes
