@@ -4,20 +4,22 @@
   "description": "Official Sanity Astro integration",
   "scripts": {
     "dev": "vite build --watch",
-    "build": "rimraf dist && vite build",
+    "build": "rimraf dist && vite build && npm run copyDts",
     "release": "semantic-release",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "copyDts": "cp sanity-module.d.ts dist/sanity-module.d.ts"
   },
   "type": "module",
   "files": [
     "dist",
-    "./src/sanity-module.d.ts"
+    "sanity-module.d.ts"
   ],
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
       "module": "./dist/sanity-astro.mjs",
-      "require": "./dist/sanity-astro.js"
+      "require": "./dist/sanity-astro.js",
+      "default": "./dist/sanity-astro.js"
     }
   },
   "types": "./dist/types/index.d.ts",
