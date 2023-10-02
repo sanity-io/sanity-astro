@@ -10,15 +10,15 @@
   },
   "type": "module",
   "files": [
-    "dist"
+    "dist",
+    "./src/sanity-module.d.ts"
   ],
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
       "module": "./dist/sanity-astro.mjs",
-      "default": "./dist/sanity-astro.mjs"
-    },
-    "./studio/studio-route.astro": "./src/studio/studio-route.astro"
+      "require": "./dist/sanity-astro.js"
+    }
   },
   "types": "./dist/types/index.d.ts",
   "preconstruct": {

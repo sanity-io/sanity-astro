@@ -1,7 +1,7 @@
 {
   "extends": "astro/tsconfigs/base",
   "$schema": "https://json.schemastore.org/tsconfig",
-  "include": ["./**/*.astro", "./**/*.ts", "sanity-module.d.ts", "./src/studio/*"],
+  "include": ["./src/**/*.astro", "./src/**/*.ts", "sanity-module.d.ts"],
   "exclude": ["node_modules/*", "./vite*.ts", "dist"],
   "compilerOptions": {
     "rootDir": "src",
