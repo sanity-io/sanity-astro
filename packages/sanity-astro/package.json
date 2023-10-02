@@ -7,7 +7,6 @@
     "build": "rimraf dist && vite build && npm run copyStudio",
     "release": "semantic-release",
     "prepublishOnly": "npm run build",
-    "copyDts": "cp sanity-module.d.ts dist/sanity-module.d.ts",
     "copyStudio": "cp -r src/studio dist/studio"
   },
   "files": [
