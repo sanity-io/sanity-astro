@@ -4,34 +4,30 @@
   "description": "Official Sanity Astro integration",
   "scripts": {
     "dev": "vite build --watch",
-    "build": "rimraf dist && vite build && npm run copyDts",
+    "build": "rimraf dist && vite build && npm run copyDts && npm run copyStudio",
     "release": "semantic-release",
     "prepublishOnly": "npm run build",
-    "copyDts": "cp sanity-module.d.ts dist/sanity-module.d.ts"
+    "copyDts": "cp sanity-module.d.ts dist/sanity-module.d.ts",
+    "copyStudio": "cp -r src/studio dist/studio"
   },
-  "type": "module",
   "files": [
-    "dist"
+    "dist",
+    "studio"
   ],
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
       "module": "./dist/sanity-astro.mjs",
-      "require": "./dist/sanity-astro.js",
-      "default": "./dist/sanity-astro.js"
+      "require": "./dist/sanity-astro.cjs"
+    },
+    "./studio/studio-route.astro": "./dist/studio/studio-route.astro",
+    "./studio/StudioComponent": {
+      "module": "./dist/studio/StudioComponent.tsx",
+      "types": "./dist/types/StudioComponent.d.ts",
+      "default": "./dist/studio/StudioComponent.tsx"
     }
   },
   "types": "./dist/types/index.d.ts",
-  "preconstruct": {
-    "entrypoints": [
-      "index.ts"
-    ],
-    "exports": {
-      "extra": {
-        "./studio/studio-route.astro": "./src/studio/studio-route.astro"
-      }
-    }
-  },
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/sanity-io/sanity-astro.git",
@@ -83,5 +79,9 @@
   "publishConfig": {
     "access": "public",
     "provenance": true
+  },
+  "engines": {
+    "node": ">=18.14.1",
+    "npm": ">=6.14.0"
   }
 }
