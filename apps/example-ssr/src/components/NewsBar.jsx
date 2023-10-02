@@ -7,13 +7,12 @@ import { sanityClient } from "sanity:client";
 
 export function NewsBar() {
   const [news, setNews] = useState({ message: "Loading news…" });
-  const client = sanityClient;
   const getNews = useCallback(async () => {
-    const response = await client.fetch(
+    const response = await sanityClient.fetch(
       `*[_type == "sanityIoSettings"][0].banner`
     );
     setNews(response || { message: "no news" });
-  }, [client]);
+  }, [sanityClient]);
 
   useEffect(() => {
     getNews();
