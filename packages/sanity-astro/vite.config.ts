@@ -17,7 +17,8 @@ export default defineConfig(() => {
     },
     plugins: [
       dts({
-        outDir: "dist/types"
+        outDir: "dist/types",
+        copyDtsFiles: true,
       }) as unknown as Plugin,
     ],
   };
