@@ -8,22 +8,21 @@
     "release": "semantic-release",
     "prepublishOnly": "npm run build"
   },
-  "types": "./dist/types/index.d.ts",
-  "main": "./dist/sanity-astro.js",
+  "typings": "./main.d.ts",
+  "types": "./dist/types/main.d.ts",
+  "main": "./dist/sanity-astro.mjs",
   "module": "./dist/sanity-astro.mjs",
   "files": [
     "dist",
-    "studio",
-    "sanity-module.d.ts"
+    "studio"
   ],
   "skipDiagnostics": false,
   "exports": {
     ".": {
-      "types": "./dist/types/index.d.ts",
+      "types": "./dist/types/main.d.ts",
       "module": "./dist/sanity-astro.mjs",
       "default": "./dist/sanity-astro.js"
     },
-    "./sanity-module": "./dist/types/sanity-module.d.ts",
     "./studio/studio-route.astro": "./studio/studio-route.astro"
   },
   "preconstruct": {
