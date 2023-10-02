@@ -12,7 +12,7 @@ if (!config) {
   );
 }
 
-export default function StudioComponent() {
+export function StudioComponent() {
   /* Disabled for now */
   // const theme = useTheme(config);
   // const scheme = usePrefersColorScheme();
