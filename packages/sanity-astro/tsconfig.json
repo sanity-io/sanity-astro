@@ -1,5 +1,4 @@
 {
-  "extends": "astro/tsconfigs/base",
   "$schema": "https://json.schemastore.org/tsconfig",
   "include": ["src/**/*"],
   "exclude": ["node_modules/*", "./vite*.ts", "dist", "studio"],
@@ -11,7 +10,6 @@
     "moduleResolution": "node",
     "esModuleInterop": true,
     "baseUrl": "src",
-    "lib": ["ES2021"],
     "types": ["astro/client"]
   }
 }

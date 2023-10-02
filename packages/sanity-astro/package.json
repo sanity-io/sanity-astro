@@ -14,15 +14,14 @@
     "dist",
     "src"
   ],
+  "type": "module",
   "exports": {
     ".": {
+      "types": "./dist/types/index.d.ts",
       "import": {
-        "types": "./dist/types/index.d.ts",
         "module": "./dist/sanity-astro.mjs"
       },
-      "require": {
-        "module": "./dist/sanity-astro.mjs"
-      }
+      "default": "./dist/sanity-astro.mjs"
     },
     "./studio/studio-route.astro": "./src/studio/studio-route.astro",
     "./studio/StudioComponent": {
@@ -54,11 +53,11 @@
     "vite-plugin-dts": "^3.6.0"
   },
   "peerDependencies": {
+    "@sanity/client": "^6.4.12",
     "astro": "^2.0.0 || ^3.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "sanity": "*",
-    "@sanity/client": "^6.4.12"
+    "sanity": "*"
   },
   "keywords": [
     "astro-integration",
@@ -66,9 +65,10 @@
     "sanity"
   ],
   "dependencies": {
+    "@sanity/astro": "^2.0.1-beta.13",
     "@sanity/client": "^6.4.12",
     "@sanity/ui": "^1.8.2",
-    "sanity": "^3.16.7"
+    "sanity": "*"
   },
   "release": {
     "extends": "@sanity/semantic-release-preset",
