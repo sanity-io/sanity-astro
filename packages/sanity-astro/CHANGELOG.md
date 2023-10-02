@@ -5,6 +5,14 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.0.1-beta.7](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.6...v2.0.1-beta.7) (2023-10-02)
+
+### Bug Fixes
+
+- clean up type files ([fd896af](https://github.com/sanity-io/sanity-astro/commit/fd896afa93e83321b17c1459e23dedf451d92d15))
+- simplify example ([a9433a2](https://github.com/sanity-io/sanity-astro/commit/a9433a28a8d4f62123186acd57a985a52e865450))
+- use named export ([624e0b0](https://github.com/sanity-io/sanity-astro/commit/624e0b05095bcdde84f08be3df533d9dff85d6d8))
+
 ## [2.0.1-beta.6](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.5...v2.0.1-beta.6) (2023-09-30)
 
 ### Bug Fixes
