@@ -16,7 +16,7 @@
     ".": {
       "types": "./dist/types/main.d.ts",
       "module": "./dist/sanity-astro.mjs",
-      "default": "./dist/sanity-astro.js"
+      "default": "./dist/sanity-astro.mjs"
     },
     "./studio/studio-route.astro": "./src/studio/studio-route.astro"
   },
