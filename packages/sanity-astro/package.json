@@ -11,8 +11,7 @@
   },
   "type": "module",
   "files": [
-    "dist",
-    "sanity-module.d.ts"
+    "dist"
   ],
   "exports": {
     ".": {
