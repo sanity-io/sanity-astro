@@ -28,7 +28,8 @@
       "types": "./dist/types/studio/StudioComponent.d.ts",
       "module": "./dist/studio/StudioComponent.tsx",
       "default": "./dist/studio/StudioComponent.tsx"
-    }
+    },
+    "./sanity-module.d.ts": "./dist/sanity-module.d.ts"
   },
   "types": "./dist/types/index.d.ts",
   "repository": {

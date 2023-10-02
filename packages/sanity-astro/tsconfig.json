@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "sanity-module.d.ts"],
   "exclude": ["node_modules/*", "./vite*.ts", "dist", "studio"],
   "compilerOptions": {
     "skipLibCheck": true,
