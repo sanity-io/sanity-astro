@@ -1,13 +1,17 @@
 {
   "extends": "astro/tsconfigs/base",
   "$schema": "https://json.schemastore.org/tsconfig",
-  "include": ["./**/*.astro", "./**/*.ts", "./**/*.tsx"],
-  "exclude": ["node_modules/*", "./vite*.ts", "dist"],
+  "include": ["src/**/*"],
+  "exclude": ["node_modules/*", "./vite*.ts", "dist", "studio"],
   "compilerOptions": {
-    "rootDir": "src",
-    "module": "Node16",
-    "isolatedModules": false,
-    "strict": false,
-    "jsx": "preserve"
+    "skipLibCheck": true,
+    // Enable top-level await, and other modern ESM features.
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "baseUrl": "src",
+    "lib": ["ES2021"],
+    "types": ["astro/client"]
   }
 }

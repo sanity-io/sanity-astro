@@ -12,18 +12,22 @@
   },
   "files": [
     "dist",
-    "studio"
+    "src"
   ],
   "exports": {
     ".": {
-      "types": "./dist/types/index.d.ts",
-      "module": "./dist/sanity-astro.mjs",
-      "require": "./dist/sanity-astro.cjs"
+      "import": {
+        "types": "./dist/types/index.d.ts",
+        "module": "./dist/sanity-astro.mjs"
+      },
+      "require": {
+        "module": "./dist/sanity-astro.mjs"
+      }
     },
-    "./studio/studio-route.astro": "./dist/studio/studio-route.astro",
+    "./studio/studio-route.astro": "./src/studio/studio-route.astro",
     "./studio/StudioComponent": {
+      "types": "./dist/types/studio/StudioComponent.d.ts",
       "module": "./dist/studio/StudioComponent.tsx",
-      "types": "./dist/types/StudioComponent.d.ts",
       "default": "./dist/studio/StudioComponent.tsx"
     }
   },
