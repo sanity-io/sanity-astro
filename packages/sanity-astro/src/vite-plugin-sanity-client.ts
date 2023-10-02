@@ -6,7 +6,7 @@ const resolvedVirtualModuleId = "\0" + virtualModuleId;
 
 export function vitePluginSanityClient(config: ClientConfig): Plugin {
   return {
-    name: "vite-plugin-sanity-client",
+    name: "sanity:client",
     resolveId(id: string) {
       if (id === virtualModuleId) {
         return resolvedVirtualModuleId;

@@ -5,7 +5,7 @@ export function vitePluginSanityStudio(resolvedOptions, { output }): Plugin {
   const resolvedVirtualModuleId = virtualModuleId;
 
   return {
-    name: "vite-plugin-sanity-studio",
+    name: "sanity:studio",
     resolveId(id: string) {
       if (id === virtualModuleId) {
         return resolvedVirtualModuleId;
