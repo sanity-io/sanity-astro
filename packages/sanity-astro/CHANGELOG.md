@@ -5,6 +5,12 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.0.1-beta.10](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.9...v2.0.1-beta.10) (2023-10-02)
+
+### Bug Fixes
+
+- add client as peerdep ([6c214cc](https://github.com/sanity-io/sanity-astro/commit/6c214cc1e75698841f0941a65ea4bf684f441d96))
+
 ## [2.0.1-beta.9](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.8...v2.0.1-beta.9) (2023-10-02)
 
 ### Bug Fixes
