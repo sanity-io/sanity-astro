@@ -1,6 +1,3 @@
-/// <reference types="@sanity/client" />
-/// <reference types="sanity" />
-
 declare module "sanity:client" {
   export const sanityClient: import("@sanity/client").SanityClient;
 }

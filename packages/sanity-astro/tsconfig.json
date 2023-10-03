@@ -9,6 +9,7 @@
     "module": "ESNext",
     "moduleResolution": "node",
     "esModuleInterop": true,
-    "baseUrl": "src"
+    "baseUrl": "src",
+    "jsx": "preserve"
   }
 }

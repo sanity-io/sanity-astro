@@ -11,8 +11,7 @@
     "copyDts": "cp sanity-module.d.ts dist/sanity-module.d.ts"
   },
   "files": [
-    "dist",
-    "sanity-module.d.ts"
+    "dist"
   ],
   "type": "module",
   "main": "./dist/sanity-astro.mjs",
