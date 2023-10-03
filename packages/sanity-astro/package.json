@@ -11,7 +11,7 @@
   },
   "files": [
     "dist",
-    "sanity-module.d.ts"
+    "module.d.ts"
   ],
   "type": "module",
   "main": "./dist/sanity-astro.mjs",
@@ -21,12 +21,12 @@
       "module": "./dist/sanity-astro.mjs",
       "default": "./dist/sanity-astro.mjs"
     },
-    "./sanity-module": "./sanity-module.d.ts",
+    "./module": "./module.d.ts",
     "./studio/studio-route.astro": "./dist/studio/studio-route.astro",
-    "./studio/StudioComponent": {
-      "types": "./dist/types/studio/StudioComponent.d.ts",
-      "module": "./dist/studio/StudioComponent.tsx",
-      "default": "./dist/studio/StudioComponent.tsx"
+    "./studio/studio-component": {
+      "types": "./dist/types/studio/studio-component.d.ts",
+      "module": "./dist/studio/studio-component.tsx",
+      "default": "./dist/studio/studio-component.tsx"
     }
   },
   "types": "./dist/types/index.d.ts",
