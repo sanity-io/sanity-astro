@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "include": ["src/**/*", "sanity-module.d.ts"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules/*", "./vite*.ts", "dist", "studio"],
   "compilerOptions": {
     "skipLibCheck": true,
@@ -9,7 +9,6 @@
     "module": "ESNext",
     "moduleResolution": "node",
     "esModuleInterop": true,
-    "baseUrl": "src",
-    "types": ["astro/client"]
+    "baseUrl": "src"
   }
 }
