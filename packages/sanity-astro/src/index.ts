@@ -3,7 +3,7 @@ import { vitePluginSanityClient } from "./vite-plugin-sanity-client";
 import { vitePluginSanityStudio } from "./vite-plugin-sanity-studio";
 import type { ClientConfig } from "@sanity/client";
 
-export type IntegrationOptions = ClientConfig & {
+type IntegrationOptions = ClientConfig & {
   studioBasePath?: string;
 };
 
@@ -11,7 +11,7 @@ const defaultOptions: IntegrationOptions = {
   apiVersion: "v2023-08-24",
 };
 
-export default function sanityIntegration(
+export function sanityIntegration(
   options: IntegrationOptions
 ): AstroIntegration {
   const resolvedOptions = {
