@@ -64,7 +64,6 @@
     "sanity"
   ],
   "dependencies": {
-    "@sanity/astro": "^2.0.1-beta.13",
     "@sanity/client": "^6.4.12",
     "@sanity/ui": "^1.8.2",
     "sanity": "*"
