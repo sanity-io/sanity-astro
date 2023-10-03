@@ -5,6 +5,12 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.0.1-beta.22](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.21...v2.0.1-beta.22) (2023-10-03)
+
+### Bug Fixes
+
+- try env.d.ts strategy ([6cc44c8](https://github.com/sanity-io/sanity-astro/commit/6cc44c8de32f052128d6ffc4f9d581b71174bf63))
+
 ## [2.0.1-beta.21](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.20...v2.0.1-beta.21) (2023-10-03)
 
 ### Bug Fixes
