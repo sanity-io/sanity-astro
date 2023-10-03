@@ -10,7 +10,6 @@
     "moduleResolution": "node",
     "esModuleInterop": true,
     "baseUrl": "src",
-    "jsx": "preserve",
     "types": ["astro/client"]
   }
 }
