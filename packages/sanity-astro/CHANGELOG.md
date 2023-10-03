@@ -5,6 +5,16 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.0.1-beta.20](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.19...v2.0.1-beta.20) (2023-10-03)
+
+### Bug Fixes
+
+- try env.d.ts strategy ([455f994](https://github.com/sanity-io/sanity-astro/commit/455f994aabb3decbc5cedcac73813f7806532a75))
+
+### Reverts
+
+- Revert "chore: add jsx to tsconfig" ([4f767c9](https://github.com/sanity-io/sanity-astro/commit/4f767c96d037e908095091440007be3403ca2cb9))
+
 ## [2.0.1-beta.19](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.18...v2.0.1-beta.19) (2023-10-02)
 
 ### Bug Fixes
