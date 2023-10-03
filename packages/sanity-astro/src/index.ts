@@ -1,18 +1,7 @@
 import type { AstroIntegration } from "astro";
-import type { SanityClient, ClientConfig } from "@sanity/client";
-import type { Config } from "sanity";
 import { vitePluginSanityClient } from "./vite-plugin-sanity-client";
 import { vitePluginSanityStudio } from "./vite-plugin-sanity-studio";
-
-declare module "sanity:client" {
-  // eslint-disable-next-line
-  export const sanityClient: SanityClient;
-}
-
-declare module "sanity:studio" {
-  // eslint-disable-next-line
-  export const studioConfig: Config;
-}
+import type { ClientConfig } from "@sanity/client";
 
 export type IntegrationOptions = ClientConfig & {
   studioBasePath?: string;
@@ -23,7 +12,7 @@ const defaultOptions: IntegrationOptions = {
 };
 
 export default function sanityIntegration(
-  options: IntegrationOptions,
+  options: IntegrationOptions
 ): AstroIntegration {
   const resolvedOptions = {
     ...defaultOptions,
@@ -60,7 +49,7 @@ export default function sanityIntegration(
           `
           import { sanityClient } from "sanity:client";
           globalThis.sanityClient = sanityClient;
-          `,
+          `
         );
       },
     },

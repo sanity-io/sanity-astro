@@ -4,6 +4,7 @@ This integration enables the [Sanity Client][sanity-client] in your [Astro][astr
 
 - [Installation](#installation)
   - [Manual installation of dependencies](#manual-installation-of-dependencies)
+  - [Adding types for `sanity:client`](#adding-types-for-sanityclient)
 - [Usage](#usage)
   - [Setting up the Sanity client](#setting-up-the-sanity-client)
   - [Embedding Sanity Studio on a route](#embedding-sanity-studio-on-a-route)
@@ -26,6 +27,17 @@ Note: `@astrojs/react` is only needed if you plan to embed a Sanity Studio in yo
 ```bash
 npm install @astrojs/react @sanity/astro @types/react-dom @types/react react-dom react
 ```
+
+### Adding types for `sanity:client`
+
+This integration leverages [Vite.js' virtual modules][vite-virtual-modules] with Astro's naming convention (e.g. `astro:assets`). Since it's not possible to automatically include module declarations from npm packages, you'll have to add the following line to the `env.d.ts` file that usually recides in the `src` folder of an Astro project:
+
+```dts
+/// <reference types="astro/client" />
+/// <reference types="@sanity/astro/module" />
+```
+
+You might have to restart the TS Server running in your code editor to get it to resolve types after updating this file. The easiest way to do this is to restart the application.
 
 ## Usage
 
@@ -201,3 +213,4 @@ You can also use community-contributed integrations like [astro-sanity-picture][
 [groq-intro]: https://egghead.io/courses/introduction-to-groq-query-language-6e9c6fc0
 [sanity-client]: https://www.sanity.io/docs/js-client
 [image-urls]: https://www.sanity.io/docs/image-urls
+[vite-virtual-modules]: https://vitejs.dev/guide/api-plugin.html#virtual-modules-convention

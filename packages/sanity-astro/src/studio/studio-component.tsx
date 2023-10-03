@@ -8,11 +8,11 @@ import { Studio } from "sanity";
 
 if (!config) {
   throw new Error(
-    "[@sanity/astro]: Can't load Sanity Studio. Check that you've configured it in `sanity.config.js|ts`.",
+    "[@sanity/astro]: Can't load Sanity Studio. Check that you've configured it in `sanity.config.js|ts`."
   );
 }
 
-export default function StudioComponent() {
+export function StudioComponent() {
   /* Disabled for now */
   // const theme = useTheme(config);
   // const scheme = usePrefersColorScheme();

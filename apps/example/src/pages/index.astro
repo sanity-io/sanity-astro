@@ -1,5 +1,5 @@
 ---
-import {sanityClient}  from "sanity:client";
+import {sanityClient} from 'sanity:client';
 import Layout from "../layouts/Layout.astro";
 
 const posts = await sanityClient.fetch(`*[_type == "post" && defined(publishedAt)] | order(publishedAt desc)`);

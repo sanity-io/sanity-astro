@@ -5,6 +5,172 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.0.1-beta.26](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.25...v2.0.1-beta.26) (2023-10-03)
+
+### Bug Fixes
+
+- finalize env.d.ts strategy ([a670a66](https://github.com/sanity-io/sanity-astro/commit/a670a661d3d69c6868aba4fd212f7440db001061))
+
+## [2.0.1-beta.25](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.24...v2.0.1-beta.25) (2023-10-03)
+
+### Bug Fixes
+
+- try env.d.ts strategy ([42ce2c7](https://github.com/sanity-io/sanity-astro/commit/42ce2c75c4b17183a795815262be15f902cdf84d))
+
+## [2.0.1-beta.24](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.23...v2.0.1-beta.24) (2023-10-03)
+
+### Bug Fixes
+
+- try env.d.ts strategy ([cf13dcb](https://github.com/sanity-io/sanity-astro/commit/cf13dcbad358f3f443752ef92b930474522ab8ea))
+
+## [2.0.1-beta.23](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.22...v2.0.1-beta.23) (2023-10-03)
+
+### Bug Fixes
+
+- try env.d.ts strategy ([c952546](https://github.com/sanity-io/sanity-astro/commit/c952546648ce760fa53d6849686390a397616c62))
+
+## [2.0.1-beta.22](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.21...v2.0.1-beta.22) (2023-10-03)
+
+### Bug Fixes
+
+- try env.d.ts strategy ([6cc44c8](https://github.com/sanity-io/sanity-astro/commit/6cc44c8de32f052128d6ffc4f9d581b71174bf63))
+
+## [2.0.1-beta.21](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.20...v2.0.1-beta.21) (2023-10-03)
+
+### Bug Fixes
+
+- try env.d.ts strategy ([e334e38](https://github.com/sanity-io/sanity-astro/commit/e334e38c5ed21936e8d050822dff79dd4eb0c44c))
+
+## [2.0.1-beta.20](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.19...v2.0.1-beta.20) (2023-10-03)
+
+### Bug Fixes
+
+- try env.d.ts strategy ([455f994](https://github.com/sanity-io/sanity-astro/commit/455f994aabb3decbc5cedcac73813f7806532a75))
+
+### Reverts
+
+- Revert "chore: add jsx to tsconfig" ([4f767c9](https://github.com/sanity-io/sanity-astro/commit/4f767c96d037e908095091440007be3403ca2cb9))
+
+## [2.0.1-beta.19](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.18...v2.0.1-beta.19) (2023-10-02)
+
+### Bug Fixes
+
+- add [@types](https://github.com/types) ([abcc903](https://github.com/sanity-io/sanity-astro/commit/abcc903a5a96d18f8fd8fcc1dccfaf626e2aed7b))
+
+## [2.0.1-beta.18](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.17...v2.0.1-beta.18) (2023-10-02)
+
+### Bug Fixes
+
+- try including dts in chain ([65c3edb](https://github.com/sanity-io/sanity-astro/commit/65c3edbd1bbc59c353d3170b22a35755d7d61ae3))
+
+## [2.0.1-beta.17](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.16...v2.0.1-beta.17) (2023-10-02)
+
+### Bug Fixes
+
+- config fix ([3c8ea5f](https://github.com/sanity-io/sanity-astro/commit/3c8ea5ff6a6d5e30b647cc41ab5c1d662c44b544))
+
+## [2.0.1-beta.16](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.15...v2.0.1-beta.16) (2023-10-02)
+
+### Bug Fixes
+
+- config fix ([5bbb466](https://github.com/sanity-io/sanity-astro/commit/5bbb466327a27237009cecbb1b9422529d2ec0ea))
+
+## [2.0.1-beta.15](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.14...v2.0.1-beta.15) (2023-10-02)
+
+### Bug Fixes
+
+- config fix ([8785585](https://github.com/sanity-io/sanity-astro/commit/87855852162ebeaf3f31d447fcfdb9b36a706a97))
+
+## [2.0.1-beta.14](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.13...v2.0.1-beta.14) (2023-10-02)
+
+### Bug Fixes
+
+- config fix ([a742296](https://github.com/sanity-io/sanity-astro/commit/a7422965b56919e78ee5fe0e9748800b2f33b840))
+
+## [2.0.1-beta.13](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.12...v2.0.1-beta.13) (2023-10-02)
+
+### Bug Fixes
+
+- config fix ([30916f9](https://github.com/sanity-io/sanity-astro/commit/30916f90abd464aee5bf0094c0072870cb38d955))
+
+## [2.0.1-beta.12](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.11...v2.0.1-beta.12) (2023-10-02)
+
+### Bug Fixes
+
+- config fix ([43db1cd](https://github.com/sanity-io/sanity-astro/commit/43db1cd09cb6fd2d83c732f802d1f7fa64e849e2))
+
+## [2.0.1-beta.11](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.10...v2.0.1-beta.11) (2023-10-02)
+
+### Bug Fixes
+
+- remove dts from files ([a5565cd](https://github.com/sanity-io/sanity-astro/commit/a5565cdf3e52b36ec024a7755dd52161638c1fb4))
+
+## [2.0.1-beta.10](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.9...v2.0.1-beta.10) (2023-10-02)
+
+### Bug Fixes
+
+- add client as peerdep ([6c214cc](https://github.com/sanity-io/sanity-astro/commit/6c214cc1e75698841f0941a65ea4bf684f441d96))
+
+## [2.0.1-beta.9](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.8...v2.0.1-beta.9) (2023-10-02)
+
+### Bug Fixes
+
+- rename plugin ([28d25fe](https://github.com/sanity-io/sanity-astro/commit/28d25febe045fee5a7637799dffb3328109646a4))
+- trying different config ([7cb8a3c](https://github.com/sanity-io/sanity-astro/commit/7cb8a3c3231aaaabe5ff38400599908ee2bd1110))
+
+## [2.0.1-beta.8](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.7...v2.0.1-beta.8) (2023-10-02)
+
+### Bug Fixes
+
+- use mjs for esm ([8af14d0](https://github.com/sanity-io/sanity-astro/commit/8af14d0a294a409dd0fab0b8820188c1c5e4780d))
+- use named export ([e3d04ef](https://github.com/sanity-io/sanity-astro/commit/e3d04effcc6711af42a3dfc5a79ea21d8bda716a))
+
+## [2.0.1-beta.7](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.6...v2.0.1-beta.7) (2023-10-02)
+
+### Bug Fixes
+
+- clean up type files ([fd896af](https://github.com/sanity-io/sanity-astro/commit/fd896afa93e83321b17c1459e23dedf451d92d15))
+- simplify example ([a9433a2](https://github.com/sanity-io/sanity-astro/commit/a9433a28a8d4f62123186acd57a985a52e865450))
+- use named export ([624e0b0](https://github.com/sanity-io/sanity-astro/commit/624e0b05095bcdde84f08be3df533d9dff85d6d8))
+
+## [2.0.1-beta.6](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.5...v2.0.1-beta.6) (2023-09-30)
+
+### Bug Fixes
+
+- export types ([130dfec](https://github.com/sanity-io/sanity-astro/commit/130dfecddaff04bddc7491934ffa59658a2257c9))
+
+## [2.0.1-beta.5](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.4...v2.0.1-beta.5) (2023-09-30)
+
+### Bug Fixes
+
+- use referenece path to include module ([8ceb4e6](https://github.com/sanity-io/sanity-astro/commit/8ceb4e6eada0b294b3d57ef008e0ae0938191e28))
+
+## [2.0.1-beta.4](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.3...v2.0.1-beta.4) (2023-09-30)
+
+### Bug Fixes
+
+- include module declaration in dist ([bb4d04f](https://github.com/sanity-io/sanity-astro/commit/bb4d04fe195220eef474258d65f852bcfa2de089))
+
+## [2.0.1-beta.3](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.2...v2.0.1-beta.3) (2023-09-29)
+
+### Bug Fixes
+
+- more typing ([b0efd78](https://github.com/sanity-io/sanity-astro/commit/b0efd781514fcfcf3ec681f865fb10c0405f3941))
+
+## [2.0.1-beta.2](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.1...v2.0.1-beta.2) (2023-09-29)
+
+### Bug Fixes
+
+- include declaration files in build ([1820681](https://github.com/sanity-io/sanity-astro/commit/182068120922e8b4bbe4f1e758933779538f0701))
+
+## [2.0.1-beta.1](https://github.com/sanity-io/sanity-astro/compare/v2.0.0...v2.0.1-beta.1) (2023-09-29)
+
+### Bug Fixes
+
+- add prerelease support ([53e005d](https://github.com/sanity-io/sanity-astro/commit/53e005db5f9bcac36c2c7f4c1c3baf2f1f80627a))
+- clean up types and add module declarations ([34cf10d](https://github.com/sanity-io/sanity-astro/commit/34cf10dba261f67a58fe597051e8724d0df3d8ab))
+- update lockfile ([77c4062](https://github.com/sanity-io/sanity-astro/commit/77c406208771f547359069b10462aa62a7f05fce))
+
 ## [2.0.0](https://github.com/sanity-io/sanity-astro/compare/v1.3.0...v2.0.0) (2023-09-29)
 
 ### ⚠ BREAKING CHANGES
