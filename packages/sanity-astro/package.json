@@ -11,8 +11,7 @@
   },
   "files": [
     "dist",
-    "src",
-    "@types"
+    "sanity-module.d.ts"
   ],
   "type": "module",
   "main": "./dist/sanity-astro.mjs",
@@ -22,6 +21,7 @@
       "module": "./dist/sanity-astro.mjs",
       "default": "./dist/sanity-astro.mjs"
     },
+    "./types": "./sanity-module.d.ts",
     "./studio/studio-route.astro": "./dist/studio/studio-route.astro",
     "./studio/StudioComponent": {
       "types": "./dist/types/studio/StudioComponent.d.ts",
