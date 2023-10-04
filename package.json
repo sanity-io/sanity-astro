@@ -18,5 +18,6 @@
   "workspaces": [
     "packages/*",
     "apps/*"
-  ]
+  ],
+  "version": "2.1.1"
 }
