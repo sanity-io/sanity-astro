@@ -12,6 +12,13 @@ All notable changes to this project will be documented in this file. See
 - finalize env.d.ts strategy ([a670a66](https://github.com/sanity-io/sanity-astro/commit/a670a661d3d69c6868aba4fd212f7440db001061))
 - fix exports ([cd3f05d](https://github.com/sanity-io/sanity-astro/commit/cd3f05d9b0e0c45e324ecdc2ba33e42bc62397ac))
 
+## [2.0.1-beta.26](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.25...v2.0.1-beta.26) (2023-10-04)
+
+### Bug Fixes
+
+- finalize env.d.ts strategy ([a670a66](https://github.com/sanity-io/sanity-astro/commit/a670a661d3d69c6868aba4fd212f7440db001061))
+- fix exports ([cd3f05d](https://github.com/sanity-io/sanity-astro/commit/cd3f05d9b0e0c45e324ecdc2ba33e42bc62397ac))
+
 ## [2.0.1-beta.25](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.24...v2.0.1-beta.25) (2023-10-03)
 
 ### Bug Fixes
