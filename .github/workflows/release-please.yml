@@ -27,6 +27,7 @@ jobs:
         with:
           release-type: node
           token: ${{ steps.generate-token.outputs.token }}
+          path: packages/sanity-astro
 
       # Publish to NPM on new releases
       - uses: actions/checkout@v4
