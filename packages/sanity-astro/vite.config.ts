@@ -2,7 +2,7 @@ import { defineConfig, Plugin } from "vite";
 import path from "path";
 import dts from "vite-plugin-dts";
 
-const name = "@sanity/astro";
+const name = "sanity-astro";
 
 export default defineConfig(() => {
   return {
@@ -11,10 +11,7 @@ export default defineConfig(() => {
       lib: {
         entry: [path.resolve(__dirname, "src/index.ts")],
         name,
-        type: ["es", "cjs", "umd"],
-        /* fileName: (format) =>
-          console.log(format) ||
-          (format === "es" ? `${name}.mjs` : `${name}.js`), */
+        fileName: (format) => (format === "es" ? `${name}.mjs` : `${name}.js`),
       },
     },
     plugins: [
