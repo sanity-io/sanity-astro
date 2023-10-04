@@ -7,14 +7,14 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
-    "@turbo/gen": "^1.10.13",
-    "eslint": "^8.47.0",
+    "@turbo/gen": "^1.10.14",
+    "eslint": "^8.50.0",
     "eslint-config-custom": "*",
-    "prettier": "^3.0.2",
-    "turbo": "^1.10.13"
+    "prettier": "^3.0.3",
+    "turbo": "^1.10.14"
   },
   "name": "astro",
-  "packageManager": "npm@10.0.0",
+  "packageManager": "npm@10.2.0",
   "workspaces": [
     "packages/*",
     "apps/*"

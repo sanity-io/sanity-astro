@@ -5,19 +5,28 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-## [2.0.1-beta.26](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.25...v2.0.1-beta.26) (2023-10-04)
+## [2.1.1](https://github.com/sanity-io/sanity-astro/compare/v2.1.0...v2.1.1) (2023-10-04)
+
+### Bug Fixes
+
+- **ci:** replace semantic-release with release-please ([fe20b74](https://github.com/sanity-io/sanity-astro/commit/fe20b7410b7f5837fad041b78b09a35229e95f51))
+
+## [2.1.0](https://github.com/sanity-io/sanity-astro/compare/v2.0.0...v2.1.0) (2023-10-03)
+
+### Features
+
+- ship typings for virtual modules ([#71](https://github.com/sanity-io/sanity-astro/issues/71)) ([93896fb](https://github.com/sanity-io/sanity-astro/commit/93896fb5dc4f31c9ea3d11bab673e84451926902))
+
+### Bug Fixes
+
+- add prerelease support ([75321d5](https://github.com/sanity-io/sanity-astro/commit/75321d52192369ffee935a4a637d42f45effac12))
+- remove accidental dependency ([ebabcbe](https://github.com/sanity-io/sanity-astro/commit/ebabcbe423c427b5db1843dee61a41ac00fbc5e4))
+
+## [2.0.1-beta.26](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.25...v2.0.1-beta.26) (2023-10-03)
 
 ### Bug Fixes
 
 - finalize env.d.ts strategy ([a670a66](https://github.com/sanity-io/sanity-astro/commit/a670a661d3d69c6868aba4fd212f7440db001061))
-- fix exports ([cd3f05d](https://github.com/sanity-io/sanity-astro/commit/cd3f05d9b0e0c45e324ecdc2ba33e42bc62397ac))
-
-## [2.0.1-beta.26](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.25...v2.0.1-beta.26) (2023-10-04)
-
-### Bug Fixes
-
-- finalize env.d.ts strategy ([a670a66](https://github.com/sanity-io/sanity-astro/commit/a670a661d3d69c6868aba4fd212f7440db001061))
-- fix exports ([cd3f05d](https://github.com/sanity-io/sanity-astro/commit/cd3f05d9b0e0c45e324ecdc2ba33e42bc62397ac))
 
 ## [2.0.1-beta.25](https://github.com/sanity-io/sanity-astro/compare/v2.0.1-beta.24...v2.0.1-beta.25) (2023-10-03)
 

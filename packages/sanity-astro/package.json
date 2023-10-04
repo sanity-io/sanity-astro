@@ -5,7 +5,6 @@
   "scripts": {
     "dev": "vite build --watch",
     "build": "rimraf dist && vite build && npm run copyStudio",
-    "release": "semantic-release",
     "prepublishOnly": "npm run build",
     "copyStudio": "cp -r src/studio dist/studio"
   },
@@ -44,13 +43,11 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@sanity/semantic-release-preset": "^4.1.4",
-    "astro": "^3.2.0",
+    "astro": "^3.2.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "rimraf": "^5.0.5",
-    "semantic-release": "^21.1.1",
-    "vite": "^4.4.9",
+    "vite": "^4.4.10",
     "vite-plugin-dts": "^3.6.0"
   },
   "peerDependencies": {
@@ -66,24 +63,12 @@
     "sanity"
   ],
   "dependencies": {
-    "@sanity/astro": "^2.0.1-beta.13",
     "@sanity/client": "^6.4.12",
     "@sanity/ui": "^1.8.2",
     "sanity": "*"
   },
-  "release": {
-    "extends": "@sanity/semantic-release-preset",
-    "branches": [
-      "main",
-      {
-        "name": "beta",
-        "prerelease": true
-      }
-    ]
-  },
   "publishConfig": {
-    "access": "public",
-    "provenance": true
+    "access": "public"
   },
   "engines": {
     "node": ">=18.14.1",
