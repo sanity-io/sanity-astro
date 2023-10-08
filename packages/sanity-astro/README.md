@@ -30,7 +30,7 @@ npm install @astrojs/react @sanity/astro @types/react-dom @types/react react-dom
 
 ### Adding types for `sanity:client`
 
-This integration leverages [Vite.js' virtual modules][vite-virtual-modules] with Astro's naming convention (e.g. `astro:assets`). Since it's not possible to automatically include module declarations from npm packages, you'll have to add the following line to the `env.d.ts` file that usually recides in the `src` folder of an Astro project:
+This integration leverages [Vite.js' virtual modules][vite-virtual-modules] with Astro's naming convention (e.g. `astro:assets`). Since it's not possible to automatically include module declarations from npm packages, you'll have to add the following line to the `env.d.ts` file that usually resides in the `src` folder of an Astro project:
 
 ```dts
 /// <reference types="astro/client" />
