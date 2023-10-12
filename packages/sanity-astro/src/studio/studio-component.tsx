@@ -8,7 +8,7 @@ import { Studio } from "sanity";
 
 if (!config) {
   throw new Error(
-    "[@sanity/astro]: Can't load Sanity Studio. Check that you've configured it in `sanity.config.js|ts`.",
+    "[@sanity/astro]: Can't load Sanity Studio. Check that you've configured it in `sanity.config.js|ts`."
   );
 }
 

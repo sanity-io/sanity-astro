@@ -10,22 +10,21 @@
   },
   "files": [
     "dist",
+    "src/studio",
     "module.d.ts"
   ],
-  "type": "module",
-  "main": "./dist/sanity-astro.mjs",
+  "module": "./dist/sanity-astro.js",
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
-      "module": "./dist/sanity-astro.mjs",
+      "module": "./dist/sanity-astro.js",
       "default": "./dist/sanity-astro.mjs"
     },
     "./module": "./module.d.ts",
     "./studio/studio-route.astro": "./dist/studio/studio-route.astro",
-    "./studio/studio-component": {
-      "types": "./dist/types/studio/studio-component.d.ts",
-      "module": "./dist/studio/studio-component.tsx",
-      "default": "./dist/studio/studio-component.tsx"
+    "./studio/studio-component.tsx": {
+      "types": "./src/studio/studio-component.tsx",
+      "default": "./src/studio/studio-component.tsx"
     }
   },
   "types": "./dist/types/index.d.ts",
