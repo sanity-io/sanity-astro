@@ -16,9 +16,9 @@
     "@astrojs/vercel": "^5.0.2",
     "@sanity/astro": "*",
     "@sanity/image-url": "^1.0.2",
-    "@sanity/vision": "^3.18.0",
-    "astro": "^3.2.4",
-    "astro-portabletext": "^0.9.5",
+    "@sanity/vision": "^3.18.1",
+    "astro": "^3.3.1",
+    "astro-portabletext": "^0.9.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "styled-components": "^5.3.11"
