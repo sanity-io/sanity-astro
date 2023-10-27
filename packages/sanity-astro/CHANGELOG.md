@@ -5,6 +5,14 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.1.3](https://github.com/sanity-io/sanity-astro/compare/v2.1.2...v2.1.3) (2023-10-23)
+
+
+### Bug Fixes
+
+* **deps:** Update dependency @sanity/client to ^6.7.0 ([#99](https://github.com/sanity-io/sanity-astro/issues/99)) ([fa7cc1c](https://github.com/sanity-io/sanity-astro/commit/fa7cc1c58df4e7aebd70504c206fac2b95a9f299))
+* **deps:** update dependency vite to ^4.5.0 ([#97](https://github.com/sanity-io/sanity-astro/issues/97)) ([2a855cd](https://github.com/sanity-io/sanity-astro/commit/2a855cd95a0572caf4f7554eb6f8c1216c96ce69))
+
 ## [2.1.2](https://github.com/sanity-io/sanity-astro/compare/v2.1.1...v2.1.2) (2023-10-12)
 
 
