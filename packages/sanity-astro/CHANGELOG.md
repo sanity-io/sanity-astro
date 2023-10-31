@@ -5,6 +5,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.1.4](https://github.com/sanity-io/sanity-astro/compare/v2.1.3...v2.1.4) (2023-10-31)
+
+
+### Bug Fixes
+
+* **deps:** Update dependency @sanity/ui to ^1.8.3 ([#105](https://github.com/sanity-io/sanity-astro/issues/105)) ([0bb6fe1](https://github.com/sanity-io/sanity-astro/commit/0bb6fe1d1c043a665459ed5523b3ac89a0489115))
+
 ## [2.1.3](https://github.com/sanity-io/sanity-astro/compare/v2.1.2...v2.1.3) (2023-10-23)
 
 
