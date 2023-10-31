@@ -45,7 +45,7 @@
     "react-dom": "^18.2.0",
     "rimraf": "^5.0.5",
     "vite": "^4.5.0",
-    "vite-plugin-dts": "^3.6.0"
+    "vite-plugin-dts": "^3.6.3"
   },
   "peerDependencies": {
     "@sanity/client": "^6.4.12",
