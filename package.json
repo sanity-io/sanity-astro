@@ -14,7 +14,7 @@
     "turbo": "^1.10.16"
   },
   "name": "astro",
-  "packageManager": "npm@10.2.1",
+  "packageManager": "npm@10.2.2",
   "workspaces": [
     "packages/*",
     "apps/*"
