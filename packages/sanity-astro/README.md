@@ -46,13 +46,13 @@ You might have to restart the TS Server running in your code editor to get it to
 Configure the integration in your `astro.config.mjs` file. The configuration options and methods are the same as for [@sanity/client](https://github.com/sanity-io/client#readme):
 
 ```typescript
-import sanity from "@sanity/astro";
+import { sanityIntegration } from '@sanity/astro';
 import { defineConfig } from "astro/config";
 
 // https://astro.build/config
 export default defineConfig({
   integrations: [
-    sanity({
+    sanityIntegration({
       projectId: "<YOUR-PROJECT-ID>",
       dataset: "<YOUR-DATASET-NAME>",
       // Set useCdn to false if you're building statically.
