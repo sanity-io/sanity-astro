@@ -1,6 +1,6 @@
 {
   "name": "@sanity/astro",
-  "version": "2.1.4",
+  "version": "2.2.0",
   "description": "Official Sanity Astro integration",
   "scripts": {
     "dev": "vite build --watch",
@@ -13,14 +13,12 @@
     "src/studio",
     "module.d.ts"
   ],
-  "module": "./dist/sanity-astro.js",
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
-      "module": "./dist/sanity-astro.js",
+      "module": "./dist/sanity-astro.mjs",
       "default": "./dist/sanity-astro.mjs"
     },
-    "./module": "./module.d.ts",
     "./studio/studio-route.astro": "./dist/studio/studio-route.astro",
     "./studio/studio-component.tsx": {
       "types": "./src/studio/studio-component.tsx",
@@ -49,7 +47,7 @@
   },
   "peerDependencies": {
     "@sanity/client": "^6.4.12",
-    "astro": "^2.0.0 || ^3.0.0",
+    "astro": "^2.0.0 || ^3.0.0 || ^4.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "sanity": "*"
@@ -60,7 +58,7 @@
     "sanity"
   ],
   "dependencies": {
-    "@sanity/client": "^6.7.0",
+    "@sanity/client": "^6.10.0",
     "@sanity/ui": "^1.8.3",
     "sanity": "*"
   },

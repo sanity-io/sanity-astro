@@ -39,7 +39,8 @@ export default function sanityIntegration(
         // only load this route if `studioBasePath` is set
         if (resolvedOptions.studioBasePath) {
           injectRoute({
-            entryPoint: "@sanity/astro/studio/studio-route.astro",
+            entryPoint: "@sanity/astro/studio/studio-route.astro", // Astro <= 3
+            entrypoint: "@sanity/astro/studio/studio-route.astro", // Astro > 3
             pattern: `/${resolvedOptions.studioBasePath}/[...params]`,
             prerender: false,
           });
