@@ -46,7 +46,7 @@ You might have to restart the TS Server running in your code editor to get it to
 Configure the integration in your `astro.config.mjs` file. The configuration options and methods are the same as for [@sanity/client](https://github.com/sanity-io/client#readme):
 
 ```typescript
-import { sanityIntegration } from '@sanity/astro';
+import { sanityIntegration } from "@sanity/astro";
 import { defineConfig } from "astro/config";
 
 // https://astro.build/config
@@ -125,7 +125,7 @@ You can use this configuration file to install plugins, add a schema with docume
 
 ```javascript
 // astro.config.mjs
-import { sanityIntegration } from '@sanity/astro';
+import { sanityIntegration } from "@sanity/astro";
 import { defineConfig } from "astro/config";
 import react from "@astrojs/react";
 
