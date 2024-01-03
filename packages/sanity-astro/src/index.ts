@@ -11,7 +11,7 @@ const defaultOptions: IntegrationOptions = {
   apiVersion: "v2023-08-24",
 };
 
-export function sanityIntegration(
+export default function sanityIntegration(
   options: IntegrationOptions,
 ): AstroIntegration {
   const resolvedOptions = {
