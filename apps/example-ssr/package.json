@@ -10,13 +10,13 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astro-community/astro-embed-youtube": "^0.4.1",
+    "@astro-community/astro-embed-youtube": "^0.4.3",
     "@astrojs/prism": "^3.0.0",
-    "@astrojs/react": "^3.0.4",
-    "@astrojs/vercel": "^5.1.0",
+    "@astrojs/react": "^3.0.9",
+    "@astrojs/vercel": "^5.2.0",
     "@sanity/astro": "*",
     "@sanity/image-url": "^1.0.2",
-    "@sanity/vision": "^3.19.0",
+    "@sanity/vision": "^3.23.4",
     "astro": "^4.0.9",
     "astro-portabletext": "^0.9.6",
     "react": "^18.2.0",
