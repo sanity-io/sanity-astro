@@ -1,12 +1,12 @@
 {
   "extends": "astro/tsconfigs/base",
   "$schema": "https://json.schemastore.org/tsconfig",
-  "include": ["./*.astro", "./**/*.ts"],
+  "include": ["./*.astro", "./*.ts","./**/*.ts"],
   "exclude": ["node_modules/*", "./vite*.ts", "dist"],
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "node16",
     "esModuleInterop": true,
     "baseUrl": "src",
     "outDir": "./dist",
