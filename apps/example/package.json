@@ -13,7 +13,7 @@
     "@astro-community/astro-embed-youtube": "^0.4.1",
     "@astrojs/prism": "^3.0.0",
     "@astrojs/react": "^3.0.4",
-    "@astrojs/vercel": "^5.1.0",
+    "@astrojs/vercel": "^6.1.3",
     "@sanity/astro": "*",
     "@sanity/image-url": "^1.0.2",
     "@sanity/vision": "^3.19.0",
@@ -21,6 +21,6 @@
     "astro-portabletext": "^0.9.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "styled-components": "^6.1.0"
+    "styled-components": "^6.1.8"
   }
 }
