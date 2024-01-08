@@ -3,16 +3,6 @@ import { vitePluginSanityClient } from "./vite-plugin-sanity-client";
 import { vitePluginSanityStudio } from "./vite-plugin-sanity-studio";
 import type { ClientConfig } from "@sanity/client";
 
-// declaring these here will cause them to appear in unified dist/types/index.d.ts
-// importing the module.d.ts containing them would not, unreasonably....
-declare module "sanity:client" {
-  export const sanityClient: import("@sanity/client").SanityClient;
-}
-
-declare module "sanity:studio" {
-  export const studioConfig: import("sanity").Config;
-}
-
 type IntegrationOptions = ClientConfig & {
   studioBasePath?: string;
 };
