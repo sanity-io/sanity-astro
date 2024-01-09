@@ -2,6 +2,8 @@
 
 This integration enables the [Sanity Client][sanity-client] in your [Astro][astro] project and lets you embed Sanity Studio on a route. Astro is an all-in-one web framework that supports a range of UI languages and can be deployed in most places.
 
+_n.b. please be sure to follow the revised instructions which you'll find [here](###-Adding-types-for-`sanity:client`), to complete or upgrade an installation after Version 2.1.4..._
+
 - [Installation](#installation)
   - [Manual installation of dependencies](#manual-installation-of-dependencies)
   - [Adding types for `sanity:client`](#adding-types-for-sanityclient)
@@ -30,14 +32,17 @@ npm install @astrojs/react @sanity/astro @types/react-dom @types/react react-dom
 
 ### Adding types for `sanity:client`
 
-This integration leverages [Vite.js' virtual modules][vite-virtual-modules] with Astro's naming convention (e.g. `astro:assets`). Since it's not possible to automatically include module declarations from npm packages, you'll have to add the following line to the `env.d.ts` file that usually resides in the `src` folder of an Astro project:
+This integration leverages [Vite.js' virtual modules][vite-virtual-modules] with Astro's naming convention (e.g. `astro:assets`). Since it's not possible to automatically include module declarations from npm packages, you'll have to add a file with the following line at the top of the `src` folder of an Astro project:
 
 ```dts
-/// <reference types="astro/client" />
 /// <reference types="@sanity/astro/module" />
 ```
 
-You might have to restart the TS Server running in your code editor to get it to resolve types after updating this file. The easiest way to do this is to restart the application.
+The name of the file must be in the form `sani.d.ts`, as you find in each of the examples. Do not edit the env.d.ts file you may find there, as that file belongs to Astro, and may be updated or deleted. 
+
+If you have added such a line to an env.d.ts, you should now take it out, leaving the rest.You may however alter the 'sani' part of the filename you add, if desired.
+
+You might have to restart the TS Server running in your code editor to get it to resolve types after creating this file. The easiest way to do this is to restart the application.
 
 ## Usage
 

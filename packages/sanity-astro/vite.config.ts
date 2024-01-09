@@ -1,4 +1,4 @@
-import { defineConfig, Plugin } from "vite";
+import {defineConfig, Plugin} from "vite";
 import path from "path";
 import dts from "vite-plugin-dts";
 
@@ -16,6 +16,10 @@ export default defineConfig(() => {
     },
     plugins: [
       dts({
+        exclude: [
+          './src/vite-plugin-sanity-client.ts',
+          './src/vite-plugin-sanity-studio.ts'
+        ],
         outDir: "dist/types",
       }) as unknown as Plugin,
     ],
