@@ -5,6 +5,14 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.2.1](https://github.com/sanity-io/sanity-astro/compare/v2.2.0...v2.2.1) (2024-02-16)
+
+
+### Bug Fixes
+
+* **deps:** Update dependency @sanity/client to ^6.10.0 ([#113](https://github.com/sanity-io/sanity-astro/issues/113)) ([d376e40](https://github.com/sanity-io/sanity-astro/commit/d376e40cbf9789fe504bc75787ca19e6fee44d19))
+* **module:** add back missing module export ([#140](https://github.com/sanity-io/sanity-astro/issues/140)) ([fc27dd5](https://github.com/sanity-io/sanity-astro/commit/fc27dd5e99f3984ddb313ae835800f8771daf6c8))
+
 ## [2.2.0](https://github.com/sanity-io/sanity-astro/compare/v2.1.4...v2.2.0) (2024-01-03)
 
 
