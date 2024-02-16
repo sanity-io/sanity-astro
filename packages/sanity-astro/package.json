@@ -19,6 +19,7 @@
       "module": "./dist/sanity-astro.mjs",
       "default": "./dist/sanity-astro.mjs"
     },
+    "./module": "./module.d.ts",
     "./studio/studio-route.astro": "./dist/studio/studio-route.astro",
     "./studio/studio-component.tsx": {
       "types": "./src/studio/studio-component.tsx",
