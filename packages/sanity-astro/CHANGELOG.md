@@ -5,6 +5,23 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.0.0](https://github.com/sanity-io/sanity-astro/compare/v2.2.1...v3.0.0) (2024-03-13)
+
+
+### ⚠ BREAKING CHANGES
+
+* **module:** This exposes the integration as a default export to enable `npx astro add @sanity/astro` as an installation method.
+* Remove requirement for hybrid/server rendering ([#147](https://github.com/sanity-io/sanity-astro/issues/147))
+
+### Features
+
+* Remove requirement for hybrid/server rendering ([#147](https://github.com/sanity-io/sanity-astro/issues/147)) ([5e9c011](https://github.com/sanity-io/sanity-astro/commit/5e9c011987176c893fa2451b184f6362b28a9e81))
+
+
+### Bug Fixes
+
+* **module:** export module as default to enable astro add ([#151](https://github.com/sanity-io/sanity-astro/issues/151)) ([ade3dba](https://github.com/sanity-io/sanity-astro/commit/ade3dba5264fa450186987318e565056630c5b0c))
+
 ## [2.2.1](https://github.com/sanity-io/sanity-astro/compare/v2.2.0...v2.2.1) (2024-02-16)
 
 
