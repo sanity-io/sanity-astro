@@ -3,6 +3,8 @@ import { StudioComponent } from "./studio-component"
 export async function getStaticPaths() {
   return [{ params: { path: "admin" } }]
 }
+
+export const prerender = true
 ---
 
 <!doctype html>

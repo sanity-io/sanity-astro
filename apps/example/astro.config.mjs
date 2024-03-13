@@ -1,11 +1,11 @@
-import { sanityIntegration } from "@sanity/astro";
+import sanity from "@sanity/astro";
 import { defineConfig } from "astro/config";
 import react from '@astrojs/react';
 
 // https://astro.build/config
 export default defineConfig({
   integrations: [
-    sanityIntegration({
+    sanity({
       projectId: "3do82whm",
       dataset: "next",
       // If you are doing static builds you may want opt out of the CDN
