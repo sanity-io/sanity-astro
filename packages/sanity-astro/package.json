@@ -1,6 +1,6 @@
 {
   "name": "@sanity/astro",
-  "version": "2.2.1",
+  "version": "3.0.0",
   "description": "Official Sanity Astro integration",
   "scripts": {
     "dev": "vite build --watch",
