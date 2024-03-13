@@ -119,7 +119,6 @@ export default defineConfig({
 You can use this configuration file to install plugins, add a schema with document types, add customizations etc. Note that the Studio will be using Astro‘s development server which is built on top of [Vite][vite].
 
 1. Add the following to your `astro.config.mjs`:
-   - `output: 'hybrid'`: Required since the Studio is a client-side application.
    - `studioBasePath: '/admin'`: The route/path for where you want to access your studio
    - Import the [React integration for Astro][astro-react], and add it to the `integrations` array.
 
@@ -130,7 +129,6 @@ import { defineConfig } from "astro/config";
 import react from "@astrojs/react";
 
 export default defineConfig({
-  output: "hybrid",
   integrations: [
     sanityIntegration({
       projectId: "3do82whm",
@@ -145,9 +143,7 @@ export default defineConfig({
 });
 ```
 
-2. Since you have set `output: 'hybrid'` (or `server`), you have to add a deployment adapter to your Astro config as well. [Astro offers a range of adapters][adapter] depending on where you want to host your website.
-
-3. You have to [enable CORS origins for authenticated requests][cors] for the domains you're running your website project on. The Studio should automatically detect and let you add this when you access the Studio on a new URL. Typically you need to add your local development server URL and your production URL to the CORS origin settings. It's important that you only enable CORS for authenticated requests on domains that _you_ control.
+2. You have to [enable CORS origins for authenticated requests][cors] for the domains you're running your website project on. The Studio should automatically detect and let you add this when you access the Studio on a new URL. Typically you need to add your local development server URL and your production URL to the CORS origin settings. It's important that you only enable CORS for authenticated requests on domains that _you_ control.
 
 ## Rendering rich text and block content with Portable Text
 
@@ -206,7 +202,6 @@ You can also use community-contributed integrations like [astro-sanity-picture][
 [astro-portabletext]: https://github.com/theisel/astro-portabletext
 [cors]: https://www.sanity.io/docs/cors
 [vite]: https://vitejs.dev
-[adapter]: https://docs.astro.build/en/guides/server-side-rendering/#converting-a-static-site-to-hybrid-rendering
 [portabletext]: https://portabletext.org
 [image-document]: https://www.sanity.io/docs/image-metadata
 [astro-sanity-picture]: https://github.com/otterdev-io/astro-sanity-picture

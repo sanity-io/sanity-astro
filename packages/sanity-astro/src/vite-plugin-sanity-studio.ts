@@ -14,11 +14,7 @@ export function vitePluginSanityStudio(resolvedOptions, { output }): Plugin {
     },
     async load(id: string) {
       if (id === virtualModuleId) {
-        if (output !== "hybrid" && output !== "server") {
-          throw new Error(
-            "[@sanity/astro]: Sanity Studio requires `output: 'hybrid'` or `output: 'server'` in your Astro config",
-          );
-        }
+
         const studioConfig = await this.resolve("/sanity.config");
         if (!studioConfig) {
           throw new Error(
