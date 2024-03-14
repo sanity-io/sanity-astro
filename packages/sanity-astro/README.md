@@ -124,7 +124,7 @@ You can use this configuration file to install plugins, add a schema with docume
 
 ```javascript
 // astro.config.mjs
-import { sanity } from "@sanity/astro";
+import sanity from "@sanity/astro";
 import { defineConfig } from "astro/config";
 import react from "@astrojs/react";
 
