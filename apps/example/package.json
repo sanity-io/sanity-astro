@@ -10,14 +10,14 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astro-community/astro-embed-youtube": "^0.4.1",
+    "@astro-community/astro-embed-youtube": "^0.4.4",
     "@astrojs/prism": "^3.0.0",
-    "@astrojs/react": "^3.0.4",
+    "@astrojs/react": "^3.1.0",
     "@sanity/astro": "*",
     "@sanity/image-url": "^1.0.2",
-    "@sanity/vision": "^3.19.0",
+    "@sanity/vision": "^3.36.1",
     "astro": "^4.0.9",
-    "astro-portabletext": "^0.9.6",
+    "astro-portabletext": "^0.9.7",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "styled-components": "^6.1.0"
