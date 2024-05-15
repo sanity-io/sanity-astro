@@ -14,4 +14,10 @@ export default defineConfig({
     }),
     react(),
   ],
+  vite: {
+    ssr: {
+      // See: https://github.com/withastro/astro/issues/9192#issuecomment-1834192321
+      external: ["prismjs"],
+    },
+  },
 });

@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.1",
   "scripts": {
-    "clean": "rimraf .turbo && rimraf .vercel && rimraf node_modules",
+    "clean": "rimraf .astro && rimraf .turbo && rimraf .vercel && rimraf node_modules",
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
@@ -15,13 +15,15 @@
     "@astrojs/prism": "^3.0.0",
     "@astrojs/react": "^3.0.4",
     "@astrojs/vercel": "^7.3.4",
-    "@sanity/astro": "*",
+    "@sanity/astro": "workspace:^",
+    "@sanity/client": "^6.18.3",
     "@sanity/image-url": "^1.0.2",
     "@sanity/vision": "^3.19.0",
     "astro": "^4.0.9",
     "astro-portabletext": "^0.9.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "sanity": "^3.43.0",
     "styled-components": "^6.1.0"
   }
 }
