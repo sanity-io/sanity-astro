@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.1",
   "scripts": {
+    "clean": "rimraf .turbo && rimraf .vercel && rimraf node_modules",
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
