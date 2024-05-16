@@ -1,10 +1,11 @@
 ---
 import { StudioComponent } from "./studio-component"
+// Astro will warn about this being ignore, but it has to be there.
 export async function getStaticPaths() {
   return [{ params: { path: "admin" } }]
 }
-
-export const prerender = true
+// This route needs to run in "SPA" mode, so we need to set `prerender` to `false`
+export const prerender = false
 ---
 
 <!doctype html>
