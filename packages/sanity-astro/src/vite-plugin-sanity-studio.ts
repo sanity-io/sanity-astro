@@ -14,7 +14,6 @@ export function vitePluginSanityStudio(resolvedOptions, { output }): Plugin {
     },
     async load(id: string) {
       if (id === virtualModuleId) {
-
         const studioConfig = await this.resolve("/sanity.config");
         if (!studioConfig) {
           throw new Error(
