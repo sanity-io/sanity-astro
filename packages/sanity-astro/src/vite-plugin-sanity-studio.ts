@@ -19,7 +19,6 @@ export function vitePluginSanityStudio(resolvedOptions, { output }): Plugin {
           throw new Error(
             "[@sanity/astro]: Sanity Studio requires a `sanity.config.ts|js` file in your project root.",
           );
-          return null;
         }
         if (!resolvedOptions.studioBasePath) {
           throw new Error(
