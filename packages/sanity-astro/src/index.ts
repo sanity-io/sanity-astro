@@ -7,41 +7,35 @@ type IntegrationOptions = ClientConfig & {
   studioBasePath?: string;
 };
 
-const defaultOptions: IntegrationOptions = {
+const defaultClientConfig: ClientConfig = {
   apiVersion: "v2023-08-24",
 };
 
-export default function sanityIntegration(
-  options: IntegrationOptions,
-): AstroIntegration {
-  const resolvedOptions = {
-    ...defaultOptions,
-    ...options,
-  };
+export default function sanityIntegration({
+  studioBasePath,
+  ...clientConfig
+}: IntegrationOptions): AstroIntegration {
   return {
     name: "@sanity/astro",
     hooks: {
-      "astro:config:setup": ({
-        injectScript,
-        injectRoute,
-        updateConfig,
-        config,
-        logger,
-      }) => {
+      "astro:config:setup": ({ injectScript, injectRoute, updateConfig }) => {
         updateConfig({
           vite: {
             plugins: [
-              vitePluginSanityClient(resolvedOptions),
-              vitePluginSanityStudio(resolvedOptions, config),
+              vitePluginSanityClient({
+                ...defaultClientConfig,
+                ...clientConfig,
+              }),
+              vitePluginSanityStudio({ studioBasePath }),
             ],
           },
         });
         // only load this route if `studioBasePath` is set
-        if (resolvedOptions.studioBasePath) {
+        if (studioBasePath) {
           injectRoute({
             entryPoint: "@sanity/astro/studio/studio-route.astro", // Astro <= 3
             entrypoint: "@sanity/astro/studio/studio-route.astro", // Astro > 3
-            pattern: `/${resolvedOptions.studioBasePath}/[...params]`,
+            pattern: `/${studioBasePath}/[...params]`,
             prerender: false,
           });
         }

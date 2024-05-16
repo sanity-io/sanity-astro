@@ -1,6 +1,9 @@
-import type { Plugin } from "vite";
+import type { DeepPartial } from "astro/dist/type-utils";
+import type { PluginOption } from "vite";
 
-export function vitePluginSanityStudio(resolvedOptions, { output }): Plugin {
+export function vitePluginSanityStudio(resolvedOptions: {
+  studioBasePath?: string;
+}) {
   const virtualModuleId = "sanity:studio";
   const resolvedVirtualModuleId = virtualModuleId;
 
@@ -44,5 +47,5 @@ export function vitePluginSanityStudio(resolvedOptions, { output }): Plugin {
       }
       return null;
     },
-  };
+  } satisfies DeepPartial<PluginOption>;
 }

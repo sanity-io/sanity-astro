@@ -1,10 +1,11 @@
 import type { ClientConfig } from "@sanity/client";
-import type { Plugin } from "vite";
+import type { DeepPartial } from "astro/dist/type-utils";
+import type { PluginOption } from "vite";
 
 const virtualModuleId = "sanity:client";
 const resolvedVirtualModuleId = "\0" + virtualModuleId;
 
-export function vitePluginSanityClient(config: ClientConfig): Plugin {
+export function vitePluginSanityClient(config: ClientConfig) {
   return {
     name: "sanity:client",
     resolveId(id: string) {
@@ -22,5 +23,5 @@ export function vitePluginSanityClient(config: ClientConfig): Plugin {
         `;
       }
     },
-  };
+  } satisfies DeepPartial<PluginOption>;
 }
