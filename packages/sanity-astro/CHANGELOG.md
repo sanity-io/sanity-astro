@@ -5,6 +5,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.0.1](https://github.com/sanity-io/sanity-astro/compare/v3.0.0...v3.0.1) (2024-05-16)
+
+
+### Bug Fixes
+
+* studio route should not be prerendered as it's a dynamic spa route ([#153](https://github.com/sanity-io/sanity-astro/issues/153)) ([0926f9f](https://github.com/sanity-io/sanity-astro/commit/0926f9fc073dd860a9373651b1d4bd0dd270b1a6))
+
 ## [3.0.0](https://github.com/sanity-io/sanity-astro/compare/v2.2.1...v3.0.0) (2024-03-13)
 
 
