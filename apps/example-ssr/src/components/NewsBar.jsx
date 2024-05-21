@@ -9,7 +9,7 @@ export function NewsBar() {
   const [news, setNews] = useState({ message: "Loading news…" });
   const getNews = useCallback(async () => {
     const response = await sanityClient.fetch(
-      `*[_type == "sanityIoSettings"][0].banner`
+      `*[_type == "sanityIoSettings"][0].banner`,
     );
     setNews(response || { message: "no news" });
   }, [sanityClient]);
