@@ -1,5 +1,6 @@
 import type { ClientConfig } from "@sanity/client";
 import type { DeepPartial } from "astro/dist/type-utils";
+import serialize from "serialize-javascript";
 import type { PluginOption } from "vite";
 
 const virtualModuleId = "sanity:client";
@@ -18,7 +19,7 @@ export function vitePluginSanityClient(config: ClientConfig) {
         return `
           import { createClient } from "@sanity/client";
           export const sanityClient = createClient(
-            ${JSON.stringify(config)}
+            ${serialize(config)}
           );
         `;
       }
