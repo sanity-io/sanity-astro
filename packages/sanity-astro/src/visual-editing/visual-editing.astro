@@ -1,0 +1,57 @@
+---
+import type { VisualEditingOptions } from '@sanity/visual-editing'
+
+export interface Props extends Pick<VisualEditingOptions, 'zIndex'> {
+  enabled?: boolean
+}
+
+const {enabled, zIndex} = Astro.props
+---
+
+<sanity-astro-visual-editing enabled={enabled} data-z-index={zIndex}></sanity-astro-visual-editing>
+
+<script>
+  import {enableVisualEditing} from '@sanity/visual-editing'
+
+  class SanityAstroVisualEditing extends HTMLElement {
+    static observedAttributes = ['enabled']
+    private unsubscribe: (() => void) | null = null
+
+    constructor() {
+      super()
+    }
+
+    disconnectedCallback() {
+      this.teardownVisualEditing()
+    }
+
+    attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
+      if (name === 'enabled' && oldValue !== newValue) {
+        this.updateVisualEditing(newValue === 'true')
+      }
+    }
+
+    private updateVisualEditing(enabled: boolean) {
+      if (enabled) {
+        this.unsubscribe = enableVisualEditing({
+          zIndex: this.dataset.zIndex,
+          refresh: () => {
+            return new Promise((resolve) => {
+              window.location.reload()
+              resolve()
+            })
+          },
+        })
+      } else {
+        this.teardownVisualEditing()
+      }
+    }
+
+    private teardownVisualEditing() {
+      this.unsubscribe?.()
+      this.unsubscribe = null
+    }
+  }
+
+  customElements.define('sanity-astro-visual-editing', SanityAstroVisualEditing)
+</script>
