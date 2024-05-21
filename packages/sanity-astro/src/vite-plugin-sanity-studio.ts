@@ -1,6 +1,9 @@
-import type { Plugin } from "vite";
+import type { DeepPartial } from "astro/dist/type-utils";
+import type { PluginOption } from "vite";
 
-export function vitePluginSanityStudio(resolvedOptions, { output }): Plugin {
+export function vitePluginSanityStudio(resolvedOptions: {
+  studioBasePath?: string;
+}) {
   const virtualModuleId = "sanity:studio";
   const resolvedVirtualModuleId = virtualModuleId;
 
@@ -19,7 +22,6 @@ export function vitePluginSanityStudio(resolvedOptions, { output }): Plugin {
           throw new Error(
             "[@sanity/astro]: Sanity Studio requires a `sanity.config.ts|js` file in your project root.",
           );
-          return null;
         }
         if (!resolvedOptions.studioBasePath) {
           throw new Error(
@@ -45,5 +47,5 @@ export function vitePluginSanityStudio(resolvedOptions, { output }): Plugin {
       }
       return null;
     },
-  };
+  } satisfies DeepPartial<PluginOption>;
 }
