@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.1",
   "scripts": {
+    "clean": "rimraf dist && rimraf .turbo && rimraf node_modules",
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
@@ -21,5 +22,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "styled-components": "^6.1.0"
+  },
+  "devDependencies": {
+    "rimraf": "^5.0.7"
   }
 }

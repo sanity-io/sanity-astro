@@ -1,6 +1,7 @@
 {
   "private": true,
   "scripts": {
+    "clean": "turbo run clean && rimraf .turbo && rimraf node_modules",
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
@@ -11,6 +12,7 @@
     "eslint": "^8.52.0",
     "eslint-config-custom": "*",
     "prettier": "^3.0.3",
+    "rimraf": "^5.0.7",
     "turbo": "^1.10.16"
   },
   "name": "astro",
