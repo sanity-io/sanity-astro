@@ -37,7 +37,7 @@ jobs:
         with:
           cache: npm
           node-version: lts/*
-          registry-url: 'https://registry.npmjs.org'
+          registry-url: "https://registry.npmjs.org"
       - run: corepack enable && npm --version && npm ci --ignore-scripts && npm audit signatures
         if: ${{ steps.release.outputs.releases_created }}
       # Release Please has already incremented versions and published tags, so we just

@@ -7,7 +7,14 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".next/**", "!.next/cache/**", "build/**", "public/**",  ".vercel/output/**"]
+      "outputs": [
+        "dist/**",
+        ".next/**",
+        "!.next/cache/**",
+        "build/**",
+        "public/**",
+        ".vercel/output/**"
+      ]
     },
     "lint": {},
     "dev": {

@@ -5,14 +5,16 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "format": "prettier --write ."
   },
   "devDependencies": {
+    "@sanity/prettier-config": "^1.0.2",
     "@turbo/gen": "^1.10.16",
     "eslint": "^8.52.0",
     "eslint-config-custom": "*",
     "prettier": "^3.0.3",
     "rimraf": "^5.0.7",
+    "prettier-plugin-astro": "^0.13.0",
     "turbo": "^1.10.16"
   },
   "name": "astro",
