@@ -5,6 +5,20 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.1.0](https://github.com/sanity-io/sanity-astro/compare/v3.0.1...v3.1.0) (2024-05-23)
+
+
+### Features
+
+* add VisualEditing component ([#167](https://github.com/sanity-io/sanity-astro/issues/167)) ([54dbbb4](https://github.com/sanity-io/sanity-astro/commit/54dbbb497f0a6bd3f01f95618a94a2cbc11cbaef))
+
+
+### Bug Fixes
+
+* allow non-JSON ClientConfig ([#166](https://github.com/sanity-io/sanity-astro/issues/166)) ([ed086ff](https://github.com/sanity-io/sanity-astro/commit/ed086ff19600c6a68059fe0a7590f4863d56b9e4))
+* **deps:** update sanity and @sanity/client ([#173](https://github.com/sanity-io/sanity-astro/issues/173)) ([6fa2fed](https://github.com/sanity-io/sanity-astro/commit/6fa2fed8082db7c5620d9da5034917357b16ffc2))
+* distribute VisualEditing component ([#172](https://github.com/sanity-io/sanity-astro/issues/172)) ([4973aa9](https://github.com/sanity-io/sanity-astro/commit/4973aa9cb6b7ccf4f2ee15495870710fb03ec883))
+
 ## [3.0.1](https://github.com/sanity-io/sanity-astro/compare/v3.0.0...v3.0.1) (2024-05-16)
 
 
