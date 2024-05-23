@@ -23,6 +23,11 @@
     {
       "matchDepTypes": ["dependencies"],
       "rangeStrategy": "bump"
+    },
+    {
+      "matchDepTypes": ["peerDependencies"],
+      "excludePackageNames": ["astro", "react", "react-dom"],
+      "rangeStrategy": "bump"
     }
   ]
 }
