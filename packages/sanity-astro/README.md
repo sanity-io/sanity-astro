@@ -187,6 +187,37 @@ We recommend using [@sanity/image-url](https://www.sanity.io/docs/image-url) to 
 
 You can also use community-contributed integrations like [astro-sanity-picture][astro-sanity-picture] to integrate images from Sanity into your website.
 
+## Enabling Visual Editing
+
+To enable [Visual Editing][visual-editing], you should use `VisualEditing` from `@sanity/astro/visual-editing` in your ["page shell" layout](https://docs.astro.build/en/basics/layouts/):
+
+```ts
+---
+import {VisualEditing} from '@sanity/astro/visual-editing'
+
+export type props = {
+  title: string
+}
+const {title} = Astro.props
+const visualEditingEnabled = import.meta.env.SANITY_VISUAL_EDITING_ENABLED == 'true'
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+  </head>
+  <body>
+    <slot />
+    <VisualEditing enabled={visualEditingEnabled} zIndex={1000} />
+    <!--                                          ^optional -->
+  </body>
+</html>
+```
+
 ### Resources
 
 - [The official Astro + Sanity guide][guide]
@@ -209,3 +240,4 @@ You can also use community-contributed integrations like [astro-sanity-picture][
 [sanity-client]: https://www.sanity.io/docs/js-client
 [image-urls]: https://www.sanity.io/docs/image-urls
 [vite-virtual-modules]: https://vitejs.dev/guide/api-plugin.html#virtual-modules-convention
+[visual-editing]: https://www.sanity.io/docs/introduction-to-visual-editing
