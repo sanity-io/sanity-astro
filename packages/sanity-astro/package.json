@@ -56,11 +56,11 @@
     "vite-plugin-dts": "^3.7.0"
   },
   "peerDependencies": {
-    "@sanity/client": "^6.4.12",
+    "@sanity/client": "^6.18.2",
     "astro": "^2.0.0 || ^3.0.0 || ^4.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "sanity": "*"
+    "sanity": "^3.43.0"
   },
   "keywords": [
     "astro-integration",
@@ -68,10 +68,9 @@
     "sanity"
   ],
   "dependencies": {
-    "@sanity/client": "^6.4.12",
-    "@sanity/ui": "^1.8.3",
+    "@sanity/client": "^6.18.2",
     "@sanity/visual-editing": "^1.8.21",
-    "sanity": "*"
+    "sanity": "^3.43.0"
   },
   "publishConfig": {
     "access": "public"
