@@ -33,6 +33,7 @@ export default function sanityIntegration({
         // only load this route if `studioBasePath` is set
         if (studioBasePath) {
           injectRoute({
+            // @ts-expect-error
             entryPoint: "@sanity/astro/studio/studio-route.astro", // Astro <= 3
             entrypoint: "@sanity/astro/studio/studio-route.astro", // Astro > 3
             pattern: `/${studioBasePath}/[...params]`,
