@@ -53,7 +53,7 @@
     "rimraf": "^5.0.5",
     "serialize-javascript": "^6.0.2",
     "vite": "^4.5.0",
-    "vite-plugin-dts": "^3.7.0"
+    "vite-plugin-dts": "^3.9.1"
   },
   "peerDependencies": {
     "@sanity/client": "^6.18.2",
