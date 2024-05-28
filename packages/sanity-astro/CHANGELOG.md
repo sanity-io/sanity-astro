@@ -5,6 +5,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.1.2](https://github.com/sanity-io/sanity-astro/compare/v3.1.1...v3.1.2) (2024-05-28)
+
+
+### Bug Fixes
+
+* **deps:** update @sanity/visual-editing ([#179](https://github.com/sanity-io/sanity-astro/issues/179)) ([5648919](https://github.com/sanity-io/sanity-astro/commit/564891989b2b5775ccada155439a5639c8b0ed77))
+
 ## [3.1.1](https://github.com/sanity-io/sanity-astro/compare/v3.1.0...v3.1.1) (2024-05-27)
 
 
