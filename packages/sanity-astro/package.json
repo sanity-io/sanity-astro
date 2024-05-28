@@ -69,7 +69,7 @@
   ],
   "dependencies": {
     "@sanity/client": "^6.18.3",
-    "@sanity/visual-editing": "^1.8.22",
+    "@sanity/visual-editing": "^2.0.0",
     "sanity": "^3.43.0"
   },
   "publishConfig": {
