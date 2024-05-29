@@ -1,16 +1,11 @@
 ---
-import { VisualEditing as InternalVisualEditing, type VisualEditingOptions } from '@sanity/visual-editing/react'
+import { VisualEditingComponent, type VisualEditingOptions } from './visual-editing-component'
 
-export interface Props extends Pick<VisualEditingOptions, 'zIndex'> {
+export interface Props extends VisualEditingOptions {
   enabled?: boolean
 }
 
 const {enabled, zIndex} = Astro.props
 ---
 
-{enabled ? <InternalVisualEditing client:load zIndex={zIndex} refresh={() => {
-  return new Promise((resolve) => {
-    window.location.reload()
-    resolve()
-  })
-}} /> : null}
+{enabled ? <VisualEditingComponent client:only="react" zIndex={zIndex} /> : null}
