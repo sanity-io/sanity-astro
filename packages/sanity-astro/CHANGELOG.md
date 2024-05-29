@@ -5,6 +5,14 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.1.3](https://github.com/sanity-io/sanity-astro/compare/v3.1.2...v3.1.3) (2024-05-29)
+
+
+### Bug Fixes
+
+* **visual-editing:** avoid using JSX in the .astro file ([#185](https://github.com/sanity-io/sanity-astro/issues/185)) ([dd92c85](https://github.com/sanity-io/sanity-astro/commit/dd92c8586cd37accdcb859c73cbd9838d5df39b1))
+* **visual-editing:** use VisualEditing React component directly ([#183](https://github.com/sanity-io/sanity-astro/issues/183)) ([01619c0](https://github.com/sanity-io/sanity-astro/commit/01619c0ba6eed5ae90cbde3c0c10e2bb679a5fb9))
+
 ## [3.1.2](https://github.com/sanity-io/sanity-astro/compare/v3.1.1...v3.1.2) (2024-05-28)
 
 
