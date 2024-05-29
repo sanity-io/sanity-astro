@@ -4,14 +4,10 @@
   "include": ["./*.astro", "./**/*.ts"],
   "exclude": ["node_modules/*", "./vite*.ts", "dist"],
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
     "moduleResolution": "node",
-    "esModuleInterop": true,
     "baseUrl": "src",
     "outDir": "./dist",
     "declaration": true,
-    "declarationDir": "./dist",
-    "jsx": "preserve"
+    "declarationDir": "./dist"
   }
 }
