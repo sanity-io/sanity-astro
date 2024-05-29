@@ -37,3 +37,6 @@ yarn-error.log*
 
 # ides
 .idea/
+
+# Output of 'npm pack'
+*.tgz
