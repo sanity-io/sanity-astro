@@ -1,5 +1,5 @@
 import type { ClientConfig } from "@sanity/client";
-import type { DeepPartial } from "astro/dist/type-utils";
+import type { PartialDeep } from "type-fest";
 import serialize from "serialize-javascript";
 import type { PluginOption } from "vite";
 
@@ -24,5 +24,5 @@ export function vitePluginSanityClient(config: ClientConfig) {
         `;
       }
     },
-  } satisfies DeepPartial<PluginOption>;
+  } satisfies PartialDeep<PluginOption>;
 }

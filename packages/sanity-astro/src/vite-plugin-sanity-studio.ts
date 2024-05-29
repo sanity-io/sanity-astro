@@ -1,4 +1,4 @@
-import type { DeepPartial } from "astro/dist/type-utils";
+import type { PartialDeep } from "type-fest";
 import type { PluginOption } from "vite";
 
 export function vitePluginSanityStudio(resolvedOptions: {
@@ -47,5 +47,5 @@ export function vitePluginSanityStudio(resolvedOptions: {
       }
       return null;
     },
-  } satisfies DeepPartial<PluginOption>;
+  } satisfies PartialDeep<PluginOption>;
 }
