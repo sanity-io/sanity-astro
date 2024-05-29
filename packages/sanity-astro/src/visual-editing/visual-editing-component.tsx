@@ -1,10 +1,10 @@
-import React from 'react'
+import React from "react";
 import {
   VisualEditing as InternalVisualEditing,
   type VisualEditingOptions as InternalVisualEditingOptions,
-} from '@sanity/visual-editing/react';
+} from "@sanity/visual-editing/react";
 
-export type VisualEditingOptions = Pick<InternalVisualEditingOptions, 'zIndex'>;
+export type VisualEditingOptions = Pick<InternalVisualEditingOptions, "zIndex">;
 
 export function VisualEditingComponent(props: VisualEditingOptions) {
   return (
