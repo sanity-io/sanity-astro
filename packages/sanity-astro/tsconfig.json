@@ -4,7 +4,6 @@
   "include": ["./*.astro", "./**/*.ts"],
   "exclude": ["node_modules/*", "./vite*.ts", "dist"],
   "compilerOptions": {
-    "moduleResolution": "node",
     "baseUrl": "src",
     "outDir": "./dist",
     "declaration": true,
