@@ -1,4 +1,4 @@
-import { defineConfig, Plugin } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import path from "path";
 import dts from "vite-plugin-dts";
 

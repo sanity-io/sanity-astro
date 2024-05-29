@@ -2,7 +2,7 @@
   "extends": "astro/tsconfigs/base",
   "$schema": "https://json.schemastore.org/tsconfig",
   "include": ["./*.astro", "./**/*.ts"],
-  "exclude": ["node_modules/*", "./vite*.ts", "dist"],
+  "exclude": ["node_modules/*", "dist"],
   "compilerOptions": {
     "baseUrl": "src",
     "outDir": "./dist",
