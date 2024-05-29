@@ -46,11 +46,14 @@
   },
   "license": "MIT",
   "devDependencies": {
+    "@sanity/client": "^6.18.3",
+    "@sanity/visual-editing": "^2.1.1",
     "@types/serialize-javascript": "^5.0.4",
     "astro": "^4.0.9",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "rimraf": "^5.0.5",
+    "sanity": "^3.43.0",
     "serialize-javascript": "^6.0.2",
     "type-fest": "^4.18.3",
     "vite": "^4.5.0",
@@ -58,6 +61,7 @@
   },
   "peerDependencies": {
     "@sanity/client": "^6.18.3",
+    "@sanity/visual-editing": "^2.1.1",
     "astro": "^2.0.0 || ^3.0.0 || ^4.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -68,11 +72,6 @@
     "withastro",
     "sanity"
   ],
-  "dependencies": {
-    "@sanity/client": "^6.18.3",
-    "@sanity/visual-editing": "^2.0.0",
-    "sanity": "^3.43.0"
-  },
   "publishConfig": {
     "access": "public"
   },
