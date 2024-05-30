@@ -11,6 +11,7 @@ This integration enables the [Sanity Client][sanity-client] in your [Astro][astr
 - [Rendering rich text and block content with Portable Text](#rendering-rich-text-and-block-content-with-portable-text)
 - [Presenting images](#presenting-images)
   - [Resources](#resources)
+- [Enabling Visual Editing](#enabling-visual-editing)
 
 ## Installation
 
@@ -189,7 +190,34 @@ You can also use community-contributed integrations like [astro-sanity-picture][
 
 ## Enabling Visual Editing
 
-To enable [Visual Editing][visual-editing], you should use `VisualEditing` from `@sanity/astro/visual-editing` in your ["page shell" layout](https://docs.astro.build/en/basics/layouts/):
+To enable [Visual Editing][visual-editing], you need to:
+
+1. [Enable Overlays using the `VisualEditing` component](#1-enable-overlays-using-the-visualediting-component)
+2. [Add the Presentation tool to the Studio](#2-add-the-presentation-tool-to-the-studio)
+3. [Enable Stega](#3-enable-stega)
+
+**Please note that Visual Editing only works for [server-side rendered](https://docs.astro.build/en/guides/server-side-rendering/) pages.** This means you probably want to configure your Astro project something like this:
+
+```js
+import vercel from '@astrojs/vercel/serverless'
+
+// astro.config.mjs
+export default defineConfig({
+  integrations: [
+    sanity({
+      useCdn: true,
+      // ...
+    }),
+    // ...
+  ],
+  output: 'server',
+  adapter: vercel(),
+})
+```
+
+### 1. Enable [Overlays][overlays] using the `VisualEditing` component
+
+Add `VisualEditing` from `@sanity/astro/visual-editing` in your ["page shell" layout](https://docs.astro.build/en/basics/layouts/):
 
 ```ts
 ---
@@ -218,6 +246,100 @@ const visualEditingEnabled = import.meta.env.SANITY_VISUAL_EDITING_ENABLED == 't
 </html>
 ```
 
+`VisualEditing` is needed to render Overlays. It's a React component under the hood, so you'll need the [React integration for Astro][astro-react] if you don't already use that at this point.
+
+`VisualEditing` takes two props:
+
+- `enabled`: so you can control whether or not visual editing is enabled depending on your environment.
+- `zIndex` (optional): allows you to change the `z-index` of overlay elements.
+
+In the example above, `enabled` is controlled using an [environment variable](https://docs.astro.build/en/guides/environment-variables/):
+
+```sh
+// .env.local
+SANITY_VISUAL_EDITING_ENABLED="true"
+```
+
+### 2. Add the Presentation tool to the Studio
+
+Follow the instructions on [how to configure the Presentation tool][presentation-tool].
+
+### 3. Enable [Stega][stega]
+
+If you already run Studio on an Astro route, then you can set the `stega.studioUrl` to the same relative path:
+
+```js
+export default defineConfig({
+  integrations: [
+    sanity({
+      studioBasePath: '/admin',
+      stega: {
+        studioUrl: '/admin',
+      },
+    }),
+  ],
+})
+```
+
+Now, all you need is a `loadQuery` helper function akin to this one:
+
+```ts
+// load-query.ts
+import {type QueryParams} from 'sanity'
+import {sanityClient} from 'sanity:client'
+
+const visualEditingEnabled = import.meta.env.SANITY_VISUAL_EDITING_ENABLED === 'true'
+const token = import.meta.env.SANITY_API_READ_TOKEN
+
+export async function loadQuery<QueryResponse>({
+  query,
+  params,
+}: {
+  query: string
+  params?: QueryParams
+}) {
+  if (visualEditingEnabled && !token) {
+    throw new Error('The `SANITY_API_READ_TOKEN` environment variable is required during Visual Editing.')
+  }
+
+  const perspective = visualEditingEnabled ? 'previewDrafts' : 'published'
+
+  const {result, resultSourceMap} = await sanityClient.fetch<QueryResponse>(query, params ?? {}, {
+    filterResponse: false,
+    perspective,
+    resultSourceMap: visualEditingEnabled ? 'withKeyArraySelector' : false,
+    stega: visualEditingEnabled,
+    ...(visualEditingEnabled ? {token} : {}),
+    useCdn: !visualEditingEnabled,
+  })
+
+  return {
+    data: result,
+    sourceMap: resultSourceMap,
+    perspective,
+  }
+}
+```
+
+You'll notice that we rely on a "read token" which is required in order to enable stega encoding and for authentication when Sanity Studio is live previewing your application.
+
+1. Go to https://sanity.io/manage and select your project.
+2. Click on the 🔌 API tab.
+3. Click on + Add API token.
+4. Name it "SANITY_API_READ_TOKEN" and set Permissions to Viewer and hit Save.
+5. Copy the token and add it to your `.env.local` file: `SANITY_API_READ_TOKEN="<paste your token here>"`
+
+Now, you can query and interact with stega-enabled data using the visual editing overlays:
+
+```ts
+// some.astro file
+import {loadQuery} from '../load-query'
+
+const {data: movies} = await loadQuery<Array<{title: string}>>({
+  query: `*[_type == 'movie']`,
+})
+```
+
 ### Resources
 
 - [The official Astro + Sanity guide][guide]
@@ -241,3 +363,6 @@ const visualEditingEnabled = import.meta.env.SANITY_VISUAL_EDITING_ENABLED == 't
 [image-urls]: https://www.sanity.io/docs/image-urls
 [vite-virtual-modules]: https://vitejs.dev/guide/api-plugin.html#virtual-modules-convention
 [visual-editing]: https://www.sanity.io/docs/introduction-to-visual-editing
+[presentation-tool]: https://www.sanity.io/docs/configuring-the-presentation-tool
+[overlays]: https://www.sanity.io/docs/visual-editing-overlays
+[stega]: https://www.sanity.io/docs/stega
