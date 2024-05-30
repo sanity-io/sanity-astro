@@ -6,9 +6,9 @@
     "astro": "astro",
     "build": "astro build",
     "clean": "rimraf .astro && rimraf .turbo && rimraf .vercel && rimraf node_modules",
-    "dev": "astro dev",
+    "dev": "astro dev --port 4323",
     "preview": "astro preview",
-    "start": "astro dev"
+    "start": "astro dev --port 4323"
   },
   "dependencies": {
     "@astro-community/astro-embed-youtube": "^0.5.2",
