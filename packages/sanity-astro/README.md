@@ -100,14 +100,14 @@ This integration lets you embed a Sanity Studio on a route in your Astro project
 ```typescript
 // sanity.config.ts
 import {defineConfig} from 'sanity'
-import {deskTool} from 'sanity/desk'
+import {structureTool} from 'sanity/structure'
 
 export default defineConfig({
   name: 'project-name',
   title: 'Project Name',
   projectId: '<YOUR-PROJECT-ID>',
   dataset: '<YOUR-DATASET-NAME>',
-  plugins: [deskTool()],
+  plugins: [structureTool()],
   schema: {
     types: [
       /* your content types here*/
@@ -124,13 +124,13 @@ You can use this configuration file to install plugins, add a schema with docume
 
 ```javascript
 // astro.config.mjs
-import {sanityIntegration} from '@sanity/astro'
+import sanity from '@sanity/astro'
 import {defineConfig} from 'astro/config'
 import react from '@astrojs/react'
 
 export default defineConfig({
   integrations: [
-    sanityIntegration({
+    sanity({
       projectId: '3do82whm',
       dataset: 'next',
       // Set useCdn to false if you're building statically.
