@@ -32,17 +32,20 @@ jobs:
       # Publish to NPM on new releases
       - uses: actions/checkout@v4
         if: ${{ steps.release.outputs.releases_created }}
+      - uses: pnpm/action-setup@v2
+        if: ${{ steps.release.outputs.releases_created }}
       - uses: actions/setup-node@v4
         if: ${{ steps.release.outputs.releases_created }}
         with:
-          cache: npm
+          cache: pnpm
           node-version: lts/*
           registry-url: "https://registry.npmjs.org"
-      - run: corepack enable && npm --version && npm ci --ignore-scripts && npm audit signatures
+      - run: corepack enable && pnpm --version && pnpm install --ignore-scripts && pnpm audit
         if: ${{ steps.release.outputs.releases_created }}
       # Release Please has already incremented versions and published tags, so we just
       # need to publish the new version to npm here
-      - run: npm publish --provenance --workspaces
+      - run: pnpm -r publish
         if: ${{ steps.release.outputs.releases_created }}
         env:
+          NPM_CONFIG_PROVENANCE: true
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}

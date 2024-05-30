@@ -16,17 +16,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
       - uses: actions/setup-node@v4
         with:
-          cache: npm
+          cache: pnpm
           node-version: lts/*
-      - run: corepack enable && npm --version
-      - run: npm install --ignore-scripts
+      - run: corepack enable && pnpm --version
+      - run: pnpm install --dev --ignore-scripts
       - uses: actions/cache@v4
         with:
           path: node_modules/.cache/prettier/.prettier-cache
-          key: prettier-${{ hashFiles('package-lock.json') }}
-      - run: npm run format
+          key: prettier-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: pnpm format
       - run: git restore .github/workflows
       - uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # v2
         id: generate-token
@@ -36,7 +37,7 @@ jobs:
       - uses: peter-evans/create-pull-request@153407881ec5c347639a548ade7d8ad1d6740e38 # v5
         with:
           author: github-actions <41898282+github-actions[bot]@users.noreply.github.com>
-          body: I ran `npm run format` 🧑‍💻
+          body: I ran `pnpm format` 🧑‍💻
           branch: actions/prettier
           commit-message: "chore(prettier): 🤖 ✨"
           labels: 🤖 bot
