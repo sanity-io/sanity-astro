@@ -1,23 +1,23 @@
-import { defineConfig, type Plugin } from "vite";
-import path from "path";
-import dts from "vite-plugin-dts";
+import {defineConfig, type Plugin} from 'vite'
+import path from 'path'
+import dts from 'vite-plugin-dts'
 
-const name = "sanity-astro";
+const name = 'sanity-astro'
 
 export default defineConfig(() => {
   return {
-    base: "/src",
+    base: '/src',
     build: {
       lib: {
-        entry: [path.resolve(__dirname, "src/index.ts")],
+        entry: [path.resolve(__dirname, 'src/index.ts')],
         name,
-        fileName: (format) => (format === "es" ? `${name}.mjs` : `${name}.js`),
+        fileName: (format) => (format === 'es' ? `${name}.mjs` : `${name}.js`),
       },
     },
     plugins: [
       dts({
-        outDir: "dist/types",
+        outDir: 'dist/types',
       }) as unknown as Plugin,
     ],
-  };
-});
+  }
+})

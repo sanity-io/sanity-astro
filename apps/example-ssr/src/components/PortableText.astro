@@ -1,11 +1,11 @@
 ---
-import CallToActionBox from "./CallToActionBox.astro";
-import Code from "./Code.astro";
-import Debug from "./Debug.astro";
-import YouTube from "./YouTube.astro";
-import {PortableText as PortableTextInternal} from "astro-portabletext"
-import SanityImage from "./SanityImage.astro";
-import InternalLink from "./InternalLink.astro";
+import CallToActionBox from './CallToActionBox.astro'
+import Code from './Code.astro'
+import Debug from './Debug.astro'
+import YouTube from './YouTube.astro'
+import {PortableText as PortableTextInternal} from 'astro-portabletext'
+import SanityImage from './SanityImage.astro'
+import InternalLink from './InternalLink.astro'
 
 const components = {
   type: {
@@ -15,10 +15,9 @@ const components = {
     code: Code,
   },
   mark: {
-    internalLink: InternalLink
-  }
-};
-
+    internalLink: InternalLink,
+  },
+}
 ---
 
 <PortableTextInternal value={Astro.props.value} components={components} />

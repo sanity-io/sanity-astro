@@ -1,8 +1,8 @@
 ---
-import { StudioComponent } from "./studio-component"
+import {StudioComponent} from './studio-component'
 // Astro will warn about this being ignore, but it has to be there.
 export async function getStaticPaths() {
-  return [{ params: { path: "admin" } }]
+  return [{params: {path: 'admin'}}]
 }
 // This route needs to run in "SPA" mode, so we need to set `prerender` to `false`
 export const prerender = false
@@ -13,10 +13,7 @@ export const prerender = false
   <head>
     <meta charset="UTF-8" />
     <!--  Studio implements display cutouts CSS (The iPhone Notch ™ ) and needs `viewport-fit=cover` for it to work correctly -->
-    <meta
-      name="viewport"
-      content="width=device-width,initial-scale=1,viewport-fit=cover"
-    />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
     <link
       rel="icon"
       type="image/svg+xml"

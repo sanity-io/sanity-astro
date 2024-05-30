@@ -1,14 +1,14 @@
 {
   "name": "example",
-  "private": true,
   "version": "0.0.1",
+  "private": true,
   "scripts": {
+    "astro": "astro",
+    "build": "astro build",
     "clean": "rimraf .astro rimraf dist && rimraf .turbo && rimraf node_modules",
     "dev": "astro dev",
-    "start": "astro dev",
-    "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "start": "astro dev"
   },
   "dependencies": {
     "@astro-community/astro-embed-youtube": "^0.4.1",

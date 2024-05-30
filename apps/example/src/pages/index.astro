@@ -1,19 +1,23 @@
 ---
-import {sanityClient} from 'sanity:client';
-import Layout from "../layouts/Layout.astro";
+import {sanityClient} from 'sanity:client'
+import Layout from '../layouts/Layout.astro'
 
-const posts = await sanityClient.fetch(`*[_type == "post" && defined(publishedAt)] | order(publishedAt desc)`);
+const posts = await sanityClient.fetch(
+  `*[_type == "post" && defined(publishedAt)] | order(publishedAt desc)`,
+)
 ---
 
 <Layout title="Sanity.io blog">
-		<h1>Sanity.io blog</h1>
-		<ul>
-			{posts.map((post: any) => (
-				<li>
-					<a href={'/posts/' + post.slug.current} class="post-link">
-						{post.title}
-					</a>
-				</li>
-			))}
-	</ul>
+  <h1>Sanity.io blog</h1>
+  <ul>
+    {
+      posts.map((post: any) => (
+        <li>
+          <a href={'/posts/' + post.slug.current} class="post-link">
+            {post.title}
+          </a>
+        </li>
+      ))
+    }
+  </ul>
 </Layout>
