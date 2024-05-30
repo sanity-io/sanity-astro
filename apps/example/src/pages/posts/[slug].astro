@@ -1,8 +1,8 @@
 ---
-import { sanityClient } from "sanity:client";
-import Layout from "../../layouts/Layout.astro";
-import PortableText from "../../components/PortableText.astro";
-import SanityImage from "../../components/SanityImage.astro";
+import {sanityClient} from 'sanity:client'
+import Layout from '../../layouts/Layout.astro'
+import PortableText from '../../components/PortableText.astro'
+import SanityImage from '../../components/SanityImage.astro'
 
 export async function getStaticPaths() {
   const posts = await sanityClient.fetch(
@@ -11,22 +11,22 @@ export async function getStaticPaths() {
 			authors[]-> {
 				name
 			}
-		}`
-  );
+		}`,
+  )
   return posts.map((post: any) => ({
-    params: { slug: post.slug.current },
-    props: { post },
-  }));
+    params: {slug: post.slug.current},
+    props: {post},
+  }))
 }
 
-const { post } = Astro.props;
-const byline = (post.authors || []).map((a:any) => a.name).join(", ");
+const {post} = Astro.props
+const byline = (post.authors || []).map((a: any) => a.name).join(', ')
 ---
 
 <Layout title={post.title}>
   <article>
     <h1>{post.title}</h1>
-		<p>Written by {byline}</p>
+    <p>Written by {byline}</p>
     <SanityImage node={post.poster} width="600" />
     <PortableText value={post.blurb} />
     <PortableText value={post.text} />

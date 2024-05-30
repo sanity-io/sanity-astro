@@ -1,32 +1,30 @@
-import type { PartialDeep } from "type-fest";
-import type { PluginOption } from "vite";
+import type {PartialDeep} from 'type-fest'
+import type {PluginOption} from 'vite'
 
-export function vitePluginSanityStudio(resolvedOptions: {
-  studioBasePath?: string;
-}) {
-  const virtualModuleId = "sanity:studio";
-  const resolvedVirtualModuleId = virtualModuleId;
+export function vitePluginSanityStudio(resolvedOptions: {studioBasePath?: string}) {
+  const virtualModuleId = 'sanity:studio'
+  const resolvedVirtualModuleId = virtualModuleId
 
   return {
-    name: "sanity:studio",
+    name: 'sanity:studio',
     resolveId(id: string) {
       if (id === virtualModuleId) {
-        return resolvedVirtualModuleId;
+        return resolvedVirtualModuleId
       }
-      return null;
+      return null
     },
     async load(id: string) {
       if (id === virtualModuleId) {
-        const studioConfig = await this.resolve("/sanity.config");
+        const studioConfig = await this.resolve('/sanity.config')
         if (!studioConfig) {
           throw new Error(
-            "[@sanity/astro]: Sanity Studio requires a `sanity.config.ts|js` file in your project root.",
-          );
+            '[@sanity/astro]: Sanity Studio requires a `sanity.config.ts|js` file in your project root.',
+          )
         }
         if (!resolvedOptions.studioBasePath) {
           throw new Error(
             "[@sanity/astro]: The `studioBasePath` option is required in `astro.config.mjs`. For example — `studioBasePath: '/admin'`",
-          );
+          )
         }
         return `
         import studioConfig from "${studioConfig.id}";
@@ -43,9 +41,9 @@ export function vitePluginSanityStudio(resolvedOptions: {
           // override basePath from sanity.config.ts|js with plugin setting
           basePath: "${resolvedOptions.studioBasePath}",
         }
-        `;
+        `
       }
-      return null;
+      return null
     },
-  } satisfies PartialDeep<PluginOption>;
+  } satisfies PartialDeep<PluginOption>
 }

@@ -46,20 +46,20 @@ You might have to restart the TS Server running in your code editor to get it to
 Configure the integration in your `astro.config.mjs` file. The configuration options and methods are the same as for [@sanity/client](https://github.com/sanity-io/client#readme):
 
 ```typescript
-import sanity from "@sanity/astro";
-import { defineConfig } from "astro/config";
+import sanity from '@sanity/astro'
+import {defineConfig} from 'astro/config'
 
 // https://astro.build/config
 export default defineConfig({
   integrations: [
     sanity({
-      projectId: "<YOUR-PROJECT-ID>",
-      dataset: "<YOUR-DATASET-NAME>",
+      projectId: '<YOUR-PROJECT-ID>',
+      dataset: '<YOUR-DATASET-NAME>',
       // Set useCdn to false if you're building statically.
       useCdn: false,
     }),
   ],
-});
+})
 ```
 
 This enables the use of `sanityClient` in your template files. For example:
@@ -76,7 +76,7 @@ const posts = await sanityClient.fetch(`*[_type == "post" && defined(slug)] | or
 <ul>
   {posts.map((post) => (
     <li>
-      <a href={"/posts/" + post.slug.current} class="post-link">
+      <a href={'/posts/' + post.slug.current} class="post-link">
         {post.title}
       </a>
     </li>
@@ -99,21 +99,21 @@ This integration lets you embed a Sanity Studio on a route in your Astro project
 
 ```typescript
 // sanity.config.ts
-import { defineConfig } from "sanity";
-import { deskTool } from "sanity/desk";
+import {defineConfig} from 'sanity'
+import {deskTool} from 'sanity/desk'
 
 export default defineConfig({
-  name: "project-name",
-  title: "Project Name",
-  projectId: "<YOUR-PROJECT-ID>",
-  dataset: "<YOUR-DATASET-NAME>",
+  name: 'project-name',
+  title: 'Project Name',
+  projectId: '<YOUR-PROJECT-ID>',
+  dataset: '<YOUR-DATASET-NAME>',
   plugins: [deskTool()],
   schema: {
     types: [
       /* your content types here*/
     ],
   },
-});
+})
 ```
 
 You can use this configuration file to install plugins, add a schema with document types, add customizations etc. Note that the Studio will be using Astro‘s development server which is built on top of [Vite][vite].
@@ -124,23 +124,23 @@ You can use this configuration file to install plugins, add a schema with docume
 
 ```javascript
 // astro.config.mjs
-import { sanityIntegration } from "@sanity/astro";
-import { defineConfig } from "astro/config";
-import react from "@astrojs/react";
+import {sanityIntegration} from '@sanity/astro'
+import {defineConfig} from 'astro/config'
+import react from '@astrojs/react'
 
 export default defineConfig({
   integrations: [
     sanityIntegration({
-      projectId: "3do82whm",
-      dataset: "next",
+      projectId: '3do82whm',
+      dataset: 'next',
       // Set useCdn to false if you're building statically.
       useCdn: false,
       // Access the Studio on your.url/admin
-      studioBasePath: "/admin",
+      studioBasePath: '/admin',
     }),
     react(),
   ],
-});
+})
 ```
 
 2. You have to [enable CORS origins for authenticated requests][cors] for the domains you're running your website project on. The Studio should automatically detect and let you add this when you access the Studio on a new URL. Typically you need to add your local development server URL and your production URL to the CORS origin settings. It's important that you only enable CORS for authenticated requests on domains that _you_ control.

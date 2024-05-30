@@ -1,7 +1,7 @@
 ---
-import { Prism } from '@astrojs/prism';
+import {Prism} from '@astrojs/prism'
 
-const { node } = Astro.props
-
+const {node} = Astro.props
 ---
+
 <Prism lang={node.language} code={node.code} />

@@ -1,8 +1,8 @@
 ---
-import { sanityClient } from "sanity:client";
-import Layout from "../../layouts/Layout.astro";
-import PortableText from "../../components/PortableText.astro";
-import SanityImage from "../../components/SanityImage.astro";
+import {sanityClient} from 'sanity:client'
+import Layout from '../../layouts/Layout.astro'
+import PortableText from '../../components/PortableText.astro'
+import SanityImage from '../../components/SanityImage.astro'
 
 const post = await sanityClient.fetch(
   `*[_type == "post" && defined(publishedAt) && slug.current == $slug] | order(publishedAt desc) {
@@ -10,18 +10,19 @@ const post = await sanityClient.fetch(
     authors[]-> {
       name
     }
-  }[0]`, {
+  }[0]`,
+  {
     slug: Astro.params.slug,
-  }
-);
+  },
+)
 
-const byline = (post.authors || []).map((a:any) => a.name).join(", ");
+const byline = (post.authors || []).map((a: any) => a.name).join(', ')
 ---
 
 <Layout title={post.title}>
   <article>
     <h1>{post.title}</h1>
-		<p>Written by {byline}</p>
+    <p>Written by {byline}</p>
     <SanityImage node={post.poster} width="600" />
     <PortableText value={post.blurb} />
     <PortableText value={post.text} />

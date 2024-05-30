@@ -1,24 +1,19 @@
 ---
-import { sanityClient } from "sanity:client";
-const { node } = Astro.props;
-const { markDef } = node;
+import {sanityClient} from 'sanity:client'
+const {node} = Astro.props
+const {markDef} = node
 
 // Only deal with posts links for this example
-const destination = markDef._ref && await sanityClient.fetch(
-  `* [_type == "post" && _id == $id] {slug {current}}[0]`,
-  { id: markDef._ref }
-);
+const destination =
+  markDef._ref &&
+  (await sanityClient.fetch(`* [_type == "post" && _id == $id] {slug {current}}[0]`, {
+    id: markDef._ref,
+  }))
 
 const linkText = node.children.map((c: any) => c.text).join(' ')
 ---
 
-{
-  destination && (
-    <a href={"/posts/" + destination.slug.current}>
-      {linkText}
-    </a>
-  )
-}
+{destination && <a href={'/posts/' + destination.slug.current}>{linkText}</a>}
 {!destination && <span class="missingInternalLink">{linkText}</span>}
 
 <style>
