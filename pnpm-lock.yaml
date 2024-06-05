@@ -171,7 +171,7 @@ importers:
   packages/sanity-astro:
     devDependencies:
       '@sanity/client':
-        specifier: ^6.18.3
+        specifier: ^6.19.1
         version: 6.19.1(debug@3.2.7)
       '@sanity/visual-editing':
         specifier: ^2.1.1
