@@ -299,7 +299,9 @@ export async function loadQuery<QueryResponse>({
   params?: QueryParams
 }) {
   if (visualEditingEnabled && !token) {
-    throw new Error('The `SANITY_API_READ_TOKEN` environment variable is required during Visual Editing.')
+    throw new Error(
+      'The `SANITY_API_READ_TOKEN` environment variable is required during Visual Editing.',
+    )
   }
 
   const perspective = visualEditingEnabled ? 'previewDrafts' : 'published'
