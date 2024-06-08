@@ -227,7 +227,7 @@ export type props = {
   title: string
 }
 const {title} = Astro.props
-const visualEditingEnabled = import.meta.env.SANITY_VISUAL_EDITING_ENABLED == 'true'
+const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED == 'true'
 ---
 
 <html lang="en">
@@ -257,7 +257,7 @@ In the example above, `enabled` is controlled using an [environment variable](ht
 
 ```sh
 // .env.local
-SANITY_VISUAL_EDITING_ENABLED="true"
+PUBLIC_SANITY_VISUAL_EDITING_ENABLED="true"
 ```
 
 ### 2. Add the Presentation tool to the Studio
@@ -288,7 +288,7 @@ Now, all you need is a `loadQuery` helper function akin to this one:
 import {type QueryParams} from 'sanity'
 import {sanityClient} from 'sanity:client'
 
-const visualEditingEnabled = import.meta.env.SANITY_VISUAL_EDITING_ENABLED === 'true'
+const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED === 'true'
 const token = import.meta.env.SANITY_API_READ_TOKEN
 
 export async function loadQuery<QueryResponse>({
