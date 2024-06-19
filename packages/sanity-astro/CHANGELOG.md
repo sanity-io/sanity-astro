@@ -5,6 +5,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.1.4](https://github.com/sanity-io/sanity-astro/compare/v3.1.3...v3.1.4) (2024-06-19)
+
+
+### Bug Fixes
+
+* remove wild semicolon in StudioComponent JSX ([#205](https://github.com/sanity-io/sanity-astro/issues/205)) ([03aedc2](https://github.com/sanity-io/sanity-astro/commit/03aedc21f2b085f855b32c19d6d143209cbb1932))
+
 ## [3.1.3](https://github.com/sanity-io/sanity-astro/compare/v3.1.2...v3.1.3) (2024-05-29)
 
 
