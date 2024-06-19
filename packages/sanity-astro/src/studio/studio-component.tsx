@@ -21,7 +21,7 @@ export function StudioComponent() {
         overflow: 'hidden',
       }}
     >
-      <Studio config={config} />;
+      <Studio config={config} />
     </div>
   )
 }
