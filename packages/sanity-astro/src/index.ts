@@ -30,8 +30,9 @@ export default function sanityIntegration({
             ],
           },
         })
-        // only load this route if `studioBasePath` is set
-        if (studioBasePath) {
+        // only load this route if `studioBasePath` is set,
+        // and if it is not a protocol-domain URL (separate Studio case)
+        if (studioBasePath && !studioBasePath.match(/https?:\/\//)) {
           injectRoute({
             // @ts-expect-error
             entryPoint: '@sanity/astro/studio/studio-route.astro', // Astro <= 3
