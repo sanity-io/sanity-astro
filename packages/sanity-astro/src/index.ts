@@ -11,10 +11,11 @@ const defaultClientConfig: ClientConfig = {
   apiVersion: 'v2023-08-24',
 }
 
-export default function sanityIntegration({
-  studioBasePath,
-  ...clientConfig
-}: IntegrationOptions): AstroIntegration {
+export default function sanityIntegration(integrationConfig: IntegrationOptions = {}): AstroIntegration {
+  const studioBasePath = integrationConfig.studioBasePath
+  const clientConfig = integrationConfig
+  delete clientConfig.studioBasePath
+
   return {
     name: '@sanity/astro',
     hooks: {
