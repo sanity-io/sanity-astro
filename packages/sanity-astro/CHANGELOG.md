@@ -5,6 +5,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.1.5](https://github.com/sanity-io/sanity-astro/compare/v3.1.4...v3.1.5) (2024-08-27)
+
+
+### Bug Fixes
+
+* allow integration options to be undefined ([#213](https://github.com/sanity-io/sanity-astro/issues/213)) ([0e8924b](https://github.com/sanity-io/sanity-astro/commit/0e8924bcdf2097efebb0d20edadb5a7db9d59b9c))
+
 ## [3.1.4](https://github.com/sanity-io/sanity-astro/compare/v3.1.3...v3.1.4) (2024-06-19)
 
 
