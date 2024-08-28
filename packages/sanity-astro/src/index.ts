@@ -15,6 +15,17 @@ export default function sanityIntegration({
   studioBasePath,
   ...clientConfig
 }: IntegrationOptions): AstroIntegration {
+
+  if (!!studioBasePath && studioBasePath.match(/https?:\/\//)) {
+    throw new Error(
+      "[@sanity/astro]: The `studioBasePath:` and `stega { studioUrl: }` configs\n" +
+      " should be a relative URL,  e.g. '/admin', when using the embedded Studio.\n" +
+      " But if you are using a separate Studio, set `studioBasePath:` to an unquoted\n" +
+      " JavaScript `undefined`, then set the full (http etc.) URL for this Studio\n" +
+      " as the string for your config `stega { studioUrl: }` value."
+    )
+  }
+
   return {
     name: '@sanity/astro',
     hooks: {
@@ -30,9 +41,8 @@ export default function sanityIntegration({
             ],
           },
         })
-        // only load this route if `studioBasePath` is set,
-        // and if it is not a protocol-domain URL (separate Studio case)
-        if (studioBasePath && !studioBasePath.match(/https?:\/\//)) {
+        // only load this route if `studioBasePath` is set
+        if (studioBasePath) {
           injectRoute({
             // @ts-expect-error
             entryPoint: '@sanity/astro/studio/studio-route.astro', // Astro <= 3
