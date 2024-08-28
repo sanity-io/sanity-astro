@@ -1,6 +1,6 @@
 {
   "name": "@sanity/astro",
-  "version": "3.1.4",
+  "version": "3.1.5",
   "description": "Official Sanity Astro integration",
   "keywords": [
     "astro-integration",
