@@ -20,11 +20,7 @@ export default function sanityIntegration(
 
   if (!!studioBasePath && studioBasePath.match(/https?:\/\//)) {
     throw new Error(
-      "[@sanity/astro]: The `studioBasePath:` and `stega { studioUrl: }` configs\n" +
-      " should be a relative URL,  e.g. '/admin', when using the embedded Studio.\n" +
-      " But if you are using a separate Studio, set `studioBasePath:` to an unquoted\n" +
-      " JavaScript `undefined`, then set the full (http etc.) URL for this Studio\n" +
-      " as the string for your config `stega { studioUrl: }` value."
+      "[@sanity/astro]: The `studioBasePath` option should be a relative URL. For example — `studioBasePath: '/admin'`",
     )
   }
 
