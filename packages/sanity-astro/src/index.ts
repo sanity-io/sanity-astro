@@ -18,6 +18,12 @@ export default function sanityIntegration(
   const clientConfig = integrationConfig
   delete clientConfig.studioBasePath
 
+  if (!!studioBasePath && studioBasePath.match(/https?:\/\//)) {
+    throw new Error(
+      "[@sanity/astro]: The `studioBasePath` option should be a relative URL. For example — `studioBasePath: '/admin'`",
+    )
+  }
+
   return {
     name: '@sanity/astro',
     hooks: {
