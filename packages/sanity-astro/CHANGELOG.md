@@ -5,6 +5,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.1.6](https://github.com/sanity-io/sanity-astro/compare/v3.1.5...v3.1.6) (2024-08-29)
+
+
+### Bug Fixes
+
+* error out if studioBasePath looks like an absolute URL ([#211](https://github.com/sanity-io/sanity-astro/issues/211)) ([9dc8b72](https://github.com/sanity-io/sanity-astro/commit/9dc8b72792646c8d1f0f4af1e15bb3c3a9fa5e5a))
+
 ## [3.1.5](https://github.com/sanity-io/sanity-astro/compare/v3.1.4...v3.1.5) (2024-08-27)
 
 
