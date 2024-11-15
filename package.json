@@ -15,7 +15,7 @@
     "lint": "turbo run lint"
   },
   "devDependencies": {
-    "@sanity/prettier-config": "^1.0.2",
+    "@sanity/prettier-config": "^1.0.3",
     "@turbo/gen": "^1.13.4",
     "eslint": "^8.57.0",
     "eslint-config-custom": "*",
@@ -24,11 +24,15 @@
     "rimraf": "^5.0.7",
     "turbo": "^1.13.4"
   },
-  "packageManager": "pnpm@8.15.8",
+  "packageManager": "pnpm@9.13.2",
   "pnpm": {
     "overrides": {
-      "braces@<3.0.3": ">=3.0.3",
-      "ws@>=8.0.0 <8.17.1": ">=8.17.1"
+      "dset@<3.1.4": ">=3.1.4",
+      "vite@>=4.0.0 <4.5.4": ">=4.5.4",
+      "vite@>=4.0.0 <=4.5.3": ">=4.5.4",
+      "rollup@>=3.0.0 <3.29.5": ">=3.29.5",
+      "rollup@>=4.0.0 <4.22.4": ">=4.22.4",
+      "@sentry/browser@>=8.0.0-alpha.1 <8.33.0": ">=8.33.0"
     }
   }
 }
