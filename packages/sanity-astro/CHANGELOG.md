@@ -5,6 +5,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.1.9](https://github.com/sanity-io/sanity-astro/compare/v3.1.8...v3.1.9) (2024-12-18)
+
+
+### Bug Fixes
+
+* bump react peer ([#233](https://github.com/sanity-io/sanity-astro/issues/233)) ([debdfbe](https://github.com/sanity-io/sanity-astro/commit/debdfbe20f4f430abbb90028ccfca74d39aa500b))
+
 ## [3.1.8](https://github.com/sanity-io/sanity-astro/compare/v3.1.7...v3.1.8) (2024-12-12)
 
 
