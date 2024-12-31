@@ -3,11 +3,12 @@ import {
   VisualEditing as InternalVisualEditing,
   type VisualEditingOptions as InternalVisualEditingOptions,
 } from '@sanity/visual-editing/react'
+import {createPortal} from 'react-dom'
 
 export type VisualEditingOptions = Pick<InternalVisualEditingOptions, 'zIndex'>
 
 export function VisualEditingComponent(props: VisualEditingOptions) {
-  return (
+  return createPortal(
     <InternalVisualEditing
       zIndex={props.zIndex}
       refresh={() => {
@@ -16,6 +17,7 @@ export function VisualEditingComponent(props: VisualEditingOptions) {
           resolve()
         })
       }}
-    />
+    />,
+    document.body.parentNode,
   )
 }
