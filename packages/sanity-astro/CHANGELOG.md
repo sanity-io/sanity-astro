@@ -5,6 +5,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.1.10](https://github.com/sanity-io/sanity-astro/compare/v3.1.9...v3.1.10) (2025-01-14)
+
+
+### Bug Fixes
+
+* bump visual editing to 2.12.2 to fix refresh connectivity ([#238](https://github.com/sanity-io/sanity-astro/issues/238)) ([3233c60](https://github.com/sanity-io/sanity-astro/commit/3233c60a1264c079a7f1973c809afe20cf39fbe9))
+
 ## [3.1.9](https://github.com/sanity-io/sanity-astro/compare/v3.1.8...v3.1.9) (2024-12-18)
 
 
