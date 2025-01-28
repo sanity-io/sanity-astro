@@ -13,7 +13,7 @@ importers:
   .:
     devDependencies:
       '@sanity/prettier-config':
-        specifier: ^1.0.2
+        specifier: ^1.0.3
         version: 1.0.3(prettier@3.4.2)
       '@turbo/gen':
         specifier: ^1.13.4
@@ -8413,6 +8413,7 @@ packages:
 
   /lodash.get@4.4.2:
     resolution: {integrity: sha512-z+Uw/vLuy6gQe8cfaFWD7p0wVv8fJl3mbzXh33RS+0oW2wvUqiRXiQ69gLWSLpgB5/6sU+r6BlQR0MBILadqTQ==}
+    deprecated: This package is deprecated. Use the optional chaining (?.) operator instead.
     dev: true
 
   /lodash.merge@4.6.2:
