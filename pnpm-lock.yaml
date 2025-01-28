@@ -178,7 +178,7 @@ importers:
         specifier: ^6.27.2
         version: 6.27.2(debug@4.4.0)
       '@sanity/visual-editing':
-        specifier: ^2.12.2
+        specifier: ^2.12.10
         version: 2.12.10(@sanity/client@6.27.2)(@sanity/types@3.72.1)(react-dom@18.3.1)(react@18.3.1)
       '@types/serialize-javascript':
         specifier: ^5.0.4
