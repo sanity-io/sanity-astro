@@ -11,19 +11,19 @@
     "start": "astro dev --port 4322"
   },
   "dependencies": {
-    "@astro-community/astro-embed-youtube": "^0.5.2",
-    "@astrojs/prism": "^3.1.0",
-    "@astrojs/react": "^3.4.0",
+    "@astro-community/astro-embed-youtube": "^0.5.6",
+    "@astrojs/prism": "^3.2.0",
+    "@astrojs/react": "^3.6.3",
     "@sanity/astro": "workspace:^",
-    "@sanity/client": "^6.19.1",
-    "@sanity/image-url": "^1.0.2",
-    "@sanity/vision": "^3.44.0",
-    "astro": "^4.9.2",
-    "astro-portabletext": "^0.10.0",
+    "@sanity/client": "^6.27.2",
+    "@sanity/image-url": "^1.1.0",
+    "@sanity/vision": "^3.72.1",
+    "astro": "^4.16.18",
+    "astro-portabletext": "^0.11.0",
     "prismjs": "^1.29.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "sanity": "^3.44.0",
-    "styled-components": "^6.1.11"
+    "sanity": "^3.72.1",
+    "styled-components": "^6.1.14"
   }
 }
