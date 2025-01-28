@@ -34,7 +34,7 @@ jobs:
         with:
           app-id: ${{ secrets.ECOSPARK_APP_ID }}
           private-key: ${{ secrets.ECOSPARK_APP_PRIVATE_KEY }}
-      - uses: peter-evans/create-pull-request@153407881ec5c347639a548ade7d8ad1d6740e38 # v5
+      - uses: peter-evans/create-pull-request@4e1beaa7521e8b457b572c090b25bd3db56bf1c5 # v5
         with:
           author: github-actions <41898282+github-actions[bot]@users.noreply.github.com>
           body: I ran `pnpm format` 🧑‍💻
