@@ -21,8 +21,8 @@
     "astro": "^4.16.18",
     "astro-portabletext": "^0.11.0",
     "prismjs": "^1.29.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "sanity": "^3.72.1",
     "styled-components": "^6.1.14"
   }
