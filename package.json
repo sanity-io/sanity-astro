@@ -17,7 +17,7 @@
   "devDependencies": {
     "@sanity/prettier-config": "^1.0.3",
     "@turbo/gen": "^1.13.4",
-    "eslint": "^8.57.1",
+    "eslint": "^9.19.0",
     "eslint-config-custom": "*",
     "prettier": "^3.4.2",
     "prettier-plugin-astro": "^0.14.1",
