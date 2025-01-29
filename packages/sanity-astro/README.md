@@ -199,7 +199,7 @@ To enable [Visual Editing][visual-editing], you need to:
 **Please note that Visual Editing only works for [server-side rendered](https://docs.astro.build/en/guides/server-side-rendering/) pages.** This means you probably want to configure your Astro project something like this:
 
 ```js
-import vercel from '@astrojs/vercel/serverless'
+import vercel from '@astrojs/vercel'
 
 // astro.config.mjs
 export default defineConfig({
