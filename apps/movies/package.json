@@ -13,7 +13,7 @@
   "dependencies": {
     "@astrojs/check": "^0.9.4",
     "@astrojs/react": "^4.2.0",
-    "@astrojs/vercel": "^7.8.2",
+    "@astrojs/vercel": "^8.0.4",
     "@sanity/astro": "workspace:^",
     "@sanity/client": "^6.27.2",
     "@sanity/visual-editing": "^2.12.10",
