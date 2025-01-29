@@ -205,7 +205,7 @@ importers:
         specifier: ^5.4.14
         version: 5.4.14(@types/node@22.10.10)(terser@5.37.0)
       vite-plugin-dts:
-        specifier: ^4.0.3
+        specifier: ^4.5.0
         version: 4.5.0(@types/node@22.10.10)(rollup@4.31.0)(typescript@5.7.3)(vite@5.4.14(@types/node@22.10.10)(terser@5.37.0))
 
 packages:
