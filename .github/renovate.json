@@ -22,13 +22,11 @@
       "matchDepTypes": ["peerDependencies"],
       "rangeStrategy": "bump",
       "matchPackageNames": [
-        "!@sanity/client",
-        "!@sanity/visual-editing",
         "!astro",
         "!react",
-        "!react-dom",
-        "!sanity"
-      ]
+        "!react-dom"
+      ],
+      "semanticCommitType": "fix"
     }
   ]
 }
