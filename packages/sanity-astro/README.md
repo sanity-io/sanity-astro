@@ -152,7 +152,7 @@ Sanity uses an open specification for rich text and block content called [Portab
 
 While it's possible to loop over the JSON structure manually, we recommend using a Portable Text library to do the heavy lifting. It will automatically render the default editor configuration to HTML. If you do customizations like adding custom block types, then you need to map those to a component in your front end.
 
-We recommend using [astro-portabletext][astro-portabletext] to render your PortableText fields in Astro. See an example of this in [apps/example/src/components/PortableText.astro](../../apps/example/src/components/PortableText.astro), including using custom components to render custom blocks and annotations.
+We recommend using [astro-portabletext][astro-portabletext] to render your PortableText fields in Astro. See an example of this in [apps/example/src/components/PortableText.astro](../../blob/main/apps/example/src/components/PortableText.astro), including using custom components to render custom blocks and annotations.
 
 ```mdx
 ---
