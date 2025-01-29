@@ -57,7 +57,7 @@
     "astro": "^5.1.10",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "sanity": "^3.55.0",
+    "sanity": "^3.72.1",
     "serialize-javascript": "^6.0.2",
     "type-fest": "^4.33.0",
     "vite": "^5.4.14",
