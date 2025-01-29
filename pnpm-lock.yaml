@@ -19,13 +19,13 @@ importers:
         specifier: ^1.13.4
         version: 1.13.4(@types/node@22.10.10)(typescript@5.7.3)
       eslint:
-        specifier: ^8.57.0
+        specifier: ^8.57.1
         version: 8.57.1
       eslint-config-custom:
         specifier: '*'
         version: 0.0.0(eslint@8.57.1)(typescript@5.7.3)
       prettier:
-        specifier: ^3.3.1
+        specifier: ^3.4.2
         version: 3.4.2
       prettier-plugin-astro:
         specifier: ^0.13.0
