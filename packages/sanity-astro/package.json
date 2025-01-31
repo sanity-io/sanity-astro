@@ -26,6 +26,7 @@
     },
     "./module": "./module.d.ts",
     "./studio/studio-route.astro": "./dist/studio/studio-route.astro",
+    "./studio/studio-route-hash.astro": "./dist/studio/studio-route-hash.astro",
     "./studio/studio-component.tsx": {
       "types": "./src/studio/studio-component.tsx",
       "default": "./src/studio/studio-component.tsx"
@@ -76,5 +77,8 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "dependencies": {
+    "history": "^5.3.0"
   }
 }
