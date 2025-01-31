@@ -5,6 +5,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.2.0](https://github.com/sanity-io/sanity-astro/compare/v3.1.11...v3.2.0) (2025-01-31)
+
+
+### Features
+
+* support embedding studios without ssr ([#275](https://github.com/sanity-io/sanity-astro/issues/275)) ([b1dd953](https://github.com/sanity-io/sanity-astro/commit/b1dd9536a6d778f6898e76a438985c414087222f))
+
 ## [3.1.11](https://github.com/sanity-io/sanity-astro/compare/v3.1.10...v3.1.11) (2025-01-29)
 
 
