@@ -51,6 +51,9 @@
     "dev": "vite build --watch",
     "prepublishOnly": "pnpm build"
   },
+  "dependencies": {
+    "history": "^5.3.0"
+  },
   "devDependencies": {
     "@sanity/client": "^6.27.2",
     "@sanity/visual-editing": "^2.12.10",
@@ -77,8 +80,5 @@
   },
   "publishConfig": {
     "access": "public"
-  },
-  "dependencies": {
-    "history": "^5.3.0"
   }
 }
