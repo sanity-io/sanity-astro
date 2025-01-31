@@ -63,9 +63,7 @@ function createHashHistoryForStudio(): History {
     },
     // Overriding listen to workaround a problem where native history provides history.listen(location => void), but the npm package is history.listen(({action, location}) => void)
     listen(listener: Listener) {
-      // return history.listen(({ action, location }) => {
       return history.listen(({location}) => {
-        // console.debug('history.listen', action, location)
         // @ts-expect-error -- working around a bug? in studio
         listener(location)
       })
