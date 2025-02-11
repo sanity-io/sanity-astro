@@ -58,7 +58,7 @@
     "@sanity/client": "^6.27.2",
     "@sanity/visual-editing": "^2.12.10",
     "@types/serialize-javascript": "^5.0.4",
-    "astro": "^5.1.10",
+    "astro": "^5.2.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "sanity": "^3.72.1",
