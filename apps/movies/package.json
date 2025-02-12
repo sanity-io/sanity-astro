@@ -13,17 +13,17 @@
   "dependencies": {
     "@astrojs/check": "^0.9.4",
     "@astrojs/react": "^4.2.0",
-    "@astrojs/vercel": "^8.0.4",
+    "@astrojs/vercel": "^8.0.6",
     "@sanity/astro": "workspace:^",
-    "@sanity/client": "^6.27.2",
-    "@sanity/visual-editing": "^2.12.10",
+    "@sanity/client": "^6.28.0",
+    "@sanity/visual-editing": "^2.13.2",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
-    "astro": "^5.1.10",
+    "astro": "^5.2.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-icons": "^5.4.0",
-    "sanity": "^3.72.1",
+    "sanity": "^3.75.0",
     "typescript": "^5.7.3"
   }
 }
