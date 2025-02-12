@@ -55,7 +55,7 @@
     "history": "^5.3.0"
   },
   "devDependencies": {
-    "@sanity/client": "^6.27.2",
+    "@sanity/client": "^6.28.0",
     "@sanity/visual-editing": "^2.13.2",
     "@types/serialize-javascript": "^5.0.4",
     "astro": "^5.2.5",
@@ -68,7 +68,7 @@
     "vite-plugin-dts": "^4.5.0"
   },
   "peerDependencies": {
-    "@sanity/client": "^6.27.2",
+    "@sanity/client": "^6.28.0",
     "@sanity/visual-editing": "^2.13.2",
     "astro": "^2.0.0 || ^3.0.0 || ^4.0.0 || ^5.0.0",
     "react": "^18.2.0 || ^19.0.0",
