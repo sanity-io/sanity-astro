@@ -15,7 +15,7 @@ export async function loadQuery<QueryResponse>({
     throw new Error('The `SANITY_API_READ_TOKEN` environment variable is required in Draft Mode.')
   }
 
-  const perspective = visualEditingEnabled ? 'previewDrafts' : 'published'
+  const perspective = visualEditingEnabled ? 'drafts' : 'published'
 
   const {result, resultSourceMap} = await sanityClient.fetch<QueryResponse>(query, params ?? {}, {
     filterResponse: false,
