@@ -182,7 +182,7 @@ importers:
         specifier: ^6.28.0
         version: 6.28.0(debug@4.4.0)
       '@sanity/visual-editing':
-        specifier: ^2.13.3
+        specifier: ^2.13.4
         version: 2.13.4(@emotion/is-prop-valid@1.2.2)(@sanity/client@6.28.0)(@sanity/types@3.75.1(@types/react@19.0.10))(react-dom@19.0.0(react@19.0.0))(react-is@18.3.1)(react@19.0.0)
       '@types/serialize-javascript':
         specifier: ^5.0.4
