@@ -9,6 +9,7 @@ export type VisualEditingOptions = Pick<InternalVisualEditingOptions, 'zIndex'>
 export function VisualEditingComponent(props: VisualEditingOptions) {
   return (
     <InternalVisualEditing
+      portal
       zIndex={props.zIndex}
       refresh={() => {
         return new Promise((resolve) => {

@@ -1,6 +1,6 @@
 {
   "name": "@sanity/astro",
-  "version": "3.2.2",
+  "version": "3.2.3-canary.4",
   "description": "Official Sanity Astro integration",
   "keywords": [
     "astro-integration",
@@ -52,11 +52,11 @@
     "prepublishOnly": "pnpm build"
   },
   "dependencies": {
+    "@sanity/visual-editing": "^2.13.4",
     "history": "^5.3.0"
   },
   "devDependencies": {
     "@sanity/client": "^6.28.0",
-    "@sanity/visual-editing": "^2.13.4",
     "@types/serialize-javascript": "^5.0.4",
     "astro": "^5.3.0",
     "react": "^19.0.0",
@@ -69,10 +69,10 @@
   },
   "peerDependencies": {
     "@sanity/client": "^6.28.0",
-    "@sanity/visual-editing": "^2.13.4",
     "astro": "^2.0.0 || ^3.0.0 || ^4.0.0 || ^5.0.0",
     "react": "^18.2.0 || ^19.0.0",
     "react-dom": "^18.2.0 || ^19.0.0",
+    "react-is": "^18.2.0 || ^19.0.0",
     "sanity": "^3.75.1"
   },
   "engines": {
