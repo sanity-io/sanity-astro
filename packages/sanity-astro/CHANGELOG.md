@@ -5,6 +5,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.2.4](https://github.com/sanity-io/sanity-astro/compare/v3.2.3...v3.2.4) (2025-02-18)
+
+
+### Bug Fixes
+
+* optimize `shallowequal` instead of `styled-components` ([e8684ae](https://github.com/sanity-io/sanity-astro/commit/e8684ae3c6b4734f547b6d6451547c195e087d15))
+
 ## [3.2.3](https://github.com/sanity-io/sanity-astro/compare/v3.2.2...v3.2.3) (2025-02-18)
 
 
