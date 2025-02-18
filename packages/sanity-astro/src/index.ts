@@ -34,6 +34,15 @@ export default function sanityIntegration(
       'astro:config:setup': ({injectScript, injectRoute, updateConfig}) => {
         updateConfig({
           vite: {
+            optimizeDeps: {
+              include: [
+                '@sanity/visual-editing > @sanity/ui > react-compiler-runtime',
+                '@sanity/visual-editing > styled-components > shallowequal',
+                '@sanity/visual-editing > react-is',
+                '@sanity/visual-editing > react-compiler-runtime',
+                '@sanity/visual-editing > lodash/startCase.js',
+              ],
+            },
             plugins: [
               vitePluginSanityClient({
                 ...defaultClientConfig,
