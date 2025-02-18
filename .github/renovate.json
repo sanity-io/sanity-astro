@@ -21,7 +21,7 @@
     {
       "matchDepTypes": ["peerDependencies"],
       "rangeStrategy": "bump",
-      "matchPackageNames": ["!astro", "!react", "!react-dom"],
+      "matchPackageNames": ["!astro", "!react", "!react-dom", "!react-is"],
       "semanticCommitType": "fix"
     }
   ]
