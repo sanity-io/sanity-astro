@@ -36,9 +36,9 @@ export default function sanityIntegration(
           vite: {
             optimizeDeps: {
               include: [
+                'shallowequal',
                 'react-compiler-runtime',
                 'react-is',
-                'styled-components',
                 'lodash/startCase.js',
               ],
             },
