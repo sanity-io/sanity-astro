@@ -36,11 +36,10 @@ export default function sanityIntegration(
           vite: {
             optimizeDeps: {
               include: [
-                '@sanity/visual-editing > @sanity/ui > react-compiler-runtime',
-                '@sanity/visual-editing > styled-components > shallowequal',
-                '@sanity/visual-editing > react-is',
-                '@sanity/visual-editing > react-compiler-runtime',
-                '@sanity/visual-editing > lodash/startCase.js',
+                'react-compiler-runtime',
+                'react-is',
+                'styled-components',
+                'lodash/startCase.js',
               ],
             },
             plugins: [
