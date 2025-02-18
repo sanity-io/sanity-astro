@@ -26,7 +26,7 @@ Note: `@astrojs/react` is only needed if you plan to embed a Sanity Studio in yo
 ### Manual installation of dependencies
 
 ```bash
-npm install @astrojs/react @sanity/astro @sanity/client sanity @types/react-dom @types/react react-dom react
+npm install @astrojs/react @sanity/astro @sanity/client sanity @types/react-dom @types/react-is @types/react react-dom react-is react styled-components
 ```
 
 ### Adding types for `sanity:client`
