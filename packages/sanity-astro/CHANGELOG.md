@@ -5,6 +5,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.2.5](https://github.com/sanity-io/sanity-astro/compare/v3.2.4...v3.2.5) (2025-02-18)
+
+
+### Bug Fixes
+
+* make styled-components a peer ([#310](https://github.com/sanity-io/sanity-astro/issues/310)) ([f5cbec0](https://github.com/sanity-io/sanity-astro/commit/f5cbec0d2966afd893087b8f681a29aeec31a8e9))
+
 ## [3.2.4](https://github.com/sanity-io/sanity-astro/compare/v3.2.3...v3.2.4) (2025-02-18)
 
 
