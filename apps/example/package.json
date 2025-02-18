@@ -17,13 +17,13 @@
     "@sanity/astro": "workspace:^",
     "@sanity/client": "^6.28.0",
     "@sanity/image-url": "^1.1.0",
-    "@sanity/vision": "^3.75.0",
-    "astro": "^5.2.5",
+    "@sanity/vision": "^3.75.1",
+    "astro": "^5.3.0",
     "astro-portabletext": "^0.11.1",
     "prismjs": "^1.29.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "sanity": "^3.75.0",
+    "sanity": "^3.75.1",
     "styled-components": "^6.1.15"
   }
 }
