@@ -6,7 +6,7 @@
   "scripts": {
     "astro": "astro",
     "build": "astro check && astro build",
-    "dev": "astro dev --port 4321",
+    "dev": "PUBLIC_SANITY_VISUAL_EDITING_ENABLED=true astro dev --port 4321",
     "preview": "astro preview",
     "start": "astro dev --port 4321"
   },
