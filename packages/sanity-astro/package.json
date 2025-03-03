@@ -63,7 +63,7 @@
     "react-dom": "^19.0.0",
     "sanity": "^3.76.1",
     "serialize-javascript": "^6.0.2",
-    "type-fest": "^4.35.0",
+    "type-fest": "^4.36.0",
     "vite": "^6.1.0",
     "vite-plugin-dts": "^4.5.0"
   },
