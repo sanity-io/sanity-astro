@@ -185,7 +185,7 @@ importers:
         version: 6.1.15(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
     devDependencies:
       '@sanity/client':
-        specifier: ^6.28.0
+        specifier: ^6.28.2
         version: 6.28.2(debug@4.4.0)
       '@types/serialize-javascript':
         specifier: ^5.0.4
