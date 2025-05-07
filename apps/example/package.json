@@ -15,7 +15,7 @@
     "@astrojs/prism": "^3.2.0",
     "@astrojs/react": "^4.2.1",
     "@sanity/astro": "workspace:^",
-    "@sanity/client": "^6.28.2",
+    "@sanity/client": "^7.1.0",
     "@sanity/image-url": "^1.1.0",
     "@sanity/vision": "^3.77.2",
     "astro": "^5.4.1",
@@ -24,6 +24,6 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "sanity": "^3.77.2",
-    "styled-components": "^6.1.15"
+    "styled-components": "^6.1.17"
   }
 }

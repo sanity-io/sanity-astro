@@ -15,7 +15,7 @@
     "@astrojs/react": "^4.2.1",
     "@astrojs/vercel": "^8.1.0",
     "@sanity/astro": "workspace:^",
-    "@sanity/client": "^6.28.2",
+    "@sanity/client": "^7.1.0",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "astro": "^5.4.1",
