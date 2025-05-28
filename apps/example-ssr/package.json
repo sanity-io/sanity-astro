@@ -12,18 +12,18 @@
   },
   "dependencies": {
     "@astro-community/astro-embed-youtube": "^0.5.6",
-    "@astrojs/prism": "^3.2.0",
-    "@astrojs/react": "^4.2.1",
-    "@astrojs/vercel": "^8.1.0",
+    "@astrojs/prism": "^3.3.0",
+    "@astrojs/react": "^4.3.0",
+    "@astrojs/vercel": "^8.1.4",
     "@sanity/astro": "workspace:^",
-    "@sanity/client": "^6.28.2",
+    "@sanity/client": "^6.29.1",
     "@sanity/image-url": "^1.1.0",
-    "@sanity/vision": "^3.77.2",
-    "astro": "^5.4.1",
+    "@sanity/vision": "^3.90.0",
+    "astro": "^5.8.0",
     "astro-portabletext": "^0.11.1",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "sanity": "^3.77.2",
-    "styled-components": "^6.1.15"
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "sanity": "^3.90.0",
+    "styled-components": "^6.1.18"
   }
 }
