@@ -16,7 +16,7 @@ jobs:
       # permissions for pushing commits and opening PRs are handled by the `generate-token` step
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/create-github-app-token@v1
+      - uses: actions/create-github-app-token@v2
         id: generate-token
         with:
           app-id: ${{ secrets.ECOSPARK_APP_ID }}
