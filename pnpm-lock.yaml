@@ -212,8 +212,8 @@ importers:
         specifier: ^6.2.0
         version: 6.2.0(@types/node@22.13.4)(terser@5.39.0)(yaml@2.7.0)
       vite-plugin-dts:
-        specifier: ^4.5.3
-        version: 4.5.3(@types/node@22.13.4)(rollup@4.34.8)(typescript@5.7.3)(vite@6.2.0(@types/node@22.13.4)(terser@5.39.0)(yaml@2.7.0))
+        specifier: ^4.5.4
+        version: 4.5.4(@types/node@22.13.4)(rollup@4.34.8)(typescript@5.7.3)(vite@6.2.0(@types/node@22.13.4)(terser@5.39.0)(yaml@2.7.0))
 
 packages:
 
@@ -2538,6 +2538,7 @@ packages:
 
   '@vercel/edge@1.2.1':
     resolution: {integrity: sha512-1++yncEyIAi68D3UEOlytYb1IUcIulMWdoSzX2h9LuSeeyR7JtaIgR8DcTQ6+DmYOQn+5MCh6LY+UmK6QBByNA==}
+    deprecated: This package is deprecated. You should to use `@vercel/functions` instead.
 
   '@vercel/nft@0.29.1':
     resolution: {integrity: sha512-6239JJM1V9b3OjvZIjbe+47/hGxMr44FEzlbTErrqzebCaoKAHK+yvahn3gdNacybDUbTxVF8Zuh0vqaeM8aKQ==}
@@ -6908,8 +6909,8 @@ packages:
   vfile@6.0.3:
     resolution: {integrity: sha512-KzIbH/9tXat2u30jf+smMwFCsno4wHVdNmzFyL+T/L3UGqqk6JKfVqOFOZEpZSHADH1k40ab6NUIXZq422ov3Q==}
 
-  vite-plugin-dts@4.5.3:
-    resolution: {integrity: sha512-P64VnD00dR+e8S26ESoFELqc17+w7pKkwlBpgXteOljFyT0zDwD8hH4zXp49M/kciy//7ZbVXIwQCekBJjfWzA==}
+  vite-plugin-dts@4.5.4:
+    resolution: {integrity: sha512-d4sOM8M/8z7vRXHHq/ebbblfaxENjogAAekcfcDCCwAyvGqnPrc7f4NZbvItS+g4WTgerW0xDwSz5qz11JT3vg==}
     peerDependencies:
       typescript: '*'
       vite: '*'
@@ -15456,7 +15457,7 @@ snapshots:
       '@types/unist': 3.0.3
       vfile-message: 4.0.2
 
-  vite-plugin-dts@4.5.3(@types/node@22.13.4)(rollup@4.34.8)(typescript@5.7.3)(vite@6.2.0(@types/node@22.13.4)(terser@5.39.0)(yaml@2.7.0)):
+  vite-plugin-dts@4.5.4(@types/node@22.13.4)(rollup@4.34.8)(typescript@5.7.3)(vite@6.2.0(@types/node@22.13.4)(terser@5.39.0)(yaml@2.7.0)):
     dependencies:
       '@microsoft/api-extractor': 7.51.1(@types/node@22.13.4)
       '@rollup/pluginutils': 5.1.4(rollup@4.34.8)
