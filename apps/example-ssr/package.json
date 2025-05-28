@@ -16,7 +16,7 @@
     "@astrojs/react": "^4.3.0",
     "@astrojs/vercel": "^8.1.4",
     "@sanity/astro": "workspace:^",
-    "@sanity/client": "^6.29.1",
+    "@sanity/client": "^7.3.0",
     "@sanity/image-url": "^1.1.0",
     "@sanity/vision": "^3.90.0",
     "astro": "^5.8.0",
