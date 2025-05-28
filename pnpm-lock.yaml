@@ -194,10 +194,10 @@ importers:
         specifier: 5.4.1
         version: 5.4.1(@types/node@22.13.4)(rollup@4.41.1)(terser@5.39.0)(typescript@5.8.3)(yaml@2.7.0)
       react:
-        specifier: ^19.0.0
+        specifier: ^19.1.0
         version: 19.1.0
       react-dom:
-        specifier: ^19.0.0
+        specifier: ^19.1.0
         version: 19.1.0(react@19.1.0)
       sanity:
         specifier: ^3.90.0
