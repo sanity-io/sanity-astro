@@ -18,12 +18,12 @@
     "@sanity/astro": "workspace:^",
     "@sanity/client": "^7.3.0",
     "@sanity/image-url": "^1.1.0",
-    "@sanity/vision": "^3.90.0",
+    "@sanity/vision": "^4.0.0",
     "astro": "5.4.1",
     "astro-portabletext": "^0.11.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "sanity": "^3.90.0",
+    "sanity": "^4.0.0",
     "styled-components": "^6.1.18"
   }
 }
