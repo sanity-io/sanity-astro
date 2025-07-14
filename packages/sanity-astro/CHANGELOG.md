@@ -5,6 +5,15 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.2.7](https://github.com/sanity-io/sanity-astro/compare/v3.2.6...v3.2.7) (2025-07-14)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @sanity/client to v7 ([#345](https://github.com/sanity-io/sanity-astro/issues/345)) ([f93bb2b](https://github.com/sanity-io/sanity-astro/commit/f93bb2b271b6bd59a92520c0d29d768d818b2245))
+* **deps:** Update dependency @sanity/visual-editing to ^2.14.0 ([#341](https://github.com/sanity-io/sanity-astro/issues/341)) ([c20b296](https://github.com/sanity-io/sanity-astro/commit/c20b29631b97d9160846b44dc8f995cb7f5b8906))
+* **deps:** update dependency sanity to ^3.90.0 ([#342](https://github.com/sanity-io/sanity-astro/issues/342)) ([62f8f68](https://github.com/sanity-io/sanity-astro/commit/62f8f684795e31b4fdbc2c5d49a7a4890b1d11ba))
+
 ## [3.2.6](https://github.com/sanity-io/sanity-astro/compare/v3.2.5...v3.2.6) (2025-03-03)
 
 
