@@ -5,6 +5,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.2.9](https://github.com/sanity-io/sanity-astro/compare/v3.2.8...v3.2.9) (2025-07-15)
+
+
+### Bug Fixes
+
+* allow sanity v4 in peer deps ([#357](https://github.com/sanity-io/sanity-astro/issues/357)) ([1215f58](https://github.com/sanity-io/sanity-astro/commit/1215f582aa6c7901411e86a3b4dd3af4d0b48aa0))
+
 ## [3.2.8](https://github.com/sanity-io/sanity-astro/compare/v3.2.7...v3.2.8) (2025-07-14)
 
 
