@@ -58,7 +58,7 @@
   "devDependencies": {
     "@sanity/client": "^7.6.0",
     "@types/serialize-javascript": "^5.0.4",
-    "astro": "5.11.1",
+    "astro": "5.13.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "sanity": "^4.0.0",
