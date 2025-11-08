@@ -12,11 +12,17 @@ export default defineConfig({
 
   plugins: [
     presentationTool({
-      previewUrl: process.env.VERCEL_BRANCH_URL
-        ? `https://${process.env.VERCEL_BRANCH_URL}`
-        : process.env.VERCEL_PROJECT_PRODUCTION_URL
-          ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-          : 'http://localhost:4321',
+      previewUrl: {
+        initial: import.meta.env.VERCEL_BRANCH_URL
+          ? `https://${import.meta.env.VERCEL_BRANCH_URL}`
+          : import.meta.env.VERCEL_PROJECT_PRODUCTION_URL
+            ? `https://${import.meta.env.VERCEL_PROJECT_PRODUCTION_URL}`
+            : 'http://localhost:4321',
+        preview: '/',
+        previewMode: {
+          enable: '/api/draft-mode/enable',
+        },
+      },
     }),
     structureTool(),
   ],
