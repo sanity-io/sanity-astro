@@ -1,0 +1,40 @@
+---
+import {sanityDraftMode} from 'sanity:draft-mode'
+
+// Test draft mode functionality
+const isEnabled = sanityDraftMode.isEnabled(Astro.cookies)
+
+// Enable draft mode if not already enabled
+if (!isEnabled) {
+  sanityDraftMode.enable(Astro.cookies)
+}
+
+// Verify it's enabled
+const isEnabledAfter = sanityDraftMode.isEnabled(Astro.cookies)
+
+// Test disable
+sanityDraftMode.disable(Astro.cookies)
+const isEnabledAfterDisable = sanityDraftMode.isEnabled(Astro.cookies)
+
+// Re-enable for demonstration
+sanityDraftMode.enable(Astro.cookies)
+const finalStatus = sanityDraftMode.isEnabled(Astro.cookies)
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Draft Mode Test</title>
+  </head>
+  <body>
+    <h1>Draft Mode Test</h1>
+    <ul>
+      <li>Initial status: {isEnabled ? 'Enabled' : 'Disabled'}</li>
+      <li>After enable: {isEnabledAfter ? 'Enabled' : 'Disabled'}</li>
+      <li>After disable: {isEnabledAfterDisable ? 'Enabled' : 'Disabled'}</li>
+      <li>Final status: {finalStatus ? 'Enabled' : 'Disabled'}</li>
+    </ul>
+    <p>Cookie value: {Astro.cookies.get('__sanity_draft_mode')?.value || 'Not set'}</p>
+  </body>
+</html>

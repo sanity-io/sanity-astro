@@ -1,5 +1,6 @@
 import type {AstroIntegration} from 'astro'
 import {vitePluginSanityClient} from './vite-plugin-sanity-client'
+import {vitePluginSanityDraftMode} from './vite-plugin-sanity-draft-mode'
 import {vitePluginSanityStudio} from './vite-plugin-sanity-studio'
 import {vitePluginSanityStudioHashRouter} from './vite-plugin-sanity-studio-hash-router'
 import type {ClientConfig} from '@sanity/client'
@@ -47,6 +48,7 @@ export default function sanityIntegration(
                 ...defaultClientConfig,
                 ...clientConfig,
               }),
+              vitePluginSanityDraftMode(),
               vitePluginSanityStudio({studioBasePath}),
               vitePluginSanityStudioHashRouter(),
             ],
