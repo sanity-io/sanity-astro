@@ -19,7 +19,7 @@
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "astro": "5.4.1",
-    "react": "^19.2.0",
+    "react": "19.2.1",
     "react-dom": "^19.2.0",
     "react-icons": "^5.5.0",
     "sanity": "^4.13.0",

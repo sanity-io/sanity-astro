@@ -59,7 +59,7 @@
     "@sanity/client": "^7.6.0",
     "@types/serialize-javascript": "^5.0.4",
     "astro": "5.11.1",
-    "react": "^19.1.0",
+    "react": "19.2.1",
     "react-dom": "^19.1.0",
     "sanity": "^4.0.0",
     "serialize-javascript": "^6.0.2",
@@ -70,7 +70,7 @@
   "peerDependencies": {
     "@sanity/client": "^7.6.0",
     "astro": "^2.0.0 || ^3.0.0 || ^4.0.0 || ^5.0.0",
-    "react": "^18.2.0 || ^19.0.0",
+    "react": "19.2.1",
     "react-dom": "^18.2.0 || ^19.0.0",
     "react-is": "^18.2.0 || ^19.0.0",
     "sanity": "^3.99.0 || ^4.0.0",
