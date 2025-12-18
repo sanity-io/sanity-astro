@@ -5,6 +5,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.2.11](https://github.com/sanity-io/sanity-astro/compare/v3.2.10...v3.2.11) (2025-12-18)
+
+
+### Bug Fixes
+
+* **deps:** make peer dependencies include sanity 5.x ([#367](https://github.com/sanity-io/sanity-astro/issues/367)) ([ff9d136](https://github.com/sanity-io/sanity-astro/commit/ff9d13643ab3e20dea22817c0c518794bdb5b760))
+
 ## [3.2.10](https://github.com/sanity-io/sanity-astro/compare/v3.2.9...v3.2.10) (2025-07-15)
 
 
