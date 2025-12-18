@@ -16,13 +16,13 @@
     "@astrojs/vercel": "^8.2.11",
     "@sanity/astro": "workspace:^",
     "@sanity/client": "^7.12.0",
-    "@types/react": "^19.2.2",
-    "@types/react-dom": "^19.2.2",
+    "@types/react": "^19.2.3",
+    "@types/react-dom": "^19.2.3",
     "astro": "5.4.1",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
     "react-icons": "^5.5.0",
-    "sanity": "^4.13.0",
+    "sanity": "^5.0.1",
     "typescript": "^5.9.3"
   }
 }

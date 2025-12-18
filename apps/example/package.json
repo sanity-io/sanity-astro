@@ -21,9 +21,9 @@
     "astro": "5.4.1",
     "astro-portabletext": "^0.11.3",
     "prismjs": "^1.30.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "sanity": "^4.13.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "sanity": "^5.0.1",
     "styled-components": "^6.1.19"
   }
 }
