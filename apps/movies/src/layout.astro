@@ -1,11 +1,14 @@
 ---
 import {VisualEditing} from '@sanity/astro/visual-editing'
-const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED == 'true'
+import {sanityDraftMode} from 'sanity:draft-mode'
 
 export type props = {
   title: string
 }
 const {title} = Astro.props
+
+// Enable visual editing when draft mode is enabled
+const visualEditingEnabled = sanityDraftMode.isEnabled(Astro.cookies)
 ---
 
 <html lang="en">
