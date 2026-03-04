@@ -3,5 +3,10 @@ declare module 'sanity:client' {
 }
 
 declare module 'sanity:studio' {
-  export const studioConfig: import('sanity').Config
+  export const config: import('sanity').Config
+}
+
+declare module '*.astro' {
+  const component: unknown
+  export default component
 }
