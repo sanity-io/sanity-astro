@@ -11,8 +11,9 @@ export default defineConfig({
       // If you are doing static builds you may want opt out of the CDN
       useCdn: false,
       studioBasePath: '/admin',
+      studioRouterHistory: 'hash',
       stega: {
-        studioUrl: '/admin',
+        studioUrl: '/admin#',
       },
     }),
     react(),

@@ -146,19 +146,6 @@ export default defineConfig({
 
 2. You have to [enable CORS origins for authenticated requests][cors] for the domains you're running your website project on. The Studio should automatically detect and let you add this when you access the Studio on a new URL. Typically you need to add your local development server URL and your production URL to the CORS origin settings. It's important that you only enable CORS for authenticated requests on domains that _you_ control.
 
-### Choosing a Studio history mode
-
-`studioRouterHistory` controls how Studio stores route state:
-
-- Browser history (default): Studio uses path-based URLs like `/admin/desk`.
-  - Use this if your runtime can serve the Studio page for nested routes under your base path (for example `/admin/*`).
-  - This gives cleaner URLs and direct links without hash fragments.
-- Hash history (`studioRouterHistory: 'hash'`): Studio uses hash-based URLs like `/admin#/desk`.
-  - Use this if you want to keep Studio on one static route (`/admin`) and avoid server handling for nested Studio paths.
-  - This is often the easiest option for static hosting setups.
-
-In both modes, Studio is still client-rendered. The difference is whether route state lives in the URL pathname (browser history) or hash fragment (hash history).
-
 ### Workspaces in embedded Studio
 
 Sanity workspaces are supported by exporting an array from `defineConfig` (see [Studio Workspaces][studio-workspaces]).
