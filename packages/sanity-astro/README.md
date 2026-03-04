@@ -146,16 +146,33 @@ export default defineConfig({
 
 2. You have to [enable CORS origins for authenticated requests][cors] for the domains you're running your website project on. The Studio should automatically detect and let you add this when you access the Studio on a new URL. Typically you need to add your local development server URL and your production URL to the CORS origin settings. It's important that you only enable CORS for authenticated requests on domains that _you_ control.
 
+### Choosing a Studio history mode
+
+`studioRouterHistory` controls how Studio stores route state:
+
+- Browser history (default): Studio uses path-based URLs like `/admin/desk`.
+  - Use this if your runtime can serve the Studio page for nested routes under your base path (for example `/admin/*`).
+  - This gives cleaner URLs and direct links without hash fragments.
+- Hash history (`studioRouterHistory: 'hash'`): Studio uses hash-based URLs like `/admin#/desk`.
+  - Use this if you want to keep Studio on one static route (`/admin`) and avoid server handling for nested Studio paths.
+  - This is often the easiest option for static hosting setups.
+
+In both modes, Studio is still client-rendered. The difference is whether route state lives in the URL pathname (browser history) or hash fragment (hash history).
+
 ### Workspaces in embedded Studio
 
 Sanity workspaces are supported by exporting an array from `defineConfig` (see [Studio Workspaces][studio-workspaces]).
 
 When Studio is embedded through `@sanity/astro`, the integration owns workspace `basePath` values so all workspaces stay mounted under your configured `studioBasePath` route:
 
-- single workspace: `/<studioBasePath>` (for example `/admin`)
-- multiple workspaces: `/<studioBasePath>/<workspace-name>` for every workspace
+- In browser-history mode (`studioRouterHistory` omitted or `'browser'`), workspaces are mounted as:
+  - single workspace: `/<studioBasePath>` (for example `/admin`)
+  - multiple workspaces: `/<studioBasePath>/<workspace-name>` for every workspace
+- In hash-history mode (`studioRouterHistory: 'hash'`), workspaces are mounted inside the hash router:
+  - single workspace: `#/`
+  - multiple workspaces: `#/<workspace-name>` for every workspace
 
-If you are also using Visual Editing stega, set `stega.studioUrl` to your Studio route path (for example `'/admin'`).
+If you are also using Visual Editing stega, set `stega.studioUrl` to your Studio route path (for example `'/admin'`) and avoid appending a manual hash suffix.
 
 ## Rendering rich text and block content with Portable Text
 

@@ -3,6 +3,7 @@ import type {PluginOption} from 'vite'
 
 export function vitePluginSanityStudio(resolvedOptions: {
   studioBasePath?: string
+  studioRouterHistory?: 'browser' | 'hash'
 }) {
   const virtualModuleId = 'sanity:studio'
   const resolvedVirtualModuleId = virtualModuleId
@@ -28,10 +29,13 @@ export function vitePluginSanityStudio(resolvedOptions: {
             "[@sanity/astro]: The `studioBasePath` option is required in `astro.config.mjs`. For example — `studioBasePath: '/admin'`",
           )
         }
+        const studioRouterHistory = resolvedOptions.studioRouterHistory === 'hash' ? 'hash' : 'browser'
         return `
         import studioConfig from "${studioConfig.id}";
 
         const embeddedStudioBasePath = "${resolvedOptions.studioBasePath}";
+        const historyMode = "${studioRouterHistory}";
+        const hashWorkspaceRootPath = "/";
         const browserWorkspaceRootPath = embeddedStudioBasePath;
 
         function toWorkspaceSlug(name, index) {
@@ -45,6 +49,10 @@ export function vitePluginSanityStudio(resolvedOptions: {
 
         function createWorkspaceBasePath(workspace, index, isSingleWorkspace) {
           const workspaceSlug = toWorkspaceSlug(workspace?.name, index);
+
+          if (historyMode === "hash") {
+            return isSingleWorkspace ? hashWorkspaceRootPath : "/" + workspaceSlug;
+          }
 
           if (browserWorkspaceRootPath === "/") {
             return isSingleWorkspace ? browserWorkspaceRootPath : "/" + workspaceSlug;
@@ -66,7 +74,8 @@ export function vitePluginSanityStudio(resolvedOptions: {
             warnAboutBasePathOverride();
           }
         } else if (studioConfig?.basePath) {
-          if (studioConfig.basePath !== browserWorkspaceRootPath) {
+          const expectedBasePath = historyMode === "hash" ? hashWorkspaceRootPath : browserWorkspaceRootPath;
+          if (studioConfig.basePath !== expectedBasePath) {
             warnAboutBasePathOverride();
           }
         }

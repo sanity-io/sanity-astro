@@ -1,10 +1,12 @@
 import type {AstroIntegration} from 'astro'
 import {vitePluginSanityClient} from './vite-plugin-sanity-client'
 import {vitePluginSanityStudio} from './vite-plugin-sanity-studio'
+import {vitePluginSanityStudioHashRouter} from './vite-plugin-sanity-studio-hash-router'
 import type {ClientConfig} from '@sanity/client'
 
 type IntegrationOptions = ClientConfig & {
   studioBasePath?: string
+  studioRouterHistory?: 'browser' | 'hash'
 }
 
 const defaultClientConfig: ClientConfig = {
@@ -18,8 +20,10 @@ export default function sanityIntegration(
   const normalizedStudioBasePath = studioBasePath
     ? normalizeStudioBasePath(studioBasePath)
     : undefined
+  const studioRouterHistory = integrationConfig.studioRouterHistory === 'hash' ? 'hash' : 'browser'
   const clientConfig = integrationConfig
   delete clientConfig.studioBasePath
+  delete clientConfig.studioRouterHistory
 
   if (!!studioBasePath && studioBasePath.match(/https?:\/\//)) {
     throw new Error(
@@ -48,23 +52,36 @@ export default function sanityIntegration(
               }),
               vitePluginSanityStudio({
                 studioBasePath: normalizedStudioBasePath,
+                studioRouterHistory,
               }),
+              vitePluginSanityStudioHashRouter(),
             ],
           },
         })
         // only load this route if `studioBasePath` is set
         if (normalizedStudioBasePath) {
-          const browserRoutePattern =
-            normalizedStudioBasePath === '/'
-              ? '/[...params]'
-              : `${normalizedStudioBasePath}/[...params]`
-          injectRoute({
-            // @ts-expect-error
-            entryPoint: '@sanity/astro/studio/studio-route.astro', // Astro <= 3
-            entrypoint: '@sanity/astro/studio/studio-route.astro', // Astro > 3
-            pattern: browserRoutePattern,
-            prerender: false,
-          })
+          // If the studio router history is set to hash, we can load a studio route that doesn't need a server adapter
+          if (studioRouterHistory === 'hash') {
+            injectRoute({
+              // @ts-expect-error
+              entryPoint: '@sanity/astro/studio/studio-route-hash.astro', // Astro <= 3
+              entrypoint: '@sanity/astro/studio/studio-route-hash.astro', // Astro > 3
+              pattern: normalizedStudioBasePath,
+              prerender: true,
+            })
+          } else {
+            const browserRoutePattern =
+              normalizedStudioBasePath === '/'
+                ? '/[...params]'
+                : `${normalizedStudioBasePath}/[...params]`
+            injectRoute({
+              // @ts-expect-error
+              entryPoint: '@sanity/astro/studio/studio-route.astro', // Astro <= 3
+              entrypoint: '@sanity/astro/studio/studio-route.astro', // Astro > 3
+              pattern: browserRoutePattern,
+              prerender: false,
+            })
+          }
         }
         injectScript(
           'page-ssr',
