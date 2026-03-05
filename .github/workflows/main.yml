@@ -67,4 +67,19 @@ jobs:
           node-version: ${{ matrix.node }}
       - run: pnpm install
       - run: pnpm --if-present --recursive prepublishOnly
+
+  unit-test:
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          cache: pnpm
+          node-version: lts/*
+      - run: pnpm install
       - run: pnpm --if-present --recursive test
