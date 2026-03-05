@@ -1,5 +1,6 @@
 import type {PartialDeep} from 'type-fest'
 import type {PluginOption} from 'vite'
+import {normalizeStudioBasePath} from './studio-base-path'
 
 export function vitePluginSanityStudio(resolvedOptions: {studioBasePath?: string}) {
   const virtualModuleId = 'sanity:studio'
@@ -26,8 +27,12 @@ export function vitePluginSanityStudio(resolvedOptions: {studioBasePath?: string
             "[@sanity/astro]: The `studioBasePath` option is required in `astro.config.mjs`. For example — `studioBasePath: '/admin'`",
           )
         }
-        const normalizedStudioBasePath = resolvedOptions.studioBasePath.replace(/^\/+|\/+$/g, '')
-        const studioBasePath = `/${normalizedStudioBasePath}`
+        const studioBasePath = normalizeStudioBasePath(resolvedOptions.studioBasePath)
+        if (!studioBasePath) {
+          throw new Error(
+            "[@sanity/astro]: The `studioBasePath` option cannot be empty. For example — `studioBasePath: '/admin'`",
+          )
+        }
         return `
         import studioConfig from "${studioConfig.id}";
 

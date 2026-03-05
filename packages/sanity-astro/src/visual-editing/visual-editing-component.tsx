@@ -3,6 +3,11 @@ import {
   VisualEditing as InternalVisualEditing,
   type VisualEditingOptions as InternalVisualEditingOptions,
 } from '@sanity/visual-editing/react'
+import {
+  applyPresentationHistoryUpdate,
+  getPresentationUrl,
+  shouldPublishUrl,
+} from './history'
 
 export type VisualEditingOptions = Pick<InternalVisualEditingOptions, 'zIndex'>
 type HistoryAdapter = NonNullable<InternalVisualEditingOptions['history']>
@@ -18,8 +23,8 @@ export function VisualEditingComponent(props: VisualEditingOptions) {
 
     let lastUrl = ''
     const syncCurrentUrl = () => {
-      const url = `${window.location.pathname}${window.location.search}${window.location.hash}`
-      if (url === lastUrl) {
+      const url = getPresentationUrl(window.location)
+      if (!shouldPublishUrl(url, lastUrl)) {
         return
       }
       lastUrl = url
@@ -51,27 +56,11 @@ export function VisualEditingComponent(props: VisualEditingOptions) {
         }
       },
       update: (update) => {
-        switch (update.type) {
-          case 'push': {
-            if (window.location.href !== update.url) {
-              window.location.assign(update.url)
-            }
-            return
-          }
-          case 'replace': {
-            if (window.location.href !== update.url) {
-              window.location.replace(update.url)
-            }
-            return
-          }
-          case 'pop': {
-            window.history.back()
-            return
-          }
-          default: {
-            throw new Error(`Unknown history update type: ${(update as {type?: string}).type ?? 'unknown'}`)
-          }
-        }
+        applyPresentationHistoryUpdate(update, window.location.href, {
+          assign: (url) => window.location.assign(url),
+          replace: (url) => window.location.replace(url),
+          back: () => window.history.back(),
+        })
       },
     }),
     [],

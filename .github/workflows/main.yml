@@ -67,3 +67,4 @@ jobs:
           node-version: ${{ matrix.node }}
       - run: pnpm install
       - run: pnpm --if-present --recursive prepublishOnly
+      - run: pnpm --if-present --recursive test
