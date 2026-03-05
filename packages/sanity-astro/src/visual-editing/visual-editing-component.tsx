@@ -17,6 +17,9 @@ export function VisualEditingComponent(props: VisualEditingOptions) {
   const navigateRef = React.useRef<HistoryNavigate | undefined>()
   const lastUrlRef = React.useRef('')
   const lastPublishedAtRef = React.useRef(0)
+  const optimisticUrlRef = React.useRef<string | undefined>()
+  const optimisticUntilRef = React.useRef(0)
+  const clearNavigateTimeoutRef = React.useRef<number | undefined>()
 
   React.useEffect(() => {
     const publishUrl = (url: string, force = false) => {
@@ -25,8 +28,16 @@ export function VisualEditingComponent(props: VisualEditingOptions) {
         return
       }
       const now = Date.now()
-      const shouldRepublish = now - lastPublishedAtRef.current > 2_000
-      if (!force && !shouldPublishUrl(url, lastUrlRef.current) && !shouldRepublish) {
+      const optimisticUrl = optimisticUrlRef.current
+      const optimisticWindowOpen = now < optimisticUntilRef.current
+      if (!force && optimisticUrl && optimisticWindowOpen && url !== optimisticUrl) {
+        return
+      }
+      if (optimisticUrl && url === optimisticUrl) {
+        optimisticUrlRef.current = undefined
+        optimisticUntilRef.current = 0
+      }
+      if (!force && !shouldPublishUrl(url, lastUrlRef.current)) {
         return
       }
       lastUrlRef.current = url
@@ -71,32 +82,52 @@ export function VisualEditingComponent(props: VisualEditingOptions) {
         return
       }
 
-      publishUrl(`${targetUrl.pathname}${targetUrl.search}${targetUrl.hash}`, true)
+      const url = `${targetUrl.pathname}${targetUrl.search}${targetUrl.hash}`
+      optimisticUrlRef.current = url
+      optimisticUntilRef.current = Date.now() + 1_500
+      publishUrl(url, true)
     }
 
     syncCurrentUrl()
     window.addEventListener('popstate', syncCurrentUrl)
     window.addEventListener('hashchange', syncCurrentUrl)
     document.addEventListener('click', publishClickedLink, true)
-    const intervalId = window.setInterval(syncCurrentUrl, 500)
+    const nativePushState = window.history.pushState
+    const nativeReplaceState = window.history.replaceState
+    window.history.pushState = function (...args) {
+      nativePushState.apply(window.history, args)
+      syncCurrentUrl()
+    }
+    window.history.replaceState = function (...args) {
+      nativeReplaceState.apply(window.history, args)
+      syncCurrentUrl()
+    }
 
     return () => {
       window.removeEventListener('popstate', syncCurrentUrl)
       window.removeEventListener('hashchange', syncCurrentUrl)
       document.removeEventListener('click', publishClickedLink, true)
-      window.clearInterval(intervalId)
+      window.history.pushState = nativePushState
+      window.history.replaceState = nativeReplaceState
     }
   }, [])
 
   const history = React.useMemo<HistoryAdapter>(
     () => ({
       subscribe: (_navigate) => {
+        window.clearTimeout(clearNavigateTimeoutRef.current)
         navigateRef.current = _navigate
-        lastUrlRef.current = ''
-        lastPublishedAtRef.current = 0
+        const currentUrl = getPresentationUrl(window.location)
+        lastUrlRef.current = currentUrl
+        lastPublishedAtRef.current = Date.now()
         return () => {
-          // Keep the existing callback across edit mode toggles.
-          // Presentation may briefly unsubscribe when overlays are disabled.
+          // Keep navigation publishing alive briefly for immediate link clicks
+          // after edit mode is toggled off, then release it to respect off mode.
+          clearNavigateTimeoutRef.current = window.setTimeout(() => {
+            if (navigateRef.current === _navigate) {
+              navigateRef.current = undefined
+            }
+          }, 200)
         }
       },
       update: (update) => {
