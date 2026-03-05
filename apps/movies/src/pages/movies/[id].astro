@@ -1,0 +1,46 @@
+---
+import Layout from '../../layout.astro'
+import {loadQuery} from '../../load-query'
+
+const id = Astro.params.id
+
+if (!id) {
+  Astro.response.status = 404
+  throw new Error('Movie ID is required.')
+}
+
+const {data: movie} = await loadQuery<{
+  _id: string
+  title: string
+  releaseDate?: string
+} | null>({
+  query: `*[_type == 'movie' && _id == $id][0] {
+    _id,
+    title,
+    releaseDate
+  }`,
+  params: {id},
+})
+
+if (!movie) {
+  Astro.response.status = 404
+}
+---
+
+<Layout title={movie ? movie.title : 'Movie Not Found'}>
+  {
+    movie ? (
+      <>
+        <p><a href="/">Back to all movies</a></p>
+        <h1>{movie.title}</h1>
+        {movie.releaseDate ? <p>Release date: {new Date(movie.releaseDate).toLocaleDateString()}</p> : null}
+        <p>Movie ID: <code>{movie._id}</code></p>
+      </>
+    ) : (
+      <>
+        <h1>Movie Not Found</h1>
+        <p><a href="/">Back to all movies</a></p>
+      </>
+    )
+  }
+</Layout>

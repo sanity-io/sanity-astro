@@ -17,6 +17,8 @@ export default function sanityIntegration(
   integrationConfig: IntegrationOptions = {},
 ): AstroIntegration {
   const studioBasePath = integrationConfig.studioBasePath
+  const normalizedStudioBasePath = studioBasePath?.replace(/^\/+|\/+$/g, '')
+  const resolvedStudioBasePath = normalizedStudioBasePath ? `/${normalizedStudioBasePath}` : undefined
   const studioRouterHistory = integrationConfig.studioRouterHistory === 'hash' ? 'hash' : 'browser'
   const clientConfig = integrationConfig
   delete clientConfig.studioBasePath
@@ -47,20 +49,20 @@ export default function sanityIntegration(
                 ...defaultClientConfig,
                 ...clientConfig,
               }),
-              vitePluginSanityStudio({studioBasePath}),
+              vitePluginSanityStudio({studioBasePath: resolvedStudioBasePath}),
               vitePluginSanityStudioHashRouter(),
             ],
           },
         })
         // only load this route if `studioBasePath` is set
-        if (studioBasePath) {
+        if (normalizedStudioBasePath) {
           // If the studio router history is set to hash, we can load a studio route that doesn't need a server adapter
           if (studioRouterHistory === 'hash') {
             injectRoute({
               // @ts-expect-error
               entryPoint: '@sanity/astro/studio/studio-route-hash.astro', // Astro <= 3
               entrypoint: '@sanity/astro/studio/studio-route-hash.astro', // Astro > 3
-              pattern: `/${studioBasePath}`,
+              pattern: `/${normalizedStudioBasePath}`,
               prerender: true,
             })
           } else {
@@ -68,7 +70,7 @@ export default function sanityIntegration(
               // @ts-expect-error
               entryPoint: '@sanity/astro/studio/studio-route.astro', // Astro <= 3
               entrypoint: '@sanity/astro/studio/studio-route.astro', // Astro > 3
-              pattern: `/${studioBasePath}/[...params]`,
+              pattern: `/${normalizedStudioBasePath}/[...params]`,
               prerender: false,
             })
           }

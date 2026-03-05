@@ -26,11 +26,13 @@ export function vitePluginSanityStudio(resolvedOptions: {studioBasePath?: string
             "[@sanity/astro]: The `studioBasePath` option is required in `astro.config.mjs`. For example — `studioBasePath: '/admin'`",
           )
         }
+        const normalizedStudioBasePath = resolvedOptions.studioBasePath.replace(/^\/+|\/+$/g, '')
+        const studioBasePath = `/${normalizedStudioBasePath}`
         return `
         import studioConfig from "${studioConfig.id}";
 
         if (studioConfig.basePath) {
-          if (studioConfig.basePath !== "/${resolvedOptions.studioBasePath}") {
+          if (studioConfig.basePath !== "${studioBasePath}") {
             console.warn(
               "[@sanity/astro]: This integration ignores the basePath setting in sanity.config.ts|js. To set the basePath for Sanity Studio, use the studioBasePath option in astro.config.mjs and remove it from sanity.config.ts.");
           }
@@ -39,7 +41,7 @@ export function vitePluginSanityStudio(resolvedOptions: {studioBasePath?: string
         export const config = {
           ...studioConfig,
           // override basePath from sanity.config.ts|js with plugin setting
-          basePath: "${resolvedOptions.studioBasePath}",
+          basePath: "${studioBasePath}",
         }
         `
       }

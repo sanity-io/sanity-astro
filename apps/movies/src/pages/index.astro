@@ -2,14 +2,23 @@
 import Layout from '../layout.astro'
 import {loadQuery} from '../load-query'
 
-const {data: movies} = await loadQuery<Array<{title: string}>>({
-  query: `*[_type == 'movie']`,
+const {data: movies} = await loadQuery<Array<{_id: string; title: string}>>({
+  query: `*[_type == 'movie'] | order(title asc) {
+    _id,
+    title
+  }`,
 })
 ---
 
 <Layout title="Movies">
   <h1>Movies</h1>
   <ol>
-    {movies.map((movie) => <li>{movie.title}</li>)}
+    {
+      movies.map((movie) => (
+        <li>
+          <a href={`/movies/${encodeURIComponent(movie._id)}`}>{movie.title}</a>
+        </li>
+      ))
+    }
   </ol>
 </Layout>
