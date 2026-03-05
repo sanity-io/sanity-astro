@@ -14,45 +14,89 @@ type HistoryAdapter = NonNullable<InternalVisualEditingOptions['history']>
 type HistoryNavigate = Parameters<HistoryAdapter['subscribe']>[0]
 
 export function VisualEditingComponent(props: VisualEditingOptions) {
-  const [navigate, setNavigate] = React.useState<HistoryNavigate | undefined>()
+  const navigateRef = React.useRef<HistoryNavigate | undefined>()
+  const lastUrlRef = React.useRef('')
+  const lastPublishedAtRef = React.useRef(0)
 
   React.useEffect(() => {
-    if (!navigate) {
-      return
-    }
-
-    let lastUrl = ''
-    const syncCurrentUrl = () => {
-      const url = getPresentationUrl(window.location)
-      if (!shouldPublishUrl(url, lastUrl)) {
+    const publishUrl = (url: string, force = false) => {
+      const navigate = navigateRef.current
+      if (!navigate) {
         return
       }
-      lastUrl = url
+      const now = Date.now()
+      const shouldRepublish = now - lastPublishedAtRef.current > 2_000
+      if (!force && !shouldPublishUrl(url, lastUrlRef.current) && !shouldRepublish) {
+        return
+      }
+      lastUrlRef.current = url
+      lastPublishedAtRef.current = now
       navigate({
         type: 'push',
         title: document.title,
         url,
       })
     }
+    const syncCurrentUrl = () => {
+      publishUrl(getPresentationUrl(window.location))
+    }
+    const publishClickedLink = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0) {
+        return
+      }
+      if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) {
+        return
+      }
+
+      const eventTarget = event.target
+      if (!(eventTarget instanceof Element)) {
+        return
+      }
+
+      const anchor = eventTarget.closest('a[href]')
+      if (!(anchor instanceof HTMLAnchorElement)) {
+        return
+      }
+      if (anchor.target && anchor.target !== '_self') {
+        return
+      }
+
+      let targetUrl: URL
+      try {
+        targetUrl = new URL(anchor.href, window.location.href)
+      } catch {
+        return
+      }
+      if (targetUrl.origin !== window.location.origin) {
+        return
+      }
+
+      publishUrl(`${targetUrl.pathname}${targetUrl.search}${targetUrl.hash}`, true)
+    }
 
     syncCurrentUrl()
     window.addEventListener('popstate', syncCurrentUrl)
     window.addEventListener('hashchange', syncCurrentUrl)
+    document.addEventListener('click', publishClickedLink, true)
     const intervalId = window.setInterval(syncCurrentUrl, 500)
 
     return () => {
       window.removeEventListener('popstate', syncCurrentUrl)
       window.removeEventListener('hashchange', syncCurrentUrl)
+      document.removeEventListener('click', publishClickedLink, true)
       window.clearInterval(intervalId)
     }
-  }, [navigate])
+  }, [])
 
   const history = React.useMemo<HistoryAdapter>(
     () => ({
       subscribe: (_navigate) => {
-        setNavigate(() => _navigate)
+        navigateRef.current = _navigate
+        lastUrlRef.current = ''
+        lastPublishedAtRef.current = 0
         return () => {
-          setNavigate(undefined)
+          // Keep the existing callback across edit mode toggles.
+          // Presentation may briefly unsubscribe when overlays are disabled.
         }
       },
       update: (update) => {
