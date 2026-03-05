@@ -38,15 +38,18 @@ export default defineConfig({
 
   plugins: [
     presentationTool({
+      previewUrl: {
+        initial: branchUrl
+          ? `https://${branchUrl}`
+          : productionUrl
+            ? `https://${productionUrl}`
+            : 'http://localhost:4321',
+        preview: '/',
+      },
       resolve: {
         locations,
         mainDocuments,
       },
-      previewUrl: branchUrl
-        ? `https://${branchUrl}`
-        : productionUrl
-          ? `https://${productionUrl}`
-          : 'http://localhost:4321',
     }),
     structureTool(),
   ],

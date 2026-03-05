@@ -18,7 +18,7 @@ export default function sanityIntegration(
   integrationConfig: IntegrationOptions = {},
 ): AstroIntegration {
   const studioBasePath = integrationConfig.studioBasePath
-  const resolvedStudioBasePath = normalizeStudioBasePath(studioBasePath)
+  const normalizedStudioBasePath = normalizeStudioBasePath(studioBasePath)
   const studioRouterHistory = integrationConfig.studioRouterHistory === 'hash' ? 'hash' : 'browser'
   const clientConfig = integrationConfig
   delete clientConfig.studioBasePath
@@ -49,13 +49,16 @@ export default function sanityIntegration(
                 ...defaultClientConfig,
                 ...clientConfig,
               }),
-              vitePluginSanityStudio({studioBasePath: resolvedStudioBasePath}),
+              vitePluginSanityStudio({
+                studioBasePath: normalizedStudioBasePath,
+                studioRouterHistory,
+              }),
               vitePluginSanityStudioHashRouter(),
             ],
           },
         })
         // only load this route if `studioBasePath` is set
-        const pattern = studioRoutePattern(resolvedStudioBasePath, studioRouterHistory)
+        const pattern = studioRoutePattern(normalizedStudioBasePath, studioRouterHistory)
         if (pattern) {
           // If the studio router history is set to hash, we can load a studio route that doesn't need a server adapter
           if (studioRouterHistory === 'hash') {
