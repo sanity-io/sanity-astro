@@ -3,6 +3,7 @@ import {vitePluginSanityClient} from './vite-plugin-sanity-client'
 import {vitePluginSanityStudio} from './vite-plugin-sanity-studio'
 import {vitePluginSanityStudioHashRouter} from './vite-plugin-sanity-studio-hash-router'
 import type {ClientConfig} from '@sanity/client'
+import {normalizeStudioBasePath, studioRoutePattern} from './studio-base-path'
 
 type IntegrationOptions = ClientConfig & {
   studioBasePath?: string
@@ -17,9 +18,7 @@ export default function sanityIntegration(
   integrationConfig: IntegrationOptions = {},
 ): AstroIntegration {
   const studioBasePath = integrationConfig.studioBasePath
-  const normalizedStudioBasePath = studioBasePath
-    ? normalizeStudioBasePath(studioBasePath)
-    : undefined
+  const normalizedStudioBasePath = normalizeStudioBasePath(studioBasePath)
   const studioRouterHistory = integrationConfig.studioRouterHistory === 'hash' ? 'hash' : 'browser'
   const clientConfig = integrationConfig
   delete clientConfig.studioBasePath
@@ -59,26 +58,23 @@ export default function sanityIntegration(
           },
         })
         // only load this route if `studioBasePath` is set
-        if (normalizedStudioBasePath) {
+        const pattern = studioRoutePattern(normalizedStudioBasePath, studioRouterHistory)
+        if (pattern) {
           // If the studio router history is set to hash, we can load a studio route that doesn't need a server adapter
           if (studioRouterHistory === 'hash') {
             injectRoute({
               // @ts-expect-error
               entryPoint: '@sanity/astro/studio/studio-route-hash.astro', // Astro <= 3
               entrypoint: '@sanity/astro/studio/studio-route-hash.astro', // Astro > 3
-              pattern: normalizedStudioBasePath,
+              pattern,
               prerender: true,
             })
           } else {
-            const browserRoutePattern =
-              normalizedStudioBasePath === '/'
-                ? '/[...params]'
-                : `${normalizedStudioBasePath}/[...params]`
             injectRoute({
               // @ts-expect-error
               entryPoint: '@sanity/astro/studio/studio-route.astro', // Astro <= 3
               entrypoint: '@sanity/astro/studio/studio-route.astro', // Astro > 3
-              pattern: browserRoutePattern,
+              pattern,
               prerender: false,
             })
           }
@@ -93,13 +89,4 @@ export default function sanityIntegration(
       },
     },
   }
-}
-
-function normalizeStudioBasePath(path: string): string {
-  const trimmedPath = path.trim()
-  const withLeadingSlash = trimmedPath.startsWith('/') ? trimmedPath : `/${trimmedPath}`
-  if (withLeadingSlash === '/') {
-    return withLeadingSlash
-  }
-  return withLeadingSlash.replace(/\/+$/, '')
 }

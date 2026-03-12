@@ -8,6 +8,8 @@ export default defineConfig(() => {
   return {
     base: '/src',
     build: {
+      // Keep existing dist files while watch rebuilds to avoid
+      // transient package entry resolution failures in consuming apps.
       emptyOutDir: false,
       lib: {
         entry: [path.resolve(__dirname, 'src/index.ts')],

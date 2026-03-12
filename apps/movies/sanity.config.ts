@@ -1,7 +1,33 @@
-import { defineConfig } from 'sanity'
-import { structureTool } from 'sanity/structure'
-import { schemaTypes } from './schemaTypes'
-import { defineDocuments, presentationTool } from 'sanity/presentation'
+import {defineConfig} from 'sanity'
+import {structureTool} from 'sanity/structure'
+import {schemaTypes} from './schemaTypes'
+import {defineDocuments, defineLocations, presentationTool} from 'sanity/presentation'
+
+const branchUrl =
+  (import.meta.env?.['VERCEL_BRANCH_URL'] as string | undefined) ??
+  (typeof process !== 'undefined' ? process.env.VERCEL_BRANCH_URL : undefined)
+const productionUrl =
+  (import.meta.env?.['VERCEL_PROJECT_PRODUCTION_URL'] as string | undefined) ??
+  (typeof process !== 'undefined' ? process.env.VERCEL_PROJECT_PRODUCTION_URL : undefined)
+
+const locations = {
+  movie: defineLocations({
+    select: {
+      title: 'title',
+      id: '_id',
+    },
+    resolve: (doc) => ({
+      locations: doc?.id ? [{title: doc.title ?? 'Movie', href: `/movies/${doc.id}`}] : [],
+    }),
+  }),
+}
+
+const mainDocuments = defineDocuments([
+  {
+    route: '/movies/:id',
+    filter: `_type == "movie" && _id == $id`,
+  },
+])
 
 export default defineConfig({
   name: 'default',
@@ -13,22 +39,16 @@ export default defineConfig({
   plugins: [
     presentationTool({
       previewUrl: {
-        initial: import.meta.env.VERCEL_BRANCH_URL
-          ? `https://${import.meta.env.VERCEL_BRANCH_URL}`
-          : import.meta.env.VERCEL_PROJECT_PRODUCTION_URL
-            ? `https://${import.meta.env.VERCEL_PROJECT_PRODUCTION_URL}`
+        initial: branchUrl
+          ? `https://${branchUrl}`
+          : productionUrl
+            ? `https://${productionUrl}`
             : 'http://localhost:4321',
         preview: '/',
-
       },
       resolve: {
-        mainDocuments: defineDocuments([
-          // Document type, useful shorthand for singleton documents.
-          {
-            route: '/',
-            type: 'movie',
-          },
-        ]),
+        locations,
+        mainDocuments,
       },
     }),
     structureTool(),

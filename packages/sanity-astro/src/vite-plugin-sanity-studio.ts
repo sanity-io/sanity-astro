@@ -1,5 +1,6 @@
 import type {PartialDeep} from 'type-fest'
 import type {PluginOption} from 'vite'
+import {normalizeStudioBasePath} from './studio-base-path'
 
 export function vitePluginSanityStudio(resolvedOptions: {
   studioBasePath?: string
@@ -29,11 +30,17 @@ export function vitePluginSanityStudio(resolvedOptions: {
             "[@sanity/astro]: The `studioBasePath` option is required in `astro.config.mjs`. For example — `studioBasePath: '/admin'`",
           )
         }
+        const studioBasePath = normalizeStudioBasePath(resolvedOptions.studioBasePath)
+        if (!studioBasePath) {
+          throw new Error(
+            "[@sanity/astro]: The `studioBasePath` option cannot be empty. For example — `studioBasePath: '/admin'`",
+          )
+        }
         const studioRouterHistory = resolvedOptions.studioRouterHistory === 'hash' ? 'hash' : 'browser'
         return `
         import studioConfig from "${studioConfig.id}";
 
-        const embeddedStudioBasePath = "${resolvedOptions.studioBasePath}";
+        const embeddedStudioBasePath = "${studioBasePath}";
         const historyMode = "${studioRouterHistory}";
         const hashWorkspaceRootPath = "/";
         const browserWorkspaceRootPath = embeddedStudioBasePath;
