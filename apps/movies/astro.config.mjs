@@ -13,7 +13,10 @@ export default defineConfig({
       useCdn: true,
       studioBasePath: '/admin',
       stega: {
-        studioUrl: '/admin',
+        studioUrl: {
+          baseUrl: '/admin',
+          workspace: 'my-workspace',
+        },
       },
     }),
     react(),

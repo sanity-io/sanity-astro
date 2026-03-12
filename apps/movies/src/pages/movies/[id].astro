@@ -31,15 +31,23 @@ if (!movie) {
   {
     movie ? (
       <>
-        <p><a href="/">Back to all movies</a></p>
-        <h1>{movie.title}</h1>
-        {movie.releaseDate ? <p>Release date: {new Date(movie.releaseDate).toLocaleDateString()}</p> : null}
-        <p>Movie ID: <code>{movie._id}</code></p>
+        <p>
+          <a href="/">Back to all movies</a>
+        </p>
+        <h2>{movie.title}</h2>
+        {movie.releaseDate ? (
+          <p>Release date: {new Date(movie.releaseDate).toLocaleDateString()}</p>
+        ) : null}
+        <p>
+          Movie ID: <code>{movie._id}</code>
+        </p>
       </>
     ) : (
       <>
         <h1>Movie Not Found</h1>
-        <p><a href="/">Back to all movies</a></p>
+        <p>
+          <a href="/">Back to all movies</a>
+        </p>
       </>
     )
   }
