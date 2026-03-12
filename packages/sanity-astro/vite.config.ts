@@ -8,6 +8,7 @@ export default defineConfig(() => {
   return {
     base: '/src',
     build: {
+      emptyOutDir: false,
       lib: {
         entry: [path.resolve(__dirname, 'src/index.ts')],
         name,

@@ -146,6 +146,21 @@ export default defineConfig({
 
 2. You have to [enable CORS origins for authenticated requests][cors] for the domains you're running your website project on. The Studio should automatically detect and let you add this when you access the Studio on a new URL. Typically you need to add your local development server URL and your production URL to the CORS origin settings. It's important that you only enable CORS for authenticated requests on domains that _you_ control.
 
+### Workspaces in embedded Studio
+
+Sanity workspaces are supported by exporting an array from `defineConfig` (see [Studio Workspaces][studio-workspaces]).
+
+When Studio is embedded through `@sanity/astro`, the integration owns workspace `basePath` values so all workspaces stay mounted under your configured `studioBasePath` route:
+
+- In browser-history mode (`studioRouterHistory` omitted or `'browser'`), workspaces are mounted as:
+  - single workspace: `/<studioBasePath>` (for example `/admin`)
+  - multiple workspaces: `/<studioBasePath>/<workspace-name>` for every workspace
+- In hash-history mode (`studioRouterHistory: 'hash'`), workspaces are mounted inside the hash router:
+  - single workspace: `#/`
+  - multiple workspaces: `#/<workspace-name>` for every workspace
+
+If you are also using Visual Editing stega, set `stega.studioUrl` to your Studio route path (for example `'/admin'`) and avoid appending a manual hash suffix.
+
 ## Rendering rich text and block content with Portable Text
 
 Sanity uses an open specification for rich text and block content called [Portable Text][portabletext]. Portable Text stores content from the editor as JSON (and not HTML or Markdown). This makes it platform/framework agnostic, and also queryable (for example, you can query for blog posts that have more than 4 TypeScript code blocks).
@@ -368,3 +383,4 @@ const {data: movies} = await loadQuery<Array<{title: string}>>({
 [presentation-tool]: https://www.sanity.io/docs/configuring-the-presentation-tool
 [overlays]: https://www.sanity.io/docs/visual-editing-overlays
 [stega]: https://www.sanity.io/docs/stega
+[studio-workspaces]: https://www.sanity.io/docs/studio/workspaces
