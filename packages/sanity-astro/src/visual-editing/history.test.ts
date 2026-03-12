@@ -1,9 +1,5 @@
 import {describe, expect, it, vi} from 'vitest'
-import {
-  applyPresentationHistoryUpdate,
-  getPresentationUrl,
-  shouldPublishUrl,
-} from './history'
+import {applyPresentationHistoryUpdate, getPresentationUrl, shouldPublishUrl} from './history'
 
 describe('visual editing history helpers', () => {
   it('builds a presentation URL from location parts', () => {
