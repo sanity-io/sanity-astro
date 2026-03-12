@@ -5,6 +5,18 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.3.0](https://github.com/sanity-io/sanity-astro/compare/v3.2.11...v3.3.0) (2026-03-12)
+
+
+### Features
+
+* workspaces for embedded studios ([#378](https://github.com/sanity-io/sanity-astro/issues/378)) ([78ee2f8](https://github.com/sanity-io/sanity-astro/commit/78ee2f88abd38f4252c2c9ae7bb33a6970ab0c7c))
+
+
+### Bug Fixes
+
+* **deps:** add Astro 6 to peer dependency range ([#381](https://github.com/sanity-io/sanity-astro/issues/381)) ([8b4c592](https://github.com/sanity-io/sanity-astro/commit/8b4c592a341f60d5bc4a584504d4960a7aef2ece)), closes [#380](https://github.com/sanity-io/sanity-astro/issues/380)
+
 ## [3.2.11](https://github.com/sanity-io/sanity-astro/compare/v3.2.10...v3.2.11) (2025-12-18)
 
 
