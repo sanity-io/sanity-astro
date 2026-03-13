@@ -5,6 +5,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.3.1](https://github.com/sanity-io/sanity-astro/compare/v3.3.0...v3.3.1) (2026-03-12)
+
+
+### Bug Fixes
+
+* Keep presentation browser address in sync with front end ([#379](https://github.com/sanity-io/sanity-astro/issues/379)) ([7a293fe](https://github.com/sanity-io/sanity-astro/commit/7a293feb4dbb76a2d8afcf9ce639fd81a7c20c7a))
+
 ## [3.3.0](https://github.com/sanity-io/sanity-astro/compare/v3.2.11...v3.3.0) (2026-03-12)
 
 
