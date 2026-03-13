@@ -39,7 +39,9 @@ export function applyPresentationHistoryUpdate(
       return
     }
     default: {
-      throw new Error(`Unknown history update type: ${(update as {type?: string}).type ?? 'unknown'}`)
+      throw new Error(
+        `Unknown history update type: ${(update as {type?: string}).type ?? 'unknown'}`,
+      )
     }
   }
 }

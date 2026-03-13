@@ -3,11 +3,7 @@ import {
   VisualEditing as InternalVisualEditing,
   type VisualEditingOptions as InternalVisualEditingOptions,
 } from '@sanity/visual-editing/react'
-import {
-  applyPresentationHistoryUpdate,
-  getPresentationUrl,
-  shouldPublishUrl,
-} from './history'
+import {applyPresentationHistoryUpdate, getPresentationUrl, shouldPublishUrl} from './history'
 
 export type VisualEditingOptions = Pick<InternalVisualEditingOptions, 'zIndex'>
 type HistoryAdapter = NonNullable<InternalVisualEditingOptions['history']>

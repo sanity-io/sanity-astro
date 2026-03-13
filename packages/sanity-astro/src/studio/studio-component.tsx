@@ -36,7 +36,11 @@ export function StudioComponent(props: {history?: 'browser' | 'hash'}) {
   }, [props.history])
 
   React.useEffect(() => {
-    if (props.history !== 'hash' || typeof window === 'undefined' || typeof document === 'undefined') {
+    if (
+      props.history !== 'hash' ||
+      typeof window === 'undefined' ||
+      typeof document === 'undefined'
+    ) {
       return
     }
 
@@ -128,7 +132,9 @@ function getWorkspaceBasePaths(studioConfig: unknown): Set<string> {
     return new Set(
       studioConfig
         .map((workspace) => (workspace as {basePath?: unknown})?.basePath)
-        .filter((basePath): basePath is string => typeof basePath === 'string' && basePath.length > 0),
+        .filter(
+          (basePath): basePath is string => typeof basePath === 'string' && basePath.length > 0,
+        ),
     )
   }
 

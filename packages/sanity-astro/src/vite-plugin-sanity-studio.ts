@@ -36,7 +36,8 @@ export function vitePluginSanityStudio(resolvedOptions: {
             "[@sanity/astro]: The `studioBasePath` option cannot be empty. For example — `studioBasePath: '/admin'`",
           )
         }
-        const studioRouterHistory = resolvedOptions.studioRouterHistory === 'hash' ? 'hash' : 'browser'
+        const studioRouterHistory =
+          resolvedOptions.studioRouterHistory === 'hash' ? 'hash' : 'browser'
         return `
         import studioConfig from "${studioConfig.id}";
 
