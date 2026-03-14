@@ -12,6 +12,13 @@ const deployUrl =
 const productionUrl =
   (import.meta.env?.['VERCEL_PROJECT_PRODUCTION_URL'] as string | undefined) ??
   (typeof process !== 'undefined' ? process.env.VERCEL_PROJECT_PRODUCTION_URL : undefined)
+const configuredPreviewOrigin = branchUrl
+  ? `https://${branchUrl}`
+  : deployUrl
+    ? `https://${deployUrl}`
+    : productionUrl
+      ? `https://${productionUrl}`
+      : undefined
 
 const locations = {
   movie: defineLocations({
@@ -42,13 +49,7 @@ export default defineConfig({
   plugins: [
     presentationTool({
       previewUrl: {
-        initial: branchUrl
-          ? `https://${branchUrl}`
-          : deployUrl
-            ? `https://${deployUrl}`
-          : productionUrl
-            ? `https://${productionUrl}`
-            : 'http://localhost:4321',
+        initial: async ({origin}) => configuredPreviewOrigin ?? origin,
         preview: '/',
       },
       resolve: {
