@@ -6,6 +6,9 @@ import {defineDocuments, defineLocations, presentationTool} from 'sanity/present
 const branchUrl =
   (import.meta.env?.['VERCEL_BRANCH_URL'] as string | undefined) ??
   (typeof process !== 'undefined' ? process.env.VERCEL_BRANCH_URL : undefined)
+const deployUrl =
+  (import.meta.env?.['VERCEL_URL'] as string | undefined) ??
+  (typeof process !== 'undefined' ? process.env.VERCEL_URL : undefined)
 const productionUrl =
   (import.meta.env?.['VERCEL_PROJECT_PRODUCTION_URL'] as string | undefined) ??
   (typeof process !== 'undefined' ? process.env.VERCEL_PROJECT_PRODUCTION_URL : undefined)
@@ -41,6 +44,8 @@ export default defineConfig({
       previewUrl: {
         initial: branchUrl
           ? `https://${branchUrl}`
+          : deployUrl
+            ? `https://${deployUrl}`
           : productionUrl
             ? `https://${productionUrl}`
             : 'http://localhost:4321',
