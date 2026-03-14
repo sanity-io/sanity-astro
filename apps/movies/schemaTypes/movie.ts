@@ -1,5 +1,6 @@
-import {defineField, defineType} from 'sanity'
-import {MdLocalMovies as icon} from 'react-icons/md'
+import { defineField, defineType } from 'sanity'
+import { MdLocalMovies as icon } from 'react-icons/md'
+import { CustomInput } from '../sanity/components/custom-input'
 
 export default defineType({
   name: 'movie',
@@ -11,6 +12,9 @@ export default defineType({
       name: 'title',
       title: 'Title',
       type: 'string',
+      components: {
+        input: CustomInput,
+      },
     }),
     defineField({
       name: 'slug',
@@ -53,13 +57,13 @@ export default defineType({
       name: 'castMembers',
       title: 'Cast Members',
       type: 'array',
-      of: [{type: 'castMember'}],
+      of: [{ type: 'castMember' }],
     }),
     defineField({
       name: 'crewMembers',
       title: 'Crew Members',
       type: 'array',
-      of: [{type: 'crewMember'}],
+      of: [{ type: 'crewMember' }],
     }),
   ],
   preview: {
