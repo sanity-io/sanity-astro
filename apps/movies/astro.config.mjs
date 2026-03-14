@@ -12,6 +12,8 @@ export default defineConfig({
       dataset: 'production',
       useCdn: true,
       studioBasePath: '/admin',
+      logClientRequests: 'dev',
+
       stega: {
         studioUrl: {
           baseUrl: '/admin',
