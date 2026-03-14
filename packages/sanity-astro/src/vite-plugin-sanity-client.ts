@@ -41,6 +41,8 @@ export function vitePluginSanityClient(config: ClientConfig, options: PluginOpti
             const dimOpen = "\\u001B[2m";
             const dimClose = "\\u001B[22m";
             const viteLikeCyanOpen = "\\u001B[36m";
+            const greenOpen = "\\u001B[32m";
+            const yellowOpen = "\\u001B[33m";
             const colorClose = "\\u001B[0m";
             const pad2 = (value) => String(value).padStart(2, "0");
             const getTimestamp24h = () => {
@@ -52,6 +54,19 @@ export function vitePluginSanityClient(config: ClientConfig, options: PluginOpti
                 ":" +
                 pad2(now.getSeconds())
               );
+            };
+            const stringifyForLog = (value, maxLength = 300) => {
+              try {
+                const serialized = JSON.stringify(value);
+                if (typeof serialized !== "string") {
+                  return "[unserializable]";
+                }
+                return serialized.length > maxLength
+                  ? serialized.slice(0, maxLength) + "..."
+                  : serialized;
+              } catch {
+                return "[unserializable]";
+              }
             };
             const logRequestResult = (kind, label, startedAt, error) => {
               const durationMs = Math.round(performance.now() - startedAt);
@@ -71,7 +86,13 @@ export function vitePluginSanityClient(config: ClientConfig, options: PluginOpti
             if (fetchImpl) {
               sanityClient.fetch = async (...args) => {
                 const query = typeof args[0] === "string" ? args[0] : "[query]";
-                const label = query.slice(0, 120).replace(/\\s+/g, " ");
+                const queryValue = query.slice(0, 120).replace(/\\s+/g, " ");
+                const queryLabel = greenOpen + "query:" + colorClose + " " + queryValue;
+                const params =
+                  args.length > 1 && typeof args[1] !== "undefined"
+                    ? "  " + yellowOpen + "params:" + colorClose + " " + stringifyForLog(args[1])
+                    : "";
+                const label = queryLabel + params;
                 const startedAt = performance.now();
 
                 try {
