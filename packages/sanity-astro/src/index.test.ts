@@ -2,7 +2,7 @@ import {describe, expect, it, vi} from 'vitest'
 import sanityIntegration from './index'
 
 describe('sanity integration preview routes', () => {
-  it('injects preview enable/disable routes when preview mode is configured', () => {
+  it('injects preview enable/disable routes when preview mode is configured', async () => {
     const integration = sanityIntegration({
       projectId: 'project-id',
       dataset: 'dataset-name',
@@ -15,7 +15,7 @@ describe('sanity integration preview routes', () => {
     const updateConfig = vi.fn()
     const injectScript = vi.fn()
 
-    setup({injectRoute, updateConfig, injectScript} as never)
+    await setup({injectRoute, updateConfig, injectScript} as never)
 
     expect(injectRoute).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -33,7 +33,7 @@ describe('sanity integration preview routes', () => {
     )
   })
 
-  it('injects preview routes when preview mode is enabled without a token', () => {
+  it('injects preview routes when preview mode is enabled without a token', async () => {
     const integration = sanityIntegration({
       projectId: 'project-id',
       dataset: 'dataset-name',
@@ -46,7 +46,7 @@ describe('sanity integration preview routes', () => {
     const updateConfig = vi.fn()
     const injectScript = vi.fn()
 
-    setup({injectRoute, updateConfig, injectScript} as never)
+    await setup({injectRoute, updateConfig, injectScript} as never)
 
     expect(injectRoute).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -64,7 +64,7 @@ describe('sanity integration preview routes', () => {
     )
   })
 
-  it('does not inject preview routes when preview mode is disabled', () => {
+  it('does not inject preview routes when preview mode is disabled', async () => {
     const integration = sanityIntegration({
       projectId: 'project-id',
       dataset: 'dataset-name',
@@ -78,7 +78,7 @@ describe('sanity integration preview routes', () => {
     const updateConfig = vi.fn()
     const injectScript = vi.fn()
 
-    setup({injectRoute, updateConfig, injectScript} as never)
+    await setup({injectRoute, updateConfig, injectScript} as never)
 
     expect(
       injectRoute.mock.calls.some(
@@ -89,7 +89,7 @@ describe('sanity integration preview routes', () => {
     ).toBe(false)
   })
 
-  it('keeps preview routes off without visualEditing config', () => {
+  it('keeps preview routes off without visualEditing config', async () => {
     const integration = sanityIntegration({
       projectId: 'project-id',
       dataset: 'dataset-name',
@@ -99,7 +99,7 @@ describe('sanity integration preview routes', () => {
     const updateConfig = vi.fn()
     const injectScript = vi.fn()
 
-    setup({injectRoute, updateConfig, injectScript} as never)
+    await setup({injectRoute, updateConfig, injectScript} as never)
 
     expect(
       injectRoute.mock.calls.some(
@@ -108,5 +108,34 @@ describe('sanity integration preview routes', () => {
           route?.entrypoint === '@sanity/astro/visual-editing/draft-mode-disable.ts',
       ),
     ).toBe(false)
+  })
+
+  it('supports visualEditing shorthand with "enabled"', async () => {
+    const integration = sanityIntegration({
+      projectId: 'project-id',
+      dataset: 'dataset-name',
+      visualEditing: 'enabled',
+    })
+    const setup = integration.hooks['astro:config:setup']
+    const injectRoute = vi.fn()
+    const updateConfig = vi.fn()
+    const injectScript = vi.fn()
+
+    await setup({injectRoute, updateConfig, injectScript} as never)
+
+    expect(injectRoute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entrypoint: '@sanity/astro/visual-editing/draft-mode-enable.ts',
+        pattern: '/preview/enable',
+        prerender: false,
+      }),
+    )
+    expect(injectRoute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entrypoint: '@sanity/astro/visual-editing/draft-mode-disable.ts',
+        pattern: '/preview/disable',
+        prerender: false,
+      }),
+    )
   })
 })

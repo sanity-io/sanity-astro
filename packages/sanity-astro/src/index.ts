@@ -1,5 +1,6 @@
 import type {AstroIntegration} from 'astro'
 import {vitePluginSanityClient} from './vite-plugin-sanity-client'
+import {vitePluginSanityLoadQuery} from './vite-plugin-sanity-load-query'
 import {
   type SanityVisualEditingConfig,
   vitePluginSanityVisualEditing,
@@ -18,11 +19,82 @@ type VisualEditingOptions = {
 type IntegrationOptions = ClientConfig & {
   studioBasePath?: string
   studioRouterHistory?: 'browser' | 'hash'
-  visualEditing?: VisualEditingOptions
+  visualEditing?: 'enabled' | VisualEditingOptions
 }
 
 const defaultClientConfig: ClientConfig = {
   apiVersion: 'v2023-08-24',
+}
+
+function resolveRootDir(root: unknown): string | undefined {
+  if (typeof root === 'string') {
+    return root
+  }
+  if (root && typeof root === 'object') {
+    const maybeRoot = root as {href?: string; pathname?: string}
+    if (typeof maybeRoot.pathname === 'string') {
+      return decodeURIComponent(maybeRoot.pathname)
+    }
+    if (typeof maybeRoot.href === 'string') {
+      try {
+        const parsed = new URL(maybeRoot.href)
+        return parsed.protocol === 'file:'
+          ? decodeURIComponent(parsed.pathname)
+          : maybeRoot.href
+      } catch {
+        return maybeRoot.href
+      }
+    }
+  }
+
+  return undefined
+}
+
+async function readTokenFromDotEnv(
+  rootDir: string,
+  fileName: '.env.local' | '.env',
+): Promise<string | undefined> {
+  try {
+    const importModule = new Function(
+      'specifier',
+      'return import(specifier)',
+    ) as <T>(specifier: string) => Promise<T>
+    const [fs, path] = await Promise.all([
+      importModule<{readFile: (path: string, encoding: BufferEncoding) => Promise<string>}>(
+        'node:fs/promises',
+      ),
+      importModule<{join: (...parts: string[]) => string}>('node:path'),
+    ])
+    const {readFile} = fs
+    const {join} = path
+    const envFilePath = join(rootDir, fileName)
+    const envFileContents = await readFile(envFilePath, 'utf8')
+    const tokenMatch = envFileContents.match(/^SANITY_API_READ_TOKEN=(.*)$/m)
+    return tokenMatch?.[1]?.trim().replace(/^['"]|['"]$/g, '')
+  } catch {
+    return undefined
+  }
+}
+
+async function resolveVisualEditingToken(
+  explicitToken: string | undefined,
+  rootDir: string | undefined,
+): Promise<string | undefined> {
+  if (explicitToken) {
+    return explicitToken
+  }
+  if (process.env.SANITY_API_READ_TOKEN) {
+    return process.env.SANITY_API_READ_TOKEN
+  }
+  if (!rootDir) {
+    return undefined
+  }
+
+  const cwd = rootDir || process.cwd()
+  return (
+    (await readTokenFromDotEnv(cwd, '.env.local')) ||
+    (await readTokenFromDotEnv(cwd, '.env'))
+  )
 }
 
 function createPreviewModeId(): string {
@@ -44,14 +116,12 @@ export default function sanityIntegration(
   } = integrationConfig
   const normalizedStudioBasePath = normalizeStudioBasePath(studioBasePath)
   const studioRouterHistory = inputStudioRouterHistory === 'hash' ? 'hash' : 'browser'
+  const visualEditingOptions: VisualEditingOptions | undefined =
+    visualEditing === 'enabled' ? {} : visualEditing
   // Keep backwards compatibility: no visualEditing config means no preview routes.
-  const previewMode = visualEditing ? resolvePreviewModeConfig(visualEditing.previewMode) : false
-  const visualEditingToken = visualEditing?.token || process.env.SANITY_API_READ_TOKEN
-  const visualEditingConfig: SanityVisualEditingConfig = {
-    previewMode,
-    previewModeId: previewMode ? createPreviewModeId() : undefined,
-    token: visualEditingToken,
-  }
+  const previewMode = visualEditingOptions
+    ? resolvePreviewModeConfig(visualEditingOptions.previewMode)
+    : false
 
   if (!!studioBasePath && studioBasePath.match(/https?:\/\//)) {
     throw new Error(
@@ -61,15 +131,23 @@ export default function sanityIntegration(
   return {
     name: '@sanity/astro',
     hooks: {
-      'astro:config:setup': ({injectScript, injectRoute, updateConfig}) => {
+      'astro:config:setup': async ({config, injectScript, injectRoute, updateConfig}) => {
+        const rootDir = resolveRootDir(config?.root)
+        const visualEditingToken = await resolveVisualEditingToken(
+          visualEditingOptions?.token,
+          rootDir,
+        )
+        const visualEditingConfig: SanityVisualEditingConfig = {
+          previewMode,
+          previewModeId: previewMode ? createPreviewModeId() : undefined,
+          token: visualEditingToken,
+        }
+
         updateConfig({
           vite: {
             optimizeDeps: {
               include: [
-                'react-compiler-runtime',
-                'react-is',
-                'styled-components',
-                'lodash/startCase.js',
+                'react/compiler-runtime',
               ],
             },
             plugins: [
@@ -77,6 +155,7 @@ export default function sanityIntegration(
                 ...defaultClientConfig,
                 ...clientConfig,
               }),
+              vitePluginSanityLoadQuery(),
               vitePluginSanityVisualEditing(visualEditingConfig),
               vitePluginSanityStudio({
                 studioBasePath: normalizedStudioBasePath,
