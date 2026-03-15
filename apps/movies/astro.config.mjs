@@ -12,6 +12,7 @@ export default defineConfig({
       dataset: 'production',
       useCdn: true,
       studioBasePath: '/admin',
+      visualEditing: 'enabled',
       stega: {
         studioUrl: {
           baseUrl: '/admin',

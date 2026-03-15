@@ -237,12 +237,10 @@ Add `VisualEditing` from `@sanity/astro/visual-editing` in your ["page shell" la
 ```ts
 ---
 import {VisualEditing} from '@sanity/astro/visual-editing'
-
 export type props = {
   title: string
 }
 const {title} = Astro.props
-const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED == 'true'
 ---
 
 <html lang="en">
@@ -255,7 +253,7 @@ const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLE
   </head>
   <body>
     <slot />
-    <VisualEditing enabled={visualEditingEnabled} zIndex={1000} />
+    <VisualEditing zIndex={1000} />
     <!--                                          ^optional -->
   </body>
 </html>
@@ -263,17 +261,55 @@ const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLE
 
 `VisualEditing` is needed to render Overlays. It's a React component under the hood, so you'll need the [React integration for Astro][astro-react] if you don't already use that at this point.
 
-`VisualEditing` takes two props:
+`VisualEditing` takes two optional props:
 
-- `enabled`: so you can control whether or not visual editing is enabled depending on your environment.
+- `enabled` (optional): override for forcing overlays on or off. If omitted, draft mode cookie state decides.
 - `zIndex` (optional): allows you to change the `z-index` of overlay elements.
 
-In the example above, `enabled` is controlled using an [environment variable](https://docs.astro.build/en/guides/environment-variables/):
+By default, `VisualEditing` checks the draft mode cookie set by the preview routes below.
 
-```sh
-// .env.local
-PUBLIC_SANITY_VISUAL_EDITING_ENABLED="true"
+### 1b. Optionally - Configure draft mode routes & token
+
+By default, `@sanity/astro` uses `SANITY_API_READ_TOKEN` as the visual editing token.
+
+You'll require a read-only token for fetching and showing draft content. To get one:
+
+1. Go to https://sanity.io/manage and select your project.
+2. Click on the 🔌 API tab.
+3. Click on + Add API token.
+4. Name it "SANITY_API_READ_TOKEN" and set Permissions to Viewer and hit Save.
+5. Copy the token and add it to your `.env.local` file: `SANITY_API_READ_TOKEN="<paste your token here>"`
+
+To enable visual editing with default behavior, you can use the shorthand:
+
+```js
+sanity({
+  projectId: '<YOUR-PROJECT-ID>',
+  dataset: '<YOUR-DATASET-NAME>',
+  visualEditing: 'enabled',
+})
 ```
+
+The integration will automatically pick up this token for your `visualEditing` configuration. If you'd like to customize the token and/or preview routes, use the object form:
+
+```js
+sanity({
+  projectId: '<YOUR-PROJECT-ID>',
+  dataset: '<YOUR-DATASET-NAME>',
+  visualEditing: {
+    token: process.env.MY_CUSTOM_VISUAL_EDITING_TOKEN,
+  },
+})
+```
+
+By default, `@sanity/astro` uses the following routes for enabling and disabling the draft mode:
+
+- `enable`: `/preview/enable`
+- `disable`: `/preview/disable`
+
+You only need to set `visualEditing.previewMode` in the integration settings in `astro.config` if you want to override those route paths.
+
+The enable route validates the preview URL secret from Presentation and sets an HTTP-only draft mode cookie. The disable route clears that cookie.
 
 ### 2. Add the Presentation tool to the Studio
 
@@ -296,66 +332,111 @@ export default defineConfig({
 })
 ```
 
-Now, all you need is a `loadQuery` helper function akin to this one:
+`@sanity/astro` ships a built-in `loadQuery` helper as the `sanity:load-query` virtual module, so you do not need to create and maintain a local `load-query.ts` file.
+
+`loadQuery` exists because Visual Editing needs a consistent server-side data loading path that can:
+
+- use draft perspective when draft mode is enabled
+- use published perspective when draft mode is disabled
+- ensure a token is present only when draft reads are needed
+- keep stega-enabled query behavior consistent with overlay expectations
+
+If you prefer, you can also create your own `loadQuery` helper instead of using `sanity:load-query`.
+The built-in helper is convenience, not a hard requirement.
+
+Now, you can query and interact with stega-enabled data using the visual editing overlays:
 
 ```ts
-// load-query.ts
-import {type QueryParams} from 'sanity'
+// some.astro file
+import {loadQuery} from 'sanity:load-query'
+
+const {data: movies} = await loadQuery<Array<{title: string}>>({
+  query: `*[_type == 'movie']`,
+  cookies: Astro.cookies,
+})
+```
+
+Custom helper example:
+
+```ts
+// src/load-query.ts
+import type {AstroCookies} from 'astro'
+import type {QueryParams} from '@sanity/client'
+import {isDraftMode, resolvePreviewModeConfig} from '@sanity/astro/visual-editing'
 import {sanityClient} from 'sanity:client'
+import {sanityVisualEditing} from 'sanity:visual-editing'
 
-const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED === 'true'
-const token = import.meta.env.SANITY_API_READ_TOKEN
-
-export async function loadQuery<QueryResponse>({
+export async function loadQuery<T>({
   query,
-  params,
+  params = {},
+  cookies,
 }: {
   query: string
   params?: QueryParams
-}) {
+  cookies: AstroCookies
+}): Promise<{data: T; perspective: 'drafts' | 'published'; sourceMap?: unknown}> {
+  const previewMode = resolvePreviewModeConfig(sanityVisualEditing.previewMode)
+  const visualEditingEnabled = previewMode
+    ? isDraftMode(cookies, {
+        cookieName: previewMode.cookie,
+        ...(sanityVisualEditing.previewModeId
+          ? {cookieValue: sanityVisualEditing.previewModeId}
+          : {}),
+      })
+    : false
+
+  const token =
+    sanityVisualEditing.token ||
+    import.meta.env.SANITY_API_READ_TOKEN ||
+    (typeof process !== 'undefined' ? process.env?.SANITY_API_READ_TOKEN : undefined)
+
   if (visualEditingEnabled && !token) {
-    throw new Error(
-      'The `SANITY_API_READ_TOKEN` environment variable is required during Visual Editing.',
-    )
+    throw new Error('The `SANITY_API_READ_TOKEN` environment variable is required in Draft Mode.')
   }
 
   const perspective = visualEditingEnabled ? 'drafts' : 'published'
+  const useCdn = visualEditingEnabled ? false : sanityClient.config().useCdn ?? true
 
-  const {result, resultSourceMap} = await sanityClient.fetch<QueryResponse>(query, params ?? {}, {
+  const {result, resultSourceMap} = await sanityClient.fetch(query, params, {
     filterResponse: false,
     perspective,
     resultSourceMap: visualEditingEnabled ? 'withKeyArraySelector' : false,
     stega: visualEditingEnabled,
     ...(visualEditingEnabled ? {token} : {}),
-    useCdn: !visualEditingEnabled,
+    useCdn,
   })
 
   return {
-    data: result,
+    data: result as T,
     sourceMap: resultSourceMap,
     perspective,
   }
 }
 ```
 
-You'll notice that we rely on a "read token" which is required in order to enable stega encoding and for authentication when Sanity Studio is live previewing your application.
+### `loadQuery` vs `sanityClient`
 
-1. Go to https://sanity.io/manage and select your project.
-2. Click on the 🔌 API tab.
-3. Click on + Add API token.
-4. Name it "SANITY_API_READ_TOKEN" and set Permissions to Viewer and hit Save.
-5. Copy the token and add it to your `.env.local` file: `SANITY_API_READ_TOKEN="<paste your token here>"`
+Use `loadQuery` when:
 
-Now, you can query and interact with stega-enabled data using the visual editing overlays:
+- rendering Astro pages that participate in Visual Editing
+- you want draft/published perspective to switch automatically via draft mode cookie
+- you need stega-compatible query loading behavior that matches overlays
 
-```ts
-// some.astro file
-import {loadQuery} from '../load-query'
+Use `sanityClient` when:
 
-const {data: movies} = await loadQuery<Array<{title: string}>>({
-  query: `*[_type == 'movie']`,
-})
-```
+- running one-off scripts, utilities, or backend tasks unrelated to Visual Editing
+- querying data where draft mode cookie context is not available or not relevant
+- building custom fetch logic where you intentionally manage perspective/token yourself
+
+### Disable Visual Editing tooling entirely
+
+Visual Editing is opt-in. To disable it completely:
+
+1. Remove `<VisualEditing />` from your layout.
+2. Omit `visualEditing` from the `sanity()` integration config (do not configure preview routes).
+3. Do not enable stega in integration config.
+
+If you only need a temporary UI-level off switch, keep the component but pass `enabled={false}`.
 
 ### Resources
 

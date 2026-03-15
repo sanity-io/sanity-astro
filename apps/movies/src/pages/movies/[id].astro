@@ -1,6 +1,6 @@
 ---
 import Layout from '../../layout.astro'
-import {loadQuery} from '../../load-query'
+import {loadQuery} from 'sanity:load-query'
 
 const id = Astro.params.id
 
@@ -20,6 +20,7 @@ const {data: movie} = await loadQuery<{
     releaseDate
   }`,
   params: {id},
+  cookies: Astro.cookies,
 })
 
 if (!movie) {

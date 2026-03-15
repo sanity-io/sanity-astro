@@ -1,12 +1,13 @@
 ---
 import Layout from '../layout.astro'
-import {loadQuery} from '../load-query'
+import {loadQuery} from 'sanity:load-query'
 
 const {data: movies} = await loadQuery<Array<{_id: string; title: string}>>({
   query: `*[_type == 'movie'] | order(title asc) {
     _id,
     title
   }`,
+  cookies: Astro.cookies,
 })
 ---
 

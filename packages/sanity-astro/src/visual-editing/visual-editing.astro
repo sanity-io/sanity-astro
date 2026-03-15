@@ -1,11 +1,23 @@
 ---
 import {VisualEditingComponent, type VisualEditingOptions} from './visual-editing-component'
+import {isDraftMode, resolvePreviewModeConfig} from './draft-mode'
+import {sanityVisualEditing} from 'sanity:visual-editing'
 
 export interface Props extends VisualEditingOptions {
   enabled?: boolean
 }
 
 const {enabled, zIndex} = Astro.props
+const previewMode = resolvePreviewModeConfig(sanityVisualEditing.previewMode)
+const draftModeOptions = previewMode
+  ? {
+      cookieName: previewMode.cookie,
+      ...(sanityVisualEditing.previewModeId ? {cookieValue: sanityVisualEditing.previewModeId} : {}),
+    }
+  : undefined
+const resolvedEnabled =
+  enabled ??
+  (previewMode ? isDraftMode(Astro.cookies, draftModeOptions) : false)
 ---
 
-{enabled ? <VisualEditingComponent client:only="react" zIndex={zIndex} /> : null}
+{resolvedEnabled ? <VisualEditingComponent client:only="react" zIndex={zIndex} /> : null}
