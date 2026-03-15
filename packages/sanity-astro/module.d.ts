@@ -14,6 +14,18 @@ declare module 'sanity:visual-editing' {
   }
 }
 
+declare module 'sanity:load-query' {
+  export function loadQuery<QueryResponse>(input: {
+    query: string
+    params?: import('sanity').QueryParams
+    cookies?: {get: (name: string) => {value?: string} | string | undefined}
+  }): Promise<{
+    data: QueryResponse
+    sourceMap?: unknown
+    perspective: 'drafts' | 'published'
+  }>
+}
+
 declare module '*.astro' {
   const component: unknown
   export default component

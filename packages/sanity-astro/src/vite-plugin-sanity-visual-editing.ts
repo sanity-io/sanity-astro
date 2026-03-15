@@ -12,6 +12,7 @@ export interface SanityVisualEditingConfig {
 }
 
 export function vitePluginSanityVisualEditing(config: SanityVisualEditingConfig) {
+  const {token, ...rest} = config
   return {
     name: 'sanity:visual-editing',
     resolveId(id: string) {
@@ -22,7 +23,14 @@ export function vitePluginSanityVisualEditing(config: SanityVisualEditingConfig)
     load(id: string) {
       if (id === resolvedVirtualModuleId) {
         return `
-          export const sanityVisualEditing = ${serialize(config)};
+          const configuredToken = ${serialize(token)};
+          const runtimeToken =
+            import.meta.env.SANITY_API_READ_TOKEN ||
+            (typeof process !== "undefined" ? process.env?.SANITY_API_READ_TOKEN : undefined);
+          export const sanityVisualEditing = {
+            ...${serialize(rest)},
+            token: configuredToken || runtimeToken
+          };
         `
       }
     },

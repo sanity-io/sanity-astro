@@ -12,9 +12,7 @@ export default defineConfig({
       dataset: 'production',
       useCdn: true,
       studioBasePath: '/admin',
-      visualEditing: {
-        token: process.env.SANITY_API_READ_TOKEN,
-      },
+      visualEditing: 'enabled',
       stega: {
         studioUrl: {
           baseUrl: '/admin',
