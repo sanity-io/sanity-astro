@@ -20,6 +20,7 @@ const {data: movie} = await loadQuery<{
     releaseDate
   }`,
   params: {id},
+  cookies: Astro.cookies,
 })
 
 if (!movie) {

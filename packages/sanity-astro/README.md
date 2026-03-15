@@ -237,12 +237,10 @@ Add `VisualEditing` from `@sanity/astro/visual-editing` in your ["page shell" la
 ```ts
 ---
 import {VisualEditing} from '@sanity/astro/visual-editing'
-
 export type props = {
   title: string
 }
 const {title} = Astro.props
-const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED == 'true'
 ---
 
 <html lang="en">
@@ -255,7 +253,7 @@ const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLE
   </head>
   <body>
     <slot />
-    <VisualEditing enabled={visualEditingEnabled} zIndex={1000} />
+    <VisualEditing zIndex={1000} />
     <!--                                          ^optional -->
   </body>
 </html>
@@ -265,15 +263,40 @@ const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLE
 
 `VisualEditing` takes two props:
 
-- `enabled`: so you can control whether or not visual editing is enabled depending on your environment.
+- `enabled`: optional override for forcing overlays on or off. If omitted, draft mode cookie state decides.
 - `zIndex` (optional): allows you to change the `z-index` of overlay elements.
 
-In the example above, `enabled` is controlled using an [environment variable](https://docs.astro.build/en/guides/environment-variables/):
+By default, `VisualEditing` checks the draft mode cookie set by the preview routes below.
 
-```sh
-// .env.local
-PUBLIC_SANITY_VISUAL_EDITING_ENABLED="true"
+### 1b. Configure draft mode routes
+
+Add `visualEditing` and a read token to the integration config in `astro.config.mjs`:
+
+```js
+import sanity from '@sanity/astro'
+import {defineConfig} from 'astro/config'
+
+export default defineConfig({
+  integrations: [
+    sanity({
+      projectId: '<YOUR-PROJECT-ID>',
+      dataset: '<YOUR-DATASET-NAME>',
+      visualEditing: {
+        token: process.env.SANITY_API_READ_TOKEN,
+      },
+    }),
+  ],
+})
 ```
+
+By default, `@sanity/astro` uses:
+
+- `enable`: `/preview/enable`
+- `disable`: `/preview/disable`
+
+You only need to set `visualEditing.previewMode` if you want to override those route paths.
+
+The enable route validates the preview URL secret from Presentation and sets an HTTP-only draft mode cookie. The disable route clears that cookie.
 
 ### 2. Add the Presentation tool to the Studio
 
@@ -300,19 +323,33 @@ Now, all you need is a `loadQuery` helper function akin to this one:
 
 ```ts
 // load-query.ts
+import {isDraftMode, resolvePreviewModeConfig} from '@sanity/astro/visual-editing'
 import {type QueryParams} from 'sanity'
 import {sanityClient} from 'sanity:client'
+import {sanityVisualEditing} from 'sanity:visual-editing'
 
-const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED === 'true'
-const token = import.meta.env.SANITY_API_READ_TOKEN
+type CookieStoreLike = {
+  get: (name: string) => {value?: string} | string | undefined
+}
 
 export async function loadQuery<QueryResponse>({
   query,
   params,
+  cookies,
 }: {
   query: string
   params?: QueryParams
+  cookies?: CookieStoreLike
 }) {
+  const previewMode = resolvePreviewModeConfig(sanityVisualEditing.previewMode)
+  const visualEditingEnabled = previewMode
+    ? isDraftMode(cookies, {
+        cookieName: previewMode.cookie,
+        cookieValue: sanityVisualEditing.previewModeId,
+      })
+    : false
+  const token = sanityVisualEditing.token || import.meta.env.SANITY_API_READ_TOKEN
+
   if (visualEditingEnabled && !token) {
     throw new Error(
       'The `SANITY_API_READ_TOKEN` environment variable is required during Visual Editing.',
@@ -354,6 +391,7 @@ import {loadQuery} from '../load-query'
 
 const {data: movies} = await loadQuery<Array<{title: string}>>({
   query: `*[_type == 'movie']`,
+  cookies: Astro.cookies,
 })
 ```
 
