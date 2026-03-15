@@ -261,40 +261,43 @@ const {title} = Astro.props
 
 `VisualEditing` is needed to render Overlays. It's a React component under the hood, so you'll need the [React integration for Astro][astro-react] if you don't already use that at this point.
 
-`VisualEditing` takes two props:
+`VisualEditing` takes two optional props:
 
-- `enabled`: optional override for forcing overlays on or off. If omitted, draft mode cookie state decides.
+- `enabled` (optional): override for forcing overlays on or off. If omitted, draft mode cookie state decides.
 - `zIndex` (optional): allows you to change the `z-index` of overlay elements.
 
 By default, `VisualEditing` checks the draft mode cookie set by the preview routes below.
 
-### 1b. Configure draft mode routes
+### 1b. Optionally - Configure draft mode routes & token
 
-Add `visualEditing` and a read token to the integration config in `astro.config.mjs`:
+By default, `@sanity/astro` uses `SANITY_API_READ_TOKEN` as the visual editing token.
+
+You'll require a read-only token for fetching and showing draft content. To get one:
+
+1. Go to https://sanity.io/manage and select your project.
+2. Click on the 🔌 API tab.
+3. Click on + Add API token.
+4. Name it "SANITY_API_READ_TOKEN" and set Permissions to Viewer and hit Save.
+5. Copy the token and add it to your `.env.local` file: `SANITY_API_READ_TOKEN="<paste your token here>"`
+
+The integration will automatically pick up this token for your `visualEditing` configuration in the integration settings, but if you'd like to use a different name for the token the default can be overridden:
 
 ```js
-import sanity from '@sanity/astro'
-import {defineConfig} from 'astro/config'
-
-export default defineConfig({
-  integrations: [
-    sanity({
-      projectId: '<YOUR-PROJECT-ID>',
-      dataset: '<YOUR-DATASET-NAME>',
-      visualEditing: {
-        token: process.env.SANITY_API_READ_TOKEN,
-      },
-    }),
-  ],
+sanity({
+  projectId: '<YOUR-PROJECT-ID>',
+  dataset: '<YOUR-DATASET-NAME>',
+  visualEditing: {
+    token: process.env.MY_CUSTOM_VISUAL_EDITING_TOKEN,
+  },
 })
 ```
 
-By default, `@sanity/astro` uses:
+By default, `@sanity/astro` uses the following routes for enabling and disabling the draft mode:
 
 - `enable`: `/preview/enable`
 - `disable`: `/preview/disable`
 
-You only need to set `visualEditing.previewMode` if you want to override those route paths.
+You only need to set `visualEditing.previewMode` in the integration settings in `astro.config` if you want to override those route paths.
 
 The enable route validates the preview URL secret from Presentation and sets an HTTP-only draft mode cookie. The disable route clears that cookie.
 
@@ -374,14 +377,6 @@ export async function loadQuery<QueryResponse>({
   }
 }
 ```
-
-You'll notice that we rely on a "read token" which is required in order to enable stega encoding and for authentication when Sanity Studio is live previewing your application.
-
-1. Go to https://sanity.io/manage and select your project.
-2. Click on the 🔌 API tab.
-3. Click on + Add API token.
-4. Name it "SANITY_API_READ_TOKEN" and set Permissions to Viewer and hit Save.
-5. Copy the token and add it to your `.env.local` file: `SANITY_API_READ_TOKEN="<paste your token here>"`
 
 Now, you can query and interact with stega-enabled data using the visual editing overlays:
 
