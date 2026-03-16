@@ -8,6 +8,7 @@ import {normalizeStudioBasePath, studioRoutePattern} from './studio-base-path'
 type IntegrationOptions = ClientConfig & {
   studioBasePath?: string
   studioRouterHistory?: 'browser' | 'hash'
+  logClientRequests?: 'dev' | 'build' | 'always'
 }
 
 const defaultClientConfig: ClientConfig = {
@@ -20,9 +21,11 @@ export default function sanityIntegration(
   const studioBasePath = integrationConfig.studioBasePath
   const normalizedStudioBasePath = normalizeStudioBasePath(studioBasePath)
   const studioRouterHistory = integrationConfig.studioRouterHistory === 'hash' ? 'hash' : 'browser'
+  const logClientRequests = integrationConfig.logClientRequests
   const clientConfig = integrationConfig
   delete clientConfig.studioBasePath
   delete clientConfig.studioRouterHistory
+  delete clientConfig.logClientRequests
 
   if (!!studioBasePath && studioBasePath.match(/https?:\/\//)) {
     throw new Error(
@@ -48,7 +51,7 @@ export default function sanityIntegration(
               vitePluginSanityClient({
                 ...defaultClientConfig,
                 ...clientConfig,
-              }),
+              }, {logClientRequests}),
               vitePluginSanityStudio({
                 studioBasePath: normalizedStudioBasePath,
                 studioRouterHistory,
