@@ -110,11 +110,11 @@ describe('sanity integration preview routes', () => {
     ).toBe(false)
   })
 
-  it('supports visualEditing shorthand with "enabled"', async () => {
+  it('supports visualEditing shorthand with "draftMode"', async () => {
     const integration = sanityIntegration({
       projectId: 'project-id',
       dataset: 'dataset-name',
-      visualEditing: 'enabled',
+      visualEditing: 'draftMode',
     })
     const setup = integration.hooks['astro:config:setup']
     const injectRoute = vi.fn()
@@ -137,5 +137,27 @@ describe('sanity integration preview routes', () => {
         prerender: false,
       }),
     )
+  })
+
+  it('supports visualEditing shorthand with explicit "disabled"', async () => {
+    const integration = sanityIntegration({
+      projectId: 'project-id',
+      dataset: 'dataset-name',
+      visualEditing: 'disabled',
+    })
+    const setup = integration.hooks['astro:config:setup']
+    const injectRoute = vi.fn()
+    const updateConfig = vi.fn()
+    const injectScript = vi.fn()
+
+    await setup({injectRoute, updateConfig, injectScript} as never)
+
+    expect(
+      injectRoute.mock.calls.some(
+        ([route]) =>
+          route?.entrypoint === '@sanity/astro/visual-editing/draft-mode-enable.ts' ||
+          route?.entrypoint === '@sanity/astro/visual-editing/draft-mode-disable.ts',
+      ),
+    ).toBe(false)
   })
 })

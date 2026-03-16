@@ -230,7 +230,33 @@ export default defineConfig({
 })
 ```
 
-### 1. Enable [Overlays][overlays] using the `VisualEditing` component
+### 1. Quick path (recommended): token + `draftMode` + `<VisualEditing />` + `loadQuery`
+
+Use this path when you want Visual Editing working quickly with default behavior.
+
+#### 1a. Add a read token
+
+By default, `@sanity/astro` uses `SANITY_API_READ_TOKEN` as the visual editing token.
+
+You'll require a read-only token for fetching and showing draft content. To get one:
+
+1. Go to https://sanity.io/manage and select your project.
+2. Click on the 🔌 API tab.
+3. Click on + Add API token.
+4. Name it "SANITY_API_READ_TOKEN" and set Permissions to Viewer and hit Save.
+5. Copy the token and add it to your `.env.local` file: `SANITY_API_READ_TOKEN="<paste your token here>"`
+
+#### 1b. Turn on draft mode routes in `astro.config`
+
+```js
+sanity({
+  projectId: '<YOUR-PROJECT-ID>',
+  dataset: '<YOUR-DATASET-NAME>',
+  visualEditing: 'draftMode',
+})
+```
+
+#### 1c. Render overlays with `<VisualEditing />`
 
 Add `VisualEditing` from `@sanity/astro/visual-editing` in your ["page shell" layout](https://docs.astro.build/en/basics/layouts/):
 
@@ -259,57 +285,30 @@ const {title} = Astro.props
 </html>
 ```
 
-`VisualEditing` is needed to render Overlays. It's a React component under the hood, so you'll need the [React integration for Astro][astro-react] if you don't already use that at this point.
+`VisualEditing` is needed to render overlays. It's a React component under the hood, so you'll need the [React integration for Astro][astro-react] if you don't already use that at this point.
 
 `VisualEditing` takes two optional props:
 
 - `enabled` (optional): override for forcing overlays on or off. If omitted, draft mode cookie state decides.
 - `zIndex` (optional): allows you to change the `z-index` of overlay elements.
 
-By default, `VisualEditing` checks the draft mode cookie set by the preview routes below.
+By default, `VisualEditing` checks the draft mode cookie set by the preview routes.
 
-### 1b. Optionally - Configure draft mode routes & token
+#### 1d. Fetch page data with built-in `loadQuery`
 
-By default, `@sanity/astro` uses `SANITY_API_READ_TOKEN` as the visual editing token.
+`@sanity/astro` ships a built-in `loadQuery` helper as the `sanity:load-query` virtual module, so you do not need to create and maintain a local `load-query.ts` file.
 
-You'll require a read-only token for fetching and showing draft content. To get one:
+```ts
+// some.astro file
+import {loadQuery} from 'sanity:load-query'
 
-1. Go to https://sanity.io/manage and select your project.
-2. Click on the 🔌 API tab.
-3. Click on + Add API token.
-4. Name it "SANITY_API_READ_TOKEN" and set Permissions to Viewer and hit Save.
-5. Copy the token and add it to your `.env.local` file: `SANITY_API_READ_TOKEN="<paste your token here>"`
-
-To enable visual editing with default behavior, you can use the shorthand:
-
-```js
-sanity({
-  projectId: '<YOUR-PROJECT-ID>',
-  dataset: '<YOUR-DATASET-NAME>',
-  visualEditing: 'enabled',
+const {data: movies} = await loadQuery<Array<{title: string}>>({
+  query: `*[_type == 'movie']`,
+  cookies: Astro.cookies,
 })
 ```
 
-The integration will automatically pick up this token for your `visualEditing` configuration. If you'd like to customize the token and/or preview routes, use the object form:
-
-```js
-sanity({
-  projectId: '<YOUR-PROJECT-ID>',
-  dataset: '<YOUR-DATASET-NAME>',
-  visualEditing: {
-    token: process.env.MY_CUSTOM_VISUAL_EDITING_TOKEN,
-  },
-})
-```
-
-By default, `@sanity/astro` uses the following routes for enabling and disabling the draft mode:
-
-- `enable`: `/preview/enable`
-- `disable`: `/preview/disable`
-
-You only need to set `visualEditing.previewMode` in the integration settings in `astro.config` if you want to override those route paths.
-
-The enable route validates the preview URL secret from Presentation and sets an HTTP-only draft mode cookie. The disable route clears that cookie.
+`loadQuery` keeps Visual Editing behavior consistent by switching draft/published perspective, enforcing token usage only for draft reads, and matching stega expectations.
 
 ### 2. Add the Presentation tool to the Studio
 
@@ -332,31 +331,45 @@ export default defineConfig({
 })
 ```
 
-`@sanity/astro` ships a built-in `loadQuery` helper as the `sanity:load-query` virtual module, so you do not need to create and maintain a local `load-query.ts` file.
+### 4. Advanced options
 
-`loadQuery` exists because Visual Editing needs a consistent server-side data loading path that can:
+If you need more control than the quick path, `visualEditing` also supports an object form:
 
-- use draft perspective when draft mode is enabled
-- use published perspective when draft mode is disabled
-- ensure a token is present only when draft reads are needed
-- keep stega-enabled query behavior consistent with overlay expectations
+```js
+sanity({
+  projectId: '<YOUR-PROJECT-ID>',
+  dataset: '<YOUR-DATASET-NAME>',
+  visualEditing: {
+    token: process.env.MY_CUSTOM_VISUAL_EDITING_TOKEN,
+    previewMode: {
+      enable: '/api/draft-mode/enable',
+      disable: '/api/draft-mode/disable',
+      cookie: 'my-draft-mode-cookie',
+    },
+  },
+})
+```
+
+Available options:
+
+- `visualEditing: 'draftMode'`: turn on default draft mode routes.
+- `visualEditing: 'disabled'`: explicit opt-out from preview routes.
+- `visualEditing.token`: override the token (otherwise `SANITY_API_READ_TOKEN` is used).
+- `visualEditing.previewMode.enable`: custom route for enabling draft mode.
+- `visualEditing.previewMode.disable`: custom route for disabling draft mode.
+- `visualEditing.previewMode.cookie`: custom cookie name for draft mode state.
+
+Default draft mode routes:
+
+- `enable`: `/preview/enable`
+- `disable`: `/preview/disable`
+
+The enable route validates the preview URL secret from Presentation and sets an HTTP-only draft mode cookie. The disable route clears that cookie.
 
 If you prefer, you can also create your own `loadQuery` helper instead of using `sanity:load-query`.
 The built-in helper is convenience, not a hard requirement.
 
-Now, you can query and interact with stega-enabled data using the visual editing overlays:
-
-```ts
-// some.astro file
-import {loadQuery} from 'sanity:load-query'
-
-const {data: movies} = await loadQuery<Array<{title: string}>>({
-  query: `*[_type == 'movie']`,
-  cookies: Astro.cookies,
-})
-```
-
-Custom helper example:
+Custom `loadQuery` helper example:
 
 ```ts
 // src/load-query.ts
@@ -395,7 +408,7 @@ export async function loadQuery<T>({
   }
 
   const perspective = visualEditingEnabled ? 'drafts' : 'published'
-  const useCdn = visualEditingEnabled ? false : sanityClient.config().useCdn ?? true
+  const useCdn = visualEditingEnabled ? false : (sanityClient.config().useCdn ?? true)
 
   const {result, resultSourceMap} = await sanityClient.fetch(query, params, {
     filterResponse: false,

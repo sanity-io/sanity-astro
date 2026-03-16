@@ -19,7 +19,7 @@ type VisualEditingOptions = {
 type IntegrationOptions = ClientConfig & {
   studioBasePath?: string
   studioRouterHistory?: 'browser' | 'hash'
-  visualEditing?: 'enabled' | VisualEditingOptions
+  visualEditing?: 'draftMode' | 'disabled' | VisualEditingOptions
 }
 
 const defaultClientConfig: ClientConfig = {
@@ -117,7 +117,7 @@ export default function sanityIntegration(
   const normalizedStudioBasePath = normalizeStudioBasePath(studioBasePath)
   const studioRouterHistory = inputStudioRouterHistory === 'hash' ? 'hash' : 'browser'
   const visualEditingOptions: VisualEditingOptions | undefined =
-    visualEditing === 'enabled' ? {} : visualEditing
+    visualEditing === 'draftMode' ? {} : visualEditing === 'disabled' ? undefined : visualEditing
   // Keep backwards compatibility: no visualEditing config means no preview routes.
   const previewMode = visualEditingOptions
     ? resolvePreviewModeConfig(visualEditingOptions.previewMode)
