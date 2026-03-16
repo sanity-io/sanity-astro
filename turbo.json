@@ -9,7 +9,6 @@
       "env": [
         "PUBLIC_SANITY_PROJECT_ID",
         "PUBLIC_SANITY_DATASET",
-        "PUBLIC_SANITY_VISUAL_EDITING_ENABLED",
         "SANITY_API_READ_TOKEN"
       ],
       "dependsOn": ["^build"],

@@ -2,6 +2,7 @@ import {defineConfig} from 'sanity'
 import {structureTool} from 'sanity/structure'
 import {schemaTypes} from './schemaTypes'
 import {defineDocuments, defineLocations, presentationTool} from 'sanity/presentation'
+import {DEFAULT_PREVIEW_MODE_ENABLE_PATH} from '@sanity/astro/visual-editing'
 
 const branchUrl =
   (import.meta.env?.['VERCEL_BRANCH_URL'] as string | undefined) ??
@@ -45,6 +46,9 @@ export default defineConfig({
             ? `https://${productionUrl}`
             : 'http://localhost:4321',
         preview: '/',
+        previewMode: {
+          enable: DEFAULT_PREVIEW_MODE_ENABLE_PATH,
+        },
       },
       resolve: {
         locations,
