@@ -43,6 +43,7 @@ export function vitePluginSanityClient(config: ClientConfig, options: PluginOpti
             const viteLikeCyanOpen = "\\u001B[36m";
             const greenOpen = "\\u001B[32m";
             const yellowOpen = "\\u001B[33m";
+            const magentaOpen = "\\u001B[35m";
             const colorClose = "\\u001B[0m";
             const pad2 = (value) => String(value).padStart(2, "0");
             const getTimestamp24h = () => {
@@ -81,6 +82,99 @@ export function vitePluginSanityClient(config: ClientConfig, options: PluginOpti
 
               console.info(timestamp, message);
             };
+            const parseSourceFromStackLine = (line) => {
+              const locationMatch = line.match(/(?:file:\\/\\/)?\\/[^\\s)]+:\\d+:\\d+/);
+              if (!locationMatch) {
+                return undefined;
+              }
+
+              const withLineAndColumn = locationMatch[0].replace(/^file:\\/\\//, "");
+              const absolutePath = withLineAndColumn.replace(/:\\d+:\\d+$/, "");
+              const normalizedPath = absolutePath.replace(/\\\\/g, "/");
+              const appPathIndex = normalizedPath.lastIndexOf("/apps/");
+              if (appPathIndex >= 0) {
+                return normalizedPath.slice(appPathIndex + 1);
+              }
+
+              const packagePathIndex = normalizedPath.lastIndexOf("/packages/");
+              if (packagePathIndex >= 0) {
+                return normalizedPath.slice(packagePathIndex + 1);
+              }
+
+              const srcPathIndex = normalizedPath.lastIndexOf("/src/");
+              if (srcPathIndex >= 0) {
+                return normalizedPath.slice(srcPathIndex + 1);
+              }
+
+              return normalizedPath;
+            };
+            const getSourceFromStack = () => {
+              try {
+                const stack = new Error().stack;
+                if (typeof stack !== "string") {
+                  return undefined;
+                }
+
+                const stackLines = stack.split("\\n").slice(1);
+                const candidates = [];
+                for (const line of stackLines) {
+                  const lowerLine = line.toLowerCase();
+                  if (
+                    lowerLine.includes("sanityclient.fetch") ||
+                    lowerLine.includes("logrequestresult") ||
+                    lowerLine.includes("getfetchsourceandargs") ||
+                    lowerLine.includes("getsourcefromstack") ||
+                    lowerLine.includes("vite-plugin-sanity-client")
+                  ) {
+                    continue;
+                  }
+
+                  const source = parseSourceFromStackLine(line);
+                  if (source) {
+                    const normalizedSource = source.toLowerCase();
+                    if (normalizedSource.endsWith(".astro")) {
+                      return source;
+                    }
+
+                    if (
+                      normalizedSource.includes("node_modules/") ||
+                      normalizedSource.includes("/load-query.") ||
+                      normalizedSource.includes("vite-plugin-sanity-client")
+                    ) {
+                      continue;
+                    }
+
+                    candidates.push(source);
+                  }
+                }
+
+                return candidates[0];
+              } catch {
+                // noop
+              }
+
+              return undefined;
+            };
+            const getFetchSourceAndArgs = (args) => {
+              const options = args[2];
+              const hasLoggerSource =
+                options &&
+                typeof options === "object" &&
+                !Array.isArray(options) &&
+                Object.prototype.hasOwnProperty.call(options, "loggerSource");
+              if (!hasLoggerSource) {
+                return {source: undefined, forwardArgs: args};
+              }
+
+              const {loggerSource, ...sanityFetchOptions} = options;
+              const source =
+                typeof loggerSource === "string" && loggerSource.trim().length > 0
+                  ? loggerSource.trim()
+                  : undefined;
+              const forwardArgs = [...args];
+              forwardArgs[2] = sanityFetchOptions;
+              return {source: source || getSourceFromStack(), forwardArgs};
+            };
 
             const fetchImpl = sanityClient.fetch?.bind(sanityClient);
             if (fetchImpl) {
@@ -92,11 +186,16 @@ export function vitePluginSanityClient(config: ClientConfig, options: PluginOpti
                   args.length > 1 && typeof args[1] !== "undefined"
                     ? "  " + yellowOpen + "params:" + colorClose + " " + stringifyForLog(args[1])
                     : "";
-                const label = queryLabel + params;
+                const {source: explicitSource, forwardArgs} = getFetchSourceAndArgs(args);
+                const source = explicitSource || getSourceFromStack();
+                const sourceLabel = source
+                  ? "  " + magentaOpen + "source:" + colorClose + " " + source
+                  : "";
+                const label = queryLabel + params + sourceLabel;
                 const startedAt = performance.now();
 
                 try {
-                  const result = await fetchImpl(...args);
+                  const result = await fetchImpl(...forwardArgs);
                   logRequestResult("fetch", label, startedAt);
                   return result;
                 } catch (error) {

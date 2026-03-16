@@ -77,19 +77,42 @@ describe('vitePluginSanityClient request logging wrappers', () => {
       createClient,
     })
 
-    const query = `*[_type == "movie"][0]`
-    const params = {slug: 'alien'}
-    const result = await (sanityClient.fetch as (q: string, p: Record<string, string>) => Promise<unknown>)(
-      query,
-      params,
-    )
+    class ErrorWithSourceStack extends Error {
+      stack: string
 
-    expect(result).toEqual({title: 'Alien'})
-    expect(fetchImpl).toHaveBeenCalledWith(query, params)
-    expect(infoSpy).toHaveBeenCalledTimes(1)
-    expect(String(infoSpy.mock.calls[0]?.[1])).toContain('query:')
-    expect(String(infoSpy.mock.calls[0]?.[1])).toContain('params:')
-    expect(String(infoSpy.mock.calls[0]?.[1])).toContain('"slug":"alien"')
+      constructor(message?: string) {
+        super(message)
+        this.stack = [
+          'Error',
+          '    at sanityClient.fetch (virtual-module.js:1:1)',
+          '    at loadQuery (/Users/chrislarocque/Documents/GitHub/sanity-astro/apps/movies/src/load-query.ts:22:9)',
+          '    at /Users/chrislarocque/Documents/GitHub/sanity-astro/apps/movies/src/pages/index.astro:10:3',
+        ].join('\n')
+      }
+    }
+
+    vi.stubGlobal('Error', ErrorWithSourceStack)
+
+    try {
+      const query = `*[_type == "movie"][0]`
+      const params = {slug: 'alien'}
+      const result = await (sanityClient.fetch as (
+        q: string,
+        p: Record<string, string>,
+        options: {filterResponse: boolean},
+      ) => Promise<unknown>)(query, params, {filterResponse: false})
+
+      expect(result).toEqual({title: 'Alien'})
+      expect(fetchImpl).toHaveBeenCalledWith(query, params, {filterResponse: false})
+      expect(infoSpy).toHaveBeenCalledTimes(1)
+      expect(String(infoSpy.mock.calls[0]?.[1])).toContain('query:')
+      expect(String(infoSpy.mock.calls[0]?.[1])).toContain('params:')
+      expect(String(infoSpy.mock.calls[0]?.[1])).toContain('source:')
+      expect(String(infoSpy.mock.calls[0]?.[1])).toContain('apps/movies/src/pages/index.astro')
+      expect(String(infoSpy.mock.calls[0]?.[1])).toContain('"slug":"alien"')
+    } finally {
+      vi.unstubAllGlobals()
+    }
 
     infoSpy.mockRestore()
   })
