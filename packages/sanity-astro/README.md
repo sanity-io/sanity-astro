@@ -158,6 +158,7 @@ When Studio is embedded through `@sanity/astro`, the integration owns workspace 
 - In hash-history mode (`studioRouterHistory: 'hash'`), workspaces are mounted inside the hash router:
   - single workspace: `#/`
   - multiple workspaces: `#/<workspace-name>` for every workspace
+- If `studioRouterHistory` is omitted, the integration defaults to hash history for Astro `output: 'static'`, and browser history for server output.
 
 If you are also using Visual Editing stega, set `stega.studioUrl` to your Studio route path (for example `'/admin'`) and avoid appending a manual hash suffix.
 

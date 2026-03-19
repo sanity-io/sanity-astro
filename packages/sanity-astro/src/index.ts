@@ -5,24 +5,74 @@ import {vitePluginSanityStudioHashRouter} from './vite-plugin-sanity-studio-hash
 import type {ClientConfig} from '@sanity/client'
 import {normalizeStudioBasePath, studioRoutePattern} from './studio-base-path'
 
+type VisualEditingOptions = {
+  token?: string
+  previewMode?: boolean | {enable?: string; disable?: string; cookie?: string}
+}
+
+type PreviewModeOptions = {
+  enable: string
+  disable: string
+  cookie: string
+}
+
 type IntegrationOptions = ClientConfig & {
   studioBasePath?: string
   studioRouterHistory?: 'browser' | 'hash'
+  visualEditing?: 'draftMode' | 'disabled' | VisualEditingOptions
 }
 
 const defaultClientConfig: ClientConfig = {
   apiVersion: 'v2023-08-24',
 }
 
+function resolveStudioRouterHistory(
+  inputStudioRouterHistory: 'browser' | 'hash' | undefined,
+  output: unknown,
+): 'browser' | 'hash' {
+  if (inputStudioRouterHistory === 'hash' || inputStudioRouterHistory === 'browser') {
+    return inputStudioRouterHistory
+  }
+
+  return output === 'static' ? 'hash' : 'browser'
+}
+
+function resolvePreviewModeConfig(
+  previewMode: VisualEditingOptions['previewMode'],
+): PreviewModeOptions | false {
+  if (previewMode === false) {
+    return false
+  }
+  if (previewMode === true || previewMode === undefined) {
+    return {
+      enable: '/preview/enable',
+      disable: '/preview/disable',
+      cookie: '__sanity_preview',
+    }
+  }
+
+  return {
+    enable: previewMode.enable || '/preview/enable',
+    disable: previewMode.disable || '/preview/disable',
+    cookie: previewMode.cookie || '__sanity_preview',
+  }
+}
 export default function sanityIntegration(
   integrationConfig: IntegrationOptions = {},
 ): AstroIntegration {
-  const studioBasePath = integrationConfig.studioBasePath
+  const {
+    studioBasePath,
+    studioRouterHistory: inputStudioRouterHistory,
+    visualEditing,
+    ...clientConfig
+  } = integrationConfig
   const normalizedStudioBasePath = normalizeStudioBasePath(studioBasePath)
-  const studioRouterHistory = integrationConfig.studioRouterHistory === 'hash' ? 'hash' : 'browser'
-  const clientConfig = integrationConfig
-  delete clientConfig.studioBasePath
-  delete clientConfig.studioRouterHistory
+  const visualEditingOptions: VisualEditingOptions | undefined =
+    visualEditing === 'draftMode' ? {} : visualEditing === 'disabled' ? undefined : visualEditing
+  // Keep backwards compatibility: no visualEditing config means no preview routes.
+  const previewMode = visualEditingOptions
+    ? resolvePreviewModeConfig(visualEditingOptions.previewMode)
+    : false
 
   if (!!studioBasePath && studioBasePath.match(/https?:\/\//)) {
     throw new Error(
@@ -33,7 +83,11 @@ export default function sanityIntegration(
   return {
     name: '@sanity/astro',
     hooks: {
-      'astro:config:setup': ({injectScript, injectRoute, updateConfig}) => {
+      'astro:config:setup': ({config, injectScript, injectRoute, updateConfig}) => {
+        const studioRouterHistory = resolveStudioRouterHistory(
+          inputStudioRouterHistory,
+          config?.output,
+        )
         updateConfig({
           vite: {
             optimizeDeps: {
@@ -78,6 +132,22 @@ export default function sanityIntegration(
               prerender: false,
             })
           }
+        }
+        if (previewMode) {
+          injectRoute({
+            // @ts-expect-error
+            entryPoint: '@sanity/astro/visual-editing/draft-mode-enable.ts', // Astro <= 3
+            entrypoint: '@sanity/astro/visual-editing/draft-mode-enable.ts', // Astro > 3
+            pattern: previewMode.enable,
+            prerender: false,
+          })
+          injectRoute({
+            // @ts-expect-error
+            entryPoint: '@sanity/astro/visual-editing/draft-mode-disable.ts', // Astro <= 3
+            entrypoint: '@sanity/astro/visual-editing/draft-mode-disable.ts', // Astro > 3
+            pattern: previewMode.disable,
+            prerender: false,
+          })
         }
         injectScript(
           'page-ssr',
