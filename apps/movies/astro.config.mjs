@@ -12,6 +12,8 @@ export default defineConfig({
       dataset: 'production',
       useCdn: true,
       studioBasePath: '/admin',
+      studioRouterHistory: 'hash',
+      visualEditing: 'draftMode',
       stega: {
         studioUrl: {
           baseUrl: '/admin',
@@ -21,6 +23,6 @@ export default defineConfig({
     }),
     react(),
   ],
-  output: 'server',
+  output: 'static',
   adapter: vercel(),
 })
