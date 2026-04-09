@@ -40,7 +40,7 @@ export default function sanityIntegration(
               include: [
                 'react-compiler-runtime',
                 'react-is',
-                'styled-components'
+                'styled-components',
               ],
             },
             plugins: [
