@@ -40,8 +40,7 @@ export default function sanityIntegration(
               include: [
                 'react-compiler-runtime',
                 'react-is',
-                'styled-components',
-                'lodash/startCase.js',
+                'styled-components'
               ],
             },
             plugins: [
