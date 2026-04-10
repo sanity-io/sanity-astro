@@ -96,11 +96,13 @@ describe('vitePluginSanityClient request logging wrappers', () => {
     try {
       const query = `*[_type == "movie"][0]`
       const params = {slug: 'alien'}
-      const result = await (sanityClient.fetch as (
-        q: string,
-        p: Record<string, string>,
-        options: {filterResponse: boolean},
-      ) => Promise<unknown>)(query, params, {filterResponse: false})
+      const result = await (
+        sanityClient.fetch as (
+          q: string,
+          p: Record<string, string>,
+          options: {filterResponse: boolean},
+        ) => Promise<unknown>
+      )(query, params, {filterResponse: false})
 
       expect(result).toEqual({title: 'Alien'})
       expect(fetchImpl).toHaveBeenCalledWith(query, params, {filterResponse: false})
@@ -129,9 +131,9 @@ describe('vitePluginSanityClient request logging wrappers', () => {
     })
 
     const requestArgs = [{uri: '/data/query/production', method: 'GET'}]
-    const result = await (sanityClient.request as (arg: Record<string, string>) => Promise<unknown>)(
-      requestArgs[0],
-    )
+    const result = await (
+      sanityClient.request as (arg: Record<string, string>) => Promise<unknown>
+    )(requestArgs[0])
 
     expect(result).toEqual({result: []})
     expect(requestImpl).toHaveBeenCalledWith(requestArgs[0])
