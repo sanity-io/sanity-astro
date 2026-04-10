@@ -5,6 +5,14 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.4.0](https://github.com/sanity-io/sanity-astro/compare/v3.3.1...v3.4.0) (2026-04-10)
+
+
+### Features
+
+* Add server-side logging for Sanity client ([#387](https://github.com/sanity-io/sanity-astro/issues/387)) ([733c5af](https://github.com/sanity-io/sanity-astro/commit/733c5af2f2c5be614888f95027dab0d8bff2a45c))
+* Add studio chunk-size warning plugin and tests ([#386](https://github.com/sanity-io/sanity-astro/issues/386)) ([25733a8](https://github.com/sanity-io/sanity-astro/commit/25733a84a6970bf9817715806c3bc353c127af46))
+
 ## [3.3.1](https://github.com/sanity-io/sanity-astro/compare/v3.3.0...v3.3.1) (2026-03-12)
 
 
