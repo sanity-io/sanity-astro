@@ -99,6 +99,7 @@ export default function sanityIntegration(
             })
           }
         }
+
         injectScript(
           'page-ssr',
           `
