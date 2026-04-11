@@ -16,12 +16,23 @@ const defaultClientConfig: ClientConfig = {
   apiVersion: 'v2023-08-24',
 }
 
+function resolveStudioRouterHistory(
+  inputStudioRouterHistory: 'browser' | 'hash' | undefined,
+  output: unknown,
+): 'browser' | 'hash' {
+  if (inputStudioRouterHistory === 'hash' || inputStudioRouterHistory === 'browser') {
+    return inputStudioRouterHistory
+  }
+
+  return output === 'static' ? 'hash' : 'browser'
+}
+
 export default function sanityIntegration(
   integrationConfig: IntegrationOptions = {},
 ): AstroIntegration {
   const studioBasePath = integrationConfig.studioBasePath
   const normalizedStudioBasePath = normalizeStudioBasePath(studioBasePath)
-  const studioRouterHistory = integrationConfig.studioRouterHistory === 'hash' ? 'hash' : 'browser'
+  const inputStudioRouterHistory = integrationConfig.studioRouterHistory
   const logClientRequests = integrationConfig.logClientRequests
   const clientConfig = integrationConfig
   delete clientConfig.studioBasePath
@@ -37,7 +48,11 @@ export default function sanityIntegration(
   return {
     name: '@sanity/astro',
     hooks: {
-      'astro:config:setup': ({injectScript, injectRoute, updateConfig}) => {
+      'astro:config:setup': ({config, injectScript, injectRoute, updateConfig}) => {
+        const studioRouterHistory = resolveStudioRouterHistory(
+          inputStudioRouterHistory,
+          config?.output,
+        )
         updateConfig({
           vite: {
             optimizeDeps: {
@@ -84,6 +99,7 @@ export default function sanityIntegration(
             })
           }
         }
+
         injectScript(
           'page-ssr',
           `
