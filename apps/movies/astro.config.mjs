@@ -14,6 +14,7 @@ export default defineConfig({
       studioBasePath: '/admin',
       studioRouterHistory: 'hash',
       visualEditing: 'draftMode',
+      logClientRequests: 'dev',
       stega: {
         studioUrl: {
           baseUrl: '/admin',

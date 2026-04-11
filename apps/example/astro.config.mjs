@@ -15,6 +15,7 @@ export default defineConfig({
       stega: {
         studioUrl: '/admin#',
       },
+      logClientRequests: 'always',
     }),
     react(),
   ],

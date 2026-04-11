@@ -58,6 +58,9 @@ export default defineConfig({
       dataset: '<YOUR-DATASET-NAME>',
       // Set useCdn to false if you're building statically.
       useCdn: false,
+      // Optional: log server-side Sanity client requests.
+      // Modes: 'dev' | 'build' | 'always'
+      logClientRequests: 'dev',
     }),
   ],
 })
@@ -86,6 +89,14 @@ const posts = await sanityClient.fetch(`*[_type == "post" && defined(slug)] | or
 ```
 
 [Check out this guide][guide] for a more elaborate introduction to how to integrate content from Sanity into Astro. You can also look in the `examples` folder in this repository for complete implementation examples.
+
+To log server-side requests made with `sanity:client`, set `logClientRequests` in your integration config:
+
+- `logClientRequests: 'dev'` logs during development
+- `logClientRequests: 'build'` logs during static builds
+- `logClientRequests: 'always'` logs during both development and builds
+
+If omitted, request logging is disabled.
 
 ### Embedding Sanity Studio on a route
 
