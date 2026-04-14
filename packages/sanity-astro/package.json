@@ -21,6 +21,13 @@
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
+      "import": "./dist/sanity-astro.mjs",
+      "module": "./dist/sanity-astro.mjs",
+      "default": "./dist/sanity-astro.mjs"
+    },
+    "./content-loader": {
+      "types": "./dist/types/content-loader.d.ts",
+      "import": "./dist/sanity-astro.mjs",
       "module": "./dist/sanity-astro.mjs",
       "default": "./dist/sanity-astro.mjs"
     },

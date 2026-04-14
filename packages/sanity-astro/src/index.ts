@@ -5,6 +5,13 @@ import {vitePluginSanityStudioHashRouter} from './vite-plugin-sanity-studio-hash
 import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-chunk-warning'
 import type {ClientConfig} from '@sanity/client'
 import {normalizeStudioBasePath, studioRoutePattern} from './studio-base-path'
+import {setSharedSanityClientConfig} from './shared-client-config'
+export {
+  sanityCollectionLoader,
+  sanityCollectionTypeLoaders,
+  type SanityCollectionLoaderOptions,
+  type SanityCollectionTypeLoadersOptions,
+} from './content-loader'
 
 type IntegrationOptions = ClientConfig & {
   studioBasePath?: string
@@ -33,6 +40,11 @@ export default function sanityIntegration(
       "[@sanity/astro]: The `studioBasePath` option should be a relative URL. For example — `studioBasePath: '/admin'`",
     )
   }
+
+  setSharedSanityClientConfig({
+    ...defaultClientConfig,
+    ...clientConfig,
+  })
 
   return {
     name: '@sanity/astro',

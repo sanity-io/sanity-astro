@@ -11,6 +11,14 @@ export default defineConfig(() => {
       // Keep existing dist files while watch rebuilds to avoid
       // transient package entry resolution failures in consuming apps.
       emptyOutDir: false,
+      rollupOptions: {
+        external: ['node:fs/promises'],
+        output: {
+          inlineDynamicImports: true,
+          chunkFileNames: '[name].mjs',
+          assetFileNames: '[name][extname]',
+        },
+      },
       lib: {
         entry: [path.resolve(__dirname, 'src/index.ts')],
         name,

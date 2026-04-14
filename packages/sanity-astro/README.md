@@ -98,6 +98,114 @@ To log server-side requests made with `sanity:client`, set `logClientRequests` i
 
 If omitted, request logging is disabled.
 
+### Build-time content collections loader (Astro 6+)
+
+`@sanity/astro` also exports a build-time object loader for Astro content collections. This loader runs at build time (not request time), validates entries through your collection schema, and supports digest-based updates so unchanged entries are skipped.
+
+```ts
+// src/content.config.ts
+import {defineCollection} from 'astro:content'
+import {sanityCollectionLoader} from '@sanity/astro'
+import {z} from 'astro/zod'
+
+const movies = defineCollection({
+  loader: sanityCollectionLoader({
+    client: {
+      projectId: 'your-project-id',
+      dataset: 'production',
+      apiVersion: 'v2023-08-24',
+      useCdn: false,
+    },
+    query: `*[_type == "movie"]{
+      _id,
+      _updatedAt,
+      title,
+      director
+    }`,
+    references: {mode: 'shallow'},
+    refresh: {strategy: 'full'},
+    schema: {
+      schema: z.object({
+        _id: z.string(),
+        _updatedAt: z.string().optional(),
+        title: z.string().nullable().optional(),
+        director: z.any().optional(),
+      }),
+      entryType: '{_id: string; _updatedAt?: string; title?: string | null; director?: unknown}',
+    },
+  }),
+})
+
+export const collections = {movies}
+```
+
+#### One fetch, multiple type collections
+
+If you want referenced documents to live in separate Astro collections, use `sanityCollectionTypeLoaders()`. It fetches a shared dataset snapshot and partitions entries by `_type` into separate loaders:
+
+```ts
+import {defineCollection} from 'astro:content'
+import {sanityCollectionTypeLoaders} from '@sanity/astro'
+import {z} from 'astro/zod'
+
+const loaders = sanityCollectionTypeLoaders({
+  // Optional: if @sanity/astro integration is configured in astro.config.*,
+  // loaders can default to that client config automatically.
+  globalTypegen: {
+    typesPath: './sanity.types.ts',
+    zodFromTypegen: () => z.any(),
+  },
+  collections: {
+    movies: {
+      sanityType: 'movie',
+      references: {mode: 'shallow'},
+    },
+    people: {
+      sanityType: 'person',
+    },
+  },
+})
+
+const movies = defineCollection({loader: loaders.movies})
+const people = defineCollection({loader: loaders.people})
+
+export const collections = {movies, people}
+```
+
+`globalTypegen.typesPath` applies one generated types file across all typed collections. Each collection infers its `Entry` type name from `sanityType` by default (for example `movie` -> `Movie`), and you can override this with `globalTypegen.entryTypeNames` or `globalTypegen.inferEntryTypeName`.
+
+`globalTypegen` (and `schema.typegen`) requires `zodFromTypegen` because the schema object must come from your app's `astro/zod` runtime.
+
+#### Refresh and invalidation behavior
+
+- The loader uses `generateDigest()` + `store.set()` so unchanged entries are not rewritten.
+- In `refresh.strategy: 'full'` mode (default), stale IDs are deleted from the store.
+- In `refresh.strategy: 'incremental'` mode, the loader stores a cursor in collection `meta` (default key: `sanity-loader-cursor`) and sends it back on subsequent loads as the `since` query parameter.
+- If `refreshContextData.ids` is provided by an integration trigger, those IDs are passed through as the `ids` query parameter by default.
+
+#### Reference resolution modes
+
+- `mode: 'none'` (default): leaves Sanity references as `{_type: 'reference', _ref}`.
+- `mode: 'shallow'`: resolves references in batches with depth and node safety limits.
+- `mode: 'custom'`: provide your own `resolveEntry()` strategy per entry.
+
+#### `createSchema()` options
+
+The loader targets Astro 6+ and implements `createSchema()`. You can:
+
+- Provide an explicit Zod schema (`schema.schema`) plus `types`/`entryType`, or
+- Use `schema.typegen` to read generated Sanity type files and emit `Entry` types for Astro.
+
+```ts
+schema: {
+  typegen: {
+    typesPath: './sanity.types.ts',
+    // optional: entryTypeName: 'Movie'
+    zodFromTypegen: () => z.any(),
+  },
+}
+```
+
 ### Embedding Sanity Studio on a route
 
 Sanity Studio is a customizable content workspace where you can edit your content. It‘s a Single Page Application that you can keep in its own repository, together with your Astro project as a monorepo, or embedded in your website.
