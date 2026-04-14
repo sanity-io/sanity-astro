@@ -45,7 +45,6 @@ export default function sanityIntegration(
                 'react-compiler-runtime',
                 'react-is',
                 'styled-components',
-                'lodash/startCase.js',
               ],
             },
             plugins: [
