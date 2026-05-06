@@ -64,10 +64,13 @@ export default function sanityIntegration(
               ],
             },
             plugins: [
-              vitePluginSanityClient({
-                ...defaultClientConfig,
-                ...clientConfig,
-              }, {logClientRequests}),
+              vitePluginSanityClient(
+                {
+                  ...defaultClientConfig,
+                  ...clientConfig,
+                },
+                {logClientRequests},
+              ),
               vitePluginSanityStudio({
                 studioBasePath: normalizedStudioBasePath,
                 studioRouterHistory,
