@@ -98,6 +98,81 @@ To log server-side requests made with `sanity:client`, set `logClientRequests` i
 
 If omitted, request logging is disabled.
 
+### Astro 6 live collections from Sanity
+
+> Requires Astro 6+ for `defineLiveCollection()`.
+
+`@sanity/astro` now includes a live loader helper that can expose one Astro live collection per Sanity document type.
+
+1. Create collection schemas (you can generate these from Sanity typegen output).
+2. Define your live collections in `src/live.config.ts`.
+3. Query with `getLiveCollection()` / `getLiveEntry()`.
+
+```ts
+// src/live.config.ts
+import {defineLiveCollection} from 'astro:content'
+import {defineSanityLiveCollectionsFromSchemas} from '@sanity/astro/live-loader'
+import {sanityClient} from 'sanity:client'
+import {sanityLiveSchemas} from './live/sanity-live-schemas'
+
+const sanityLiveCollectionConfigs = defineSanityLiveCollectionsFromSchemas({
+  client: sanityClient,
+  schemas: sanityLiveSchemas,
+  overrides: {
+    person: {
+      name: 'people',
+      loader: {
+        collectionOrder: 'name asc',
+      },
+    },
+  },
+})
+
+export const collections = Object.fromEntries(
+  Object.entries(sanityLiveCollectionConfigs).map(([name, config]) => [name, defineLiveCollection(config)]),
+)
+```
+
+By default, cache hints use `_updatedAt` as `lastModified`. Set `loader.lastModifiedField` only when your documents use a different timestamp field.
+By default, collection results are ordered by `_updatedAt desc`. Set `loader.collectionOrder` to override ordering per collection.
+Collection names and Sanity `_type` names are inferred from schema map keys. Use `overrides` when you need to rename a collection or customize loader behavior.
+
+Then, in a page:
+
+```ts
+---
+import {getLiveCollection, getLiveEntry} from 'astro:content'
+
+const {entries} = await getLiveCollection('movie')
+const {entry} = await getLiveEntry('movie', Astro.params.id!)
+---
+```
+
+#### Generating Zod schemas from Sanity typegen
+
+The package ships a helper script to convert generated Sanity TypeScript types into Zod schemas using `ts-to-zod`.
+Set the generated schema output path with `liveLoader.schema.output` in your `sanity()` integration options.
+
+```bash
+pnpm --filter movies sanity:schema:extract
+pnpm --filter movies sanity:typegen
+pnpm --filter movies sanity:live:schemas
+```
+
+`sanity:live:schemas` uses:
+
+- `packages/sanity-astro/scripts/generate-live-schemas.mjs`
+- `ts-to-zod` for TS -> Zod conversion
+- a post-processing step to target `astro/zod`
+
+For reusable schema utilities, import from `@sanity/astro/live-loader/schemas`:
+
+```ts
+import {defineSanityDocumentSchema, createSanitySchemaMap, z} from '@sanity/astro/live-loader/schemas'
+```
+
+If you need custom transformations (e.g. strict projections, custom ID mapping, bespoke unions), you can keep generated schemas as a baseline and override per collection.
+
 ### Embedding Sanity Studio on a route
 
 Sanity Studio is a customizable content workspace where you can edit your content. It‘s a Single Page Application that you can keep in its own repository, together with your Astro project as a monorepo, or embedded in your website.

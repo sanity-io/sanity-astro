@@ -6,10 +6,21 @@ import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-ch
 import type {ClientConfig} from '@sanity/client'
 import {normalizeStudioBasePath, studioRoutePattern} from './studio-base-path'
 
+type LiveLoaderSchemaOptions = {
+  output?: string
+  input?: string
+  names?: string[]
+}
+
+type LiveLoaderOptions = {
+  schema?: LiveLoaderSchemaOptions
+}
+
 type IntegrationOptions = ClientConfig & {
   studioBasePath?: string
   studioRouterHistory?: 'browser' | 'hash'
   logClientRequests?: 'dev' | 'build' | 'always'
+  liveLoader?: LiveLoaderOptions
 }
 
 const defaultClientConfig: ClientConfig = {
@@ -34,10 +45,12 @@ export default function sanityIntegration(
   const normalizedStudioBasePath = normalizeStudioBasePath(studioBasePath)
   const inputStudioRouterHistory = integrationConfig.studioRouterHistory
   const logClientRequests = integrationConfig.logClientRequests
+  const liveLoader = integrationConfig.liveLoader
   const clientConfig = integrationConfig
   delete clientConfig.studioBasePath
   delete clientConfig.studioRouterHistory
   delete clientConfig.logClientRequests
+  delete clientConfig.liveLoader
 
   if (!!studioBasePath && studioBasePath.match(/https?:\/\//)) {
     throw new Error(
@@ -45,7 +58,11 @@ export default function sanityIntegration(
     )
   }
 
-  return {
+  const integration: AstroIntegration & {
+    __sanityAstroOptions?: {
+      liveLoader?: LiveLoaderOptions
+    }
+  } = {
     name: '@sanity/astro',
     hooks: {
       'astro:config:setup': ({config, injectScript, injectRoute, updateConfig}) => {
@@ -110,4 +127,10 @@ export default function sanityIntegration(
       },
     },
   }
+
+  integration.__sanityAstroOptions = {
+    liveLoader,
+  }
+
+  return integration
 }

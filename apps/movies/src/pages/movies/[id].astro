@@ -1,6 +1,6 @@
 ---
 import Layout from '../../layout.astro'
-import {loadQuery} from '../../load-query'
+import {getLiveEntry} from 'astro:content'
 
 const id = Astro.params.id
 
@@ -9,20 +9,17 @@ if (!id) {
   throw new Error('Movie ID is required.')
 }
 
-const {data: movie} = await loadQuery<{
-  _id: string
-  title: string
-  releaseDate?: string
-} | null>({
-  query: `*[_type == 'movie' && _id == $id][0] {
-    _id,
-    title,
-    releaseDate
-  }`,
-  params: {id},
-})
+const {entry, error} = await getLiveEntry('movie', id)
+const entryData = (entry?.data ?? {}) as {title?: string; releaseDate?: string}
+const movie = entry
+  ? {
+      _id: entry.id,
+      title: entryData.title ?? 'Untitled movie',
+      releaseDate: typeof entryData.releaseDate === 'string' ? entryData.releaseDate : undefined,
+    }
+  : null
 
-if (!movie) {
+if (error || !movie) {
   Astro.response.status = 404
 }
 ---

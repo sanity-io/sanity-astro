@@ -1,3 +1,10 @@
 {
-  "extends": "astro/tsconfigs/strictest"
+  "extends": "astro/tsconfigs/strictest",
+  "compilerOptions": {
+    "moduleResolution": "bundler",
+    "paths": {
+      "@sanity/astro/live-loader": ["../../packages/sanity-astro/src/live/index.ts"],
+      "@sanity/astro/live-loader/schemas": ["../../packages/sanity-astro/src/live/schemas.ts"]
+    }
+  }
 }

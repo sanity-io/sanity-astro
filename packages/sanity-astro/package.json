@@ -34,22 +34,36 @@
     "./visual-editing": {
       "import": "./dist/visual-editing/index.ts",
       "default": "./dist/visual-editing/index.ts"
+    },
+    "./live-loader": {
+      "types": "./src/live/index.ts",
+      "import": "./dist/live/index.ts",
+      "default": "./dist/live/index.ts"
+    },
+    "./live-loader/schemas": {
+      "types": "./src/live/schemas.ts",
+      "import": "./dist/live/schemas.ts",
+      "default": "./dist/live/schemas.ts"
     }
   },
   "types": "./dist/types/index.d.ts",
   "files": [
     "dist",
+    "scripts",
     "src/studio",
     "src/visual-editing",
+    "src/live",
     "module.d.ts"
   ],
   "scripts": {
-    "build": "rimraf dist && vite build && pnpm copyStudio && pnpm copy:visual-editing",
+    "build": "rimraf dist && vite build && pnpm copyStudio && pnpm copy:visual-editing && pnpm copy:live",
     "clean": "rimraf dist && rimraf .turbo && rimraf node_modules",
     "copy:visual-editing": "cp -r src/visual-editing dist/visual-editing",
     "copyStudio": "cp -r src/studio dist/studio",
+    "copy:live": "cp -r src/live dist/live",
     "dev": "vite build --watch",
     "prepublishOnly": "pnpm build",
+    "generate:live-schemas": "node ./scripts/generate-live-schemas.mjs",
     "test": "vitest run"
   },
   "dependencies": {
@@ -59,13 +73,14 @@
   "devDependencies": {
     "@sanity/client": "^7.16.0",
     "@types/serialize-javascript": "^5.0.4",
-    "astro": "5.11.1",
+    "astro": "^6.0.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "sanity": "^5.0.1",
     "serialize-javascript": "^6.0.2",
     "type-fest": "^4.41.0",
-    "vite": "^6.2.0",
+    "ts-to-zod": "^5.1.0",
+    "vite": "^7.3.0",
     "vite-plugin-dts": "^4.5.4",
     "vitest": "^4.0.18"
   },

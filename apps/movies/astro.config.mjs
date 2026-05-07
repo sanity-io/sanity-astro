@@ -14,6 +14,11 @@ export default defineConfig({
       studioBasePath: '/admin',
       studioRouterHistory: 'hash',
       logClientRequests: 'dev',
+      liveLoader: {
+        schema: {
+          output: './src/live/sanity-live-schemas.generated.ts',
+        },
+      },
       stega: {
         studioUrl: {
           baseUrl: '/admin',
