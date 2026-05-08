@@ -150,20 +150,73 @@ const {entry} = await getLiveEntry('movie', Astro.params.id!)
 
 #### Generating Zod schemas from Sanity typegen
 
-The package ships a helper script to convert generated Sanity TypeScript types into Zod schemas using `ts-to-zod`.
-Set the generated schema output path with `liveLoader.schema.output` in your `sanity()` integration options.
+Use this flow to generate the `sanity-live-schemas.generated.ts` file used by your live config.
+
+Step 1 is optional. If you do not set an output path, the generator defaults to:
+`./src/live/sanity-live-schemas.generated.ts`.
+
+1. Configure where generated schemas should be written in `astro.config.*`:
+
+```ts
+sanity({
+  // ...existing config
+  liveLoader: {
+    schema: {
+      output: './src/live/sanity-live-schemas.generated.ts',
+    },
+  },
+})
+```
+
+2. Make sure your app has the scripts:
 
 ```bash
-pnpm --filter movies sanity:schema:extract
-pnpm --filter movies sanity:typegen
-pnpm --filter movies sanity:live:schemas
+sanity:schema:extract  # sanity schema extract --path=./src/sanity.schema.json
+sanity:typegen         # sanity typegen generate
+sanity:live:schemas    # node ./node_modules/@sanity/astro/scripts/generate-live-schemas.mjs --input ./sanity.types.ts
 ```
+
+3. Run:
+
+```bash
+pnpm sanity:schema:extract
+pnpm sanity:typegen
+pnpm sanity:live:schemas
+```
+
+This will:
+
+- read generated Sanity types from `./sanity.types.ts` (or your `--input`)
+- read output target from `sanity().liveLoader.schema.output` in `astro.config.*`
+- write the generated Zod file (for example `./src/live/sanity-live-schemas.generated.ts`)
 
 `sanity:live:schemas` uses:
 
-- `packages/sanity-astro/scripts/generate-live-schemas.mjs`
+- `node_modules/@sanity/astro/scripts/generate-live-schemas.mjs`
 - `ts-to-zod` for TS -> Zod conversion
 - a post-processing step to target `astro/zod`
+
+Note: `sanity-live-schemas.generated.ts` is generated. Keep your wrapper file (for example `sanity-live-schemas.ts`) as the stable import that maps/aliases generated schema names for `src/live.config.ts`.
+
+Example wrapper:
+
+```ts
+// src/live/sanity-live-schemas.ts
+import {createSanitySchemaMap} from '@sanity/astro/live-loader/schemas'
+import {
+  movieDocumentSchema,
+  personDocumentSchema,
+  screeningDocumentSchema,
+} from './sanity-live-schemas.generated'
+
+export const sanityLiveSchemas = createSanitySchemaMap({
+  movie: movieDocumentSchema,
+  person: personDocumentSchema,
+  screening: screeningDocumentSchema,
+})
+```
+
+Then import `sanityLiveSchemas` in `src/live.config.ts`.
 
 For reusable schema utilities, import from `@sanity/astro/live-loader/schemas`:
 
