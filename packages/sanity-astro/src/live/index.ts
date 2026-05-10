@@ -5,6 +5,7 @@ export {
   type SanityLiveCollectionFilter,
   type SanityLiveEntryFilter,
   type SanityLiveLoaderOptions,
+  type SanityLiveVisualEditingOptions,
 } from './sanity-live-loader'
 export {
   defineSanityLiveCollections,

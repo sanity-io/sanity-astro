@@ -3,6 +3,7 @@ import type {LiveLoader} from 'astro/loaders'
 import type {QueryParams} from 'sanity'
 
 export type SanityClientInput = SanityClient | ClientConfig | (() => SanityClient)
+type SanityFetchOptions = NonNullable<Parameters<SanityClient['fetch']>[2]>
 
 export interface SanityLiveEntryFilter {
   id?: string
@@ -12,6 +13,14 @@ export interface SanityLiveEntryFilter {
 
 export interface SanityLiveCollectionFilter {
   params?: QueryParams
+}
+
+export interface SanityLiveVisualEditingOptions {
+  enabled?: boolean
+  token?: string
+  perspective?: SanityFetchOptions['perspective']
+  resultSourceMap?: SanityFetchOptions['resultSourceMap']
+  useCdn?: SanityFetchOptions['useCdn']
 }
 
 export interface SanityLiveLoaderOptions<TData extends Record<string, unknown>> {
@@ -25,6 +34,7 @@ export interface SanityLiveLoaderOptions<TData extends Record<string, unknown>> 
   mapId?: (document: Record<string, unknown>) => string
   cacheTagPrefix?: string
   lastModifiedField?: string
+  visualEditing?: SanityLiveVisualEditingOptions
 }
 
 export function resolveSanityClient(input: SanityClientInput): SanityClient {
@@ -77,7 +87,12 @@ export function sanityLiveLoader<TData extends Record<string, unknown>>(
           ...(options.queryParams ?? {}),
           ...(filter?.params ?? {}),
         }
-        const documents = await client.fetch<Array<Record<string, unknown>>>(collectionQuery, params)
+        const documents = await fetchSanityResult<Array<Record<string, unknown>>>(
+          client,
+          collectionQuery,
+          params,
+          createFetchOptions(options.visualEditing, loaderIdentity),
+        )
 
         const entries = documents
           .map((document) => mapDocument(document, options.mapData))
@@ -124,7 +139,12 @@ export function sanityLiveLoader<TData extends Record<string, unknown>>(
           ...(typeof filter.id === 'string' ? {id: filter.id} : {}),
           ...(typeof filter.slug === 'string' ? {slug: filter.slug} : {}),
         }
-        const document = await client.fetch<Record<string, unknown> | null>(entryQuery, params)
+        const document = await fetchSanityResult<Record<string, unknown> | null>(
+          client,
+          entryQuery,
+          params,
+          createFetchOptions(options.visualEditing, loaderIdentity),
+        )
 
         if (!document) {
           return undefined
@@ -167,6 +187,44 @@ function requireQuery(query: string, optionName: 'collectionQuery' | 'entryQuery
 
   const identity = collectionName ?? 'collection'
   throw new Error(`Sanity live loader "${identity}" requires a non-empty "${optionName}" option.`)
+}
+
+function createFetchOptions(
+  visualEditing: SanityLiveVisualEditingOptions | undefined,
+  loaderIdentity: string,
+): SanityFetchOptions | undefined {
+  if (!visualEditing?.enabled) {
+    return undefined
+  }
+
+  if (!visualEditing.token) {
+    throw new Error(
+      `Sanity live loader "${loaderIdentity}" requires a "visualEditing.token" when visual editing is enabled.`,
+    )
+  }
+
+  return {
+    filterResponse: false,
+    perspective: visualEditing.perspective ?? 'drafts',
+    resultSourceMap: visualEditing.resultSourceMap ?? 'withKeyArraySelector',
+    stega: true,
+    token: visualEditing.token,
+    useCdn: visualEditing.useCdn ?? false,
+  }
+}
+
+async function fetchSanityResult<TResponse>(
+  client: SanityClient,
+  query: string,
+  params: QueryParams,
+  fetchOptions?: SanityFetchOptions,
+): Promise<TResponse> {
+  if (fetchOptions?.filterResponse === false) {
+    const response = await client.fetch<{result: TResponse}>(query, params, fetchOptions)
+    return response.result
+  }
+
+  return client.fetch<TResponse>(query, params, fetchOptions)
 }
 
 function mapDocument<TData extends Record<string, unknown>>(

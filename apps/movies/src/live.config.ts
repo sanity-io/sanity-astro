@@ -11,6 +11,18 @@ import {
   screeningEntryQuery,
 } from './live/sanity-live-queries.ts'
 
+const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED === 'true'
+const visualEditingToken = import.meta.env.SANITY_API_READ_TOKEN
+
+const liveLoaderVisualEditing = visualEditingEnabled
+  ? {
+      enabled: true,
+      token: visualEditingToken,
+    }
+  : {
+      enabled: false,
+    }
+
 const sanityLiveCollectionConfigs = defineSanityLiveCollections({
   client: sanityClient,
   collections: [
@@ -20,6 +32,7 @@ const sanityLiveCollectionConfigs = defineSanityLiveCollections({
       loader: {
         collectionQuery: movieCollectionQuery,
         entryQuery: movieEntryQuery,
+        visualEditing: liveLoaderVisualEditing,
       },
     },
     {
@@ -28,6 +41,7 @@ const sanityLiveCollectionConfigs = defineSanityLiveCollections({
       loader: {
         collectionQuery: personCollectionQuery,
         entryQuery: personEntryQuery,
+        visualEditing: liveLoaderVisualEditing,
       },
     },
     {
@@ -36,6 +50,7 @@ const sanityLiveCollectionConfigs = defineSanityLiveCollections({
       loader: {
         collectionQuery: screeningCollectionQuery,
         entryQuery: screeningEntryQuery,
+        visualEditing: liveLoaderVisualEditing,
       },
     },
   ] as const,

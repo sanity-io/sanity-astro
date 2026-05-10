@@ -162,6 +162,44 @@ const {entry} = await getLiveEntry('movie', Astro.params.id!)
 ---
 ```
 
+#### Visual Editing with live collections
+
+When you are using [Visual Editing](#enabling-visual-editing), configure each live loader with a preview-only `visualEditing` option so loader-backed content is fetched with drafts + stega settings:
+
+```ts
+// src/live.config.ts
+const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED === 'true'
+const token = import.meta.env.SANITY_API_READ_TOKEN
+
+const liveLoaderVisualEditing = visualEditingEnabled
+  ? {
+      enabled: true,
+      token,
+    }
+  : {
+      enabled: false,
+    }
+
+const sanityLiveCollectionConfigs = defineSanityLiveCollections({
+  client: sanityClient,
+  collections: [
+    {
+      name: 'movie',
+      schema: movieSchema,
+      loader: {
+        collectionQuery: `*[_type == "movie"] {...}`,
+        entryQuery: `*[_type == "movie" && _id == $id][0] {...}`,
+        visualEditing: liveLoaderVisualEditing,
+      },
+    },
+  ],
+})
+```
+
+When `visualEditing.enabled` is `true`, the loader fetches with draft perspective, source-map aware responses, stega enabled, and requires `visualEditing.token`.
+
+If you use `loader.mapData`, preserve string fields used for rendering overlays. Rebuilding all strings can strip stega metadata and prevent click-to-edit from attaching correctly.
+
 #### Generating Zod schemas from Sanity typegen
 
 Use this flow to generate the `sanity-live-schemas.generated.ts` file used by your live config.

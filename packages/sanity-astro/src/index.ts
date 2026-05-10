@@ -74,6 +74,8 @@ export default function sanityIntegration(
           vite: {
             optimizeDeps: {
               include: [
+                'react-dom',
+                'react-dom/client',
                 'react-compiler-runtime',
                 'react-is',
                 'styled-components',
