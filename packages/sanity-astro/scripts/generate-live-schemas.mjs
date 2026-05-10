@@ -28,6 +28,10 @@ await runTsToZod({
 
 let generated = await readFile(outputPath, 'utf8')
 generated = generated.replaceAll(`from "zod"`, `from 'astro/zod'`).replaceAll(`from 'zod'`, `from 'astro/zod'`)
+generated = generated.replace(
+  /\nconst sanityClientSanityQueriesSchema = /g,
+  '\nexport const sanityClientSanityQueriesSchema = ',
+)
 
 const header = `/**
  * This file is generated from Sanity typegen output.

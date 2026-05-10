@@ -1,25 +1,47 @@
 import { defineLiveCollection } from 'astro:content'
-import { defineSanityLiveCollectionsFromSchemas } from '@sanity/astro/live-loader'
+import { defineSanityLiveCollections } from '@sanity/astro/live-loader'
 import { sanityClient } from 'sanity:client'
-import { sanityLiveSchemas } from './live/sanity-live-schemas'
+import { movieSchema, personSchema, screeningSchema } from './live/sanity-live-schemas'
+import {
+  movieCollectionQuery,
+  movieEntryQuery,
+  personCollectionQuery,
+  screeningCollectionQuery,
+} from './live/sanity-live-queries.ts'
 
-const sanityLiveCollectionConfigs = defineSanityLiveCollectionsFromSchemas({
+const sanityLiveCollectionConfigs = defineSanityLiveCollections({
   client: sanityClient,
-  schemas: sanityLiveSchemas,
-  overrides: {
-    person: {
+  collections: [
+    {
+      name: 'movie',
+      schema: movieSchema,
       loader: {
-        collectionOrder: 'name asc',
+        type: 'movie',
+        collectionQuery: movieCollectionQuery,
+        entryQuery: movieEntryQuery,
       },
     },
-    screening: {
+    {
+      name: 'person',
+      schema: personSchema,
       loader: {
-        collectionOrder: 'beginAt desc',
+        type: 'person',
+        collectionQuery: personCollectionQuery,
       },
     },
-  },
+    {
+      name: 'screening',
+      schema: screeningSchema,
+      loader: {
+        type: 'screening',
+        collectionQuery: screeningCollectionQuery,
+      },
+    },
+  ] as const,
 })
 
-export const collections = Object.fromEntries(
-  Object.entries(sanityLiveCollectionConfigs).map(([name, config]) => [name, defineLiveCollection(config)]),
-)
+export const collections = {
+  movie: defineLiveCollection(sanityLiveCollectionConfigs.movie),
+  person: defineLiveCollection(sanityLiveCollectionConfigs.person),
+  screening: defineLiveCollection(sanityLiveCollectionConfigs.screening),
+}

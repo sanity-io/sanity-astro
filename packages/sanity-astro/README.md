@@ -102,7 +102,12 @@ If omitted, request logging is disabled.
 
 > Requires Astro 6+ for `defineLiveCollection()`.
 
-`@sanity/astro` now includes a live loader helper that can expose one Astro live collection per Sanity document type.
+`@sanity/astro` includes a live loader helper that lets you define each collection explicitly with:
+
+- an Astro collection `name`
+- a GROQ `collectionQuery`
+- a matching Zod `schema`
+- optional `entryQuery` (or default id/slug entry behavior)
 
 1. Create collection schemas (you can generate these from Sanity typegen output).
 2. Define your live collections in `src/live.config.ts`.
@@ -111,21 +116,30 @@ If omitted, request logging is disabled.
 ```ts
 // src/live.config.ts
 import {defineLiveCollection} from 'astro:content'
-import {defineSanityLiveCollectionsFromSchemas} from '@sanity/astro/live-loader'
+import {defineSanityLiveCollections} from '@sanity/astro/live-loader'
 import {sanityClient} from 'sanity:client'
-import {sanityLiveSchemas} from './live/sanity-live-schemas'
+import {movieSchema, personSchema} from './live/sanity-live-schemas'
 
-const sanityLiveCollectionConfigs = defineSanityLiveCollectionsFromSchemas({
+const sanityLiveCollectionConfigs = defineSanityLiveCollections({
   client: sanityClient,
-  schemas: sanityLiveSchemas,
-  overrides: {
-    person: {
-      name: 'people',
+  collections: [
+    {
+      name: 'movie',
+      schema: movieSchema,
       loader: {
-        collectionOrder: 'name asc',
+        type: 'movie',
+        collectionQuery: `*[_type == "movie"] | order(_updatedAt desc) {...}`,
       },
     },
-  },
+    {
+      name: 'person',
+      schema: personSchema,
+      loader: {
+        type: 'person',
+        collectionQuery: `*[_type == "person"] | order(name asc) {...}`,
+      },
+    },
+  ],
 })
 
 export const collections = Object.fromEntries(
@@ -133,9 +147,9 @@ export const collections = Object.fromEntries(
 )
 ```
 
-By default, cache hints use `_updatedAt` as `lastModified`. Set `loader.lastModifiedField` only when your documents use a different timestamp field.
-By default, collection results are ordered by `_updatedAt desc`. Set `loader.collectionOrder` to override ordering per collection.
-Collection names and Sanity `_type` names are inferred from schema map keys. Use `overrides` when you need to rename a collection or customize loader behavior.
+`collectionQuery` is the source of truth for the collection shape. Your `schema` should validate the result of that query.
+If `entryQuery` is not set, `getLiveEntry()` uses the default id/slug entry query based on `loader.type`, `loader.idField`, and `loader.slugField`.
+By default, cache hints use `_updatedAt` as `lastModified`. Set `loader.lastModifiedField` only when your query result uses a different timestamp field.
 
 Then, in a page:
 
@@ -196,27 +210,20 @@ This will:
 - `ts-to-zod` for TS -> Zod conversion
 - a post-processing step to target `astro/zod`
 
-Note: `sanity-live-schemas.generated.ts` is generated. Keep your wrapper file (for example `sanity-live-schemas.ts`) as the stable import that maps/aliases generated schema names for `src/live.config.ts`.
+Note: `sanity-live-schemas.generated.ts` is generated. Keep your wrapper file (for example `sanity-live-schemas.ts`) as the stable import used by `src/live.config.ts`.
 
 Example wrapper:
 
 ```ts
 // src/live/sanity-live-schemas.ts
-import {createSanitySchemaMap} from '@sanity/astro/live-loader/schemas'
-import {
-  movieDocumentSchema,
-  personDocumentSchema,
-  screeningDocumentSchema,
-} from './sanity-live-schemas.generated'
+import {movieDocumentSchema, personDocumentSchema, screeningDocumentSchema} from './sanity-live-schemas.generated'
 
-export const sanityLiveSchemas = createSanitySchemaMap({
-  movie: movieDocumentSchema,
-  person: personDocumentSchema,
-  screening: screeningDocumentSchema,
-})
+export const movieSchema = movieDocumentSchema
+export const personSchema = personDocumentSchema
+export const screeningSchema = screeningDocumentSchema
 ```
 
-Then import `sanityLiveSchemas` in `src/live.config.ts`.
+Then import the schemas you need in `src/live.config.ts`.
 
 For reusable schema utilities, import from `@sanity/astro/live-loader/schemas`:
 
@@ -224,7 +231,7 @@ For reusable schema utilities, import from `@sanity/astro/live-loader/schemas`:
 import {defineSanityDocumentSchema, createSanitySchemaMap, z} from '@sanity/astro/live-loader/schemas'
 ```
 
-If you need custom transformations (e.g. strict projections, custom ID mapping, bespoke unions), you can keep generated schemas as a baseline and override per collection.
+If you use custom projections/queries, keep generated schemas as a baseline and customize schemas so they match your query output.
 
 ### Embedding Sanity Studio on a route
 

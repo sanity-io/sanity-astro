@@ -10,8 +10,7 @@ export {
 } from './sanity-live-loader'
 export {
   defineSanityLiveCollections,
-  defineSanityLiveCollectionsFromSchemas,
   type DefineSanityLiveCollectionsOptions,
-  type DefineSanityLiveCollectionsFromSchemasOptions,
+  type SanityExplicitCollectionLoaderOptions,
   type SanityLiveCollectionDefinition,
 } from './define-sanity-live-collections'

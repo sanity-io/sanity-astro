@@ -3,13 +3,10 @@ import Layout from '../layout.astro'
 import {getLiveCollection} from 'astro:content'
 
 const {entries, error} = await getLiveCollection('movie')
-const movies = (entries ?? []).map((entry: {id: string; data: unknown}) => {
-  const data = entry.data as {title?: string}
-  return {
-    _id: entry.id,
-    title: data.title ?? 'Untitled movie',
-  }
-})
+const movies = (entries ?? []).map((entry) => ({
+  _id: entry.id,
+  title: entry.data.title ?? 'Untitled movie',
+}))
 
 if (error) {
   throw error
@@ -20,7 +17,7 @@ if (error) {
   <h1>Movies</h1>
   <ol>
     {
-      movies.map((movie: {_id: string; title: string}) => (
+      movies.map((movie) => (
         <li>
           <a href={`/movies/${encodeURIComponent(movie._id)}`}>{movie.title}</a>
         </li>
