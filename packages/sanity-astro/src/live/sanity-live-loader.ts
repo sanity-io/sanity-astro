@@ -12,23 +12,14 @@ export interface SanityLiveEntryFilter {
 
 export interface SanityLiveCollectionFilter {
   params?: QueryParams
-  where?: string
-  order?: string
-  limit?: number
 }
 
 export interface SanityLiveLoaderOptions<TData extends Record<string, unknown>> {
   client: SanityClientInput
-  type?: string
   collectionName?: string
-  collectionQuery?: string
-  entryQuery?: string
-  projection?: string
-  baseFilter?: string
-  collectionOrder?: string
-  collectionLimit?: number
+  collectionQuery: string
+  entryQuery: string
   idField?: string
-  slugField?: string
   queryParams?: QueryParams
   mapData?: (document: Record<string, unknown>) => TData
   mapId?: (document: Record<string, unknown>) => string
@@ -52,63 +43,6 @@ function isSanityClient(input: unknown): input is SanityClient {
   return Boolean(input) && typeof input === 'object' && typeof (input as SanityClient).fetch === 'function'
 }
 
-export function buildSanityCollectionQuery(options: {
-  type: string
-  projection: string
-  baseFilter?: string
-  order?: string
-  limit?: number
-  where?: string
-}): string {
-  const filters = [`_type == $type`]
-
-  if (options.baseFilter?.trim()) {
-    filters.push(`(${options.baseFilter.trim()})`)
-  }
-
-  if (options.where?.trim()) {
-    filters.push(`(${options.where.trim()})`)
-  }
-
-  const orderClause = options.order?.trim() ? ` | order(${options.order.trim()})` : ''
-  const limitClause =
-    typeof options.limit === 'number' && Number.isFinite(options.limit) ? `[0...${options.limit}]` : ''
-
-  return `*[${filters.join(' && ')}]${orderClause}${limitClause}${ensureProjection(options.projection)}`
-}
-
-export function buildSanityEntryQuery(options: {
-  type: string
-  projection: string
-  baseFilter?: string
-  idField: string
-  slugField: string
-  useSlug: boolean
-}): string {
-  const filters = [`_type == $type`]
-
-  if (options.baseFilter?.trim()) {
-    filters.push(`(${options.baseFilter.trim()})`)
-  }
-
-  if (options.useSlug) {
-    filters.push(`${options.slugField} == $slug`)
-  } else {
-    filters.push(`${options.idField} == $id`)
-  }
-
-  return `*[${filters.join(' && ')}][0]${ensureProjection(options.projection)}`
-}
-
-function ensureProjection(projection: string): string {
-  const normalized = projection.trim()
-  if (normalized.startsWith('{')) {
-    return normalized
-  }
-
-  return `{${normalized}}`
-}
-
 function coerceDate(value: unknown): Date | undefined {
   if (value instanceof Date) {
     return value
@@ -128,42 +62,22 @@ export function sanityLiveLoader<TData extends Record<string, unknown>>(
   options: SanityLiveLoaderOptions<TData>,
 ): LiveLoader<TData, SanityLiveEntryFilter, SanityLiveCollectionFilter> {
   const client = resolveSanityClient(options.client)
-  const projection = options.projection ?? '{...}'
-  const explicitCollectionQuery = options.collectionQuery?.trim()
-  const explicitEntryQuery = options.entryQuery?.trim()
+  const collectionQuery = requireQuery(options.collectionQuery, 'collectionQuery', options.collectionName)
+  const entryQuery = requireQuery(options.entryQuery, 'entryQuery', options.collectionName)
   const idField = options.idField ?? '_id'
-  const slugField = options.slugField ?? 'slug.current'
-  const loaderIdentity = options.collectionName ?? options.type ?? 'collection'
+  const loaderIdentity = options.collectionName ?? 'collection'
   const cacheTagPrefix = options.cacheTagPrefix ?? `sanity-${loaderIdentity}`
   const lastModifiedField = options.lastModifiedField ?? '_updatedAt'
-  const collectionOrder = options.collectionOrder ?? '_updatedAt desc'
 
   return {
     name: `sanity-live-loader:${loaderIdentity}`,
     loadCollection: async ({filter}) => {
       try {
-        const useBuiltQuery = !explicitCollectionQuery
-        const query = useBuiltQuery
-          ? buildSanityCollectionQuery({
-              type: requireTypeForBuiltQuery(options.type, loaderIdentity),
-              projection,
-              baseFilter: options.baseFilter,
-              where: filter?.where,
-              order: filter?.order ?? collectionOrder,
-              limit: filter?.limit ?? options.collectionLimit,
-            })
-          : explicitCollectionQuery
-        const params = useBuiltQuery
-          ? {
-              type: options.type,
-              ...(options.queryParams ?? {}),
-              ...(filter?.params ?? {}),
-            }
-          : {
-              ...(options.queryParams ?? {}),
-              ...(filter?.params ?? {}),
-            }
-        const documents = await client.fetch<Array<Record<string, unknown>>>(query, params)
+        const params = {
+          ...(options.queryParams ?? {}),
+          ...(filter?.params ?? {}),
+        }
+        const documents = await client.fetch<Array<Record<string, unknown>>>(collectionQuery, params)
 
         const entries = documents
           .map((document) => mapDocument(document, options.mapData))
@@ -204,25 +118,13 @@ export function sanityLiveLoader<TData extends Record<string, unknown>>(
     },
     loadEntry: async ({filter}) => {
       try {
-        const useSlug = Boolean(filter.slug && !filter.id)
-        const useBuiltQuery = !explicitEntryQuery
-        const query = useBuiltQuery
-          ? buildSanityEntryQuery({
-              type: requireTypeForBuiltQuery(options.type, loaderIdentity),
-              projection,
-              baseFilter: options.baseFilter,
-              idField,
-              slugField,
-              useSlug,
-            })
-          : explicitEntryQuery
         const params = {
-          ...(useBuiltQuery ? {type: options.type} : {}),
           ...(options.queryParams ?? {}),
           ...(filter.params ?? {}),
-          ...(useSlug ? {slug: filter.slug} : {id: filter.id}),
+          ...(typeof filter.id === 'string' ? {id: filter.id} : {}),
+          ...(typeof filter.slug === 'string' ? {slug: filter.slug} : {}),
         }
-        const document = await client.fetch<Record<string, unknown> | null>(query, params)
+        const document = await client.fetch<Record<string, unknown> | null>(entryQuery, params)
 
         if (!document) {
           return undefined
@@ -257,14 +159,14 @@ export function sanityLiveLoader<TData extends Record<string, unknown>>(
   }
 }
 
-function requireTypeForBuiltQuery(type: string | undefined, collectionName: string): string {
-  if (type?.trim()) {
-    return type
+function requireQuery(query: string, optionName: 'collectionQuery' | 'entryQuery', collectionName?: string): string {
+  const normalizedQuery = query.trim()
+  if (normalizedQuery.length > 0) {
+    return normalizedQuery
   }
 
-  throw new Error(
-    `Sanity live loader "${collectionName}" requires either a custom query or a "type" for built query mode.`,
-  )
+  const identity = collectionName ?? 'collection'
+  throw new Error(`Sanity live loader "${identity}" requires a non-empty "${optionName}" option.`)
 }
 
 function mapDocument<TData extends Record<string, unknown>>(

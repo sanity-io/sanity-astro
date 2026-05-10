@@ -106,8 +106,8 @@ If omitted, request logging is disabled.
 
 - an Astro collection `name`
 - a GROQ `collectionQuery`
+- a GROQ `entryQuery`
 - a matching Zod `schema`
-- optional `entryQuery` (or default id/slug entry behavior)
 
 1. Create collection schemas (you can generate these from Sanity typegen output).
 2. Define your live collections in `src/live.config.ts`.
@@ -127,16 +127,16 @@ const sanityLiveCollectionConfigs = defineSanityLiveCollections({
       name: 'movie',
       schema: movieSchema,
       loader: {
-        type: 'movie',
         collectionQuery: `*[_type == "movie"] | order(_updatedAt desc) {...}`,
+        entryQuery: `*[_type == "movie" && _id == $id][0] {...}`,
       },
     },
     {
       name: 'person',
       schema: personSchema,
       loader: {
-        type: 'person',
         collectionQuery: `*[_type == "person"] | order(name asc) {...}`,
+        entryQuery: `*[_type == "person" && _id == $id][0] {...}`,
       },
     },
   ],
@@ -148,7 +148,7 @@ export const collections = Object.fromEntries(
 ```
 
 `collectionQuery` is the source of truth for the collection shape. Your `schema` should validate the result of that query.
-If `entryQuery` is not set, `getLiveEntry()` uses the default id/slug entry query based on `loader.type`, `loader.idField`, and `loader.slugField`.
+`entryQuery` is required and should return one document that matches the same schema shape used by the collection.
 By default, cache hints use `_updatedAt` as `lastModified`. Set `loader.lastModifiedField` only when your query result uses a different timestamp field.
 
 Then, in a page:

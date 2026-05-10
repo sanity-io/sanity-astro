@@ -1,7 +1,5 @@
 export {
   sanityLiveLoader,
-  buildSanityCollectionQuery,
-  buildSanityEntryQuery,
   resolveSanityClient,
   type SanityClientInput,
   type SanityLiveCollectionFilter,

@@ -6,7 +6,9 @@ import {
   movieCollectionQuery,
   movieEntryQuery,
   personCollectionQuery,
+  personEntryQuery,
   screeningCollectionQuery,
+  screeningEntryQuery,
 } from './live/sanity-live-queries.ts'
 
 const sanityLiveCollectionConfigs = defineSanityLiveCollections({
@@ -16,7 +18,6 @@ const sanityLiveCollectionConfigs = defineSanityLiveCollections({
       name: 'movie',
       schema: movieSchema,
       loader: {
-        type: 'movie',
         collectionQuery: movieCollectionQuery,
         entryQuery: movieEntryQuery,
       },
@@ -25,16 +26,16 @@ const sanityLiveCollectionConfigs = defineSanityLiveCollections({
       name: 'person',
       schema: personSchema,
       loader: {
-        type: 'person',
         collectionQuery: personCollectionQuery,
+        entryQuery: personEntryQuery,
       },
     },
     {
       name: 'screening',
       schema: screeningSchema,
       loader: {
-        type: 'screening',
         collectionQuery: screeningCollectionQuery,
+        entryQuery: screeningEntryQuery,
       },
     },
   ] as const,

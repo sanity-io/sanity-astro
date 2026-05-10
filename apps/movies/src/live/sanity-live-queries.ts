@@ -19,7 +19,13 @@ export const movieEntryQuery = defineQuery(
 export const personCollectionQuery = defineQuery(`*[_type == "person"] | order(name asc) {
   ...,
 }`)
+export const personEntryQuery = defineQuery(`*[_type == "person" && _id == $id][0] {
+  ...,
+}`)
 
 export const screeningCollectionQuery = defineQuery(`*[_type == "screening"] | order(beginAt desc) {
+  ...,
+}`)
+export const screeningEntryQuery = defineQuery(`*[_type == "screening" && _id == $id][0] {
   ...,
 }`)

@@ -11,8 +11,7 @@ import {
 export type SanityExplicitCollectionLoaderOptions<TData extends Record<string, unknown>> = Omit<
   SanityLiveLoaderOptions<TData>,
   'client' | 'collectionName'
-> &
-  Required<Pick<SanityLiveLoaderOptions<TData>, 'collectionQuery'>>
+>
 
 export interface SanityLiveCollectionDefinition<
   TName extends string = string,
