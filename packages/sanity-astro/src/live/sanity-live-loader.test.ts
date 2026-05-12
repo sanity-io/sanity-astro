@@ -8,6 +8,10 @@ function createClientMock() {
   } as unknown as SanityClient
 }
 
+function readCollectionLastModified(result: unknown): Date | undefined {
+  return (result as {entries: Array<{cacheHint: {lastModified?: Date}}>}).entries[0].cacheHint.lastModified
+}
+
 describe('sanityLiveLoader visual editing fetch behavior', () => {
   it('uses the default fetch response when visual editing is disabled', async () => {
     const client = createClientMock()
@@ -123,5 +127,111 @@ describe('sanityLiveLoader visual editing fetch behavior', () => {
     expect(result?.error?.message).toContain('Failed to load Sanity collection "movie"')
     expect((result?.error as Error).cause).toBeInstanceOf(Error)
     expect(((result?.error as Error).cause as Error).message).toContain('requires a "visualEditing.token"')
+  })
+})
+
+describe('sanityLiveLoader mapping and cache behavior', () => {
+  it('merges default query params with filter params', async () => {
+    const client = createClientMock()
+    const fetchMock = vi.mocked(client.fetch)
+    fetchMock.mockResolvedValueOnce([{_id: 'movie-4'}])
+
+    const loader = sanityLiveLoader({
+      client,
+      collectionName: 'movie',
+      collectionQuery: '*[_type == "movie"]',
+      entryQuery: '*[_type == "movie" && _id == $id][0]',
+      queryParams: {locale: 'en', limit: 5},
+    })
+
+    await loader.loadCollection({filter: {params: {limit: 10, sort: 'desc'}}})
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '*[_type == "movie"]',
+      {locale: 'en', limit: 10, sort: 'desc'},
+      undefined,
+    )
+  })
+
+  it('supports mapData and mapId for collection entries', async () => {
+    const client = createClientMock()
+    const fetchMock = vi.mocked(client.fetch)
+    fetchMock.mockResolvedValueOnce([
+      {_id: 'movie-5', slug: 'blade-runner', title: 'Blade Runner', _updatedAt: '2026-01-01T00:00:00.000Z'},
+    ])
+
+    const loader = sanityLiveLoader({
+      client,
+      collectionName: 'movie',
+      collectionQuery: '*[_type == "movie"]',
+      entryQuery: '*[_type == "movie" && _id == $id][0]',
+      mapData: (document) => ({
+        id: String(document.slug),
+        title: String(document.title),
+        updated: String(document._updatedAt),
+      }),
+      mapId: (document) => String(document.id),
+      lastModifiedField: 'updated',
+    })
+
+    const result = await loader.loadCollection({filter: undefined})
+
+    expect(result).toMatchObject({
+      entries: [
+        {
+          id: 'blade-runner',
+          data: {title: 'Blade Runner'},
+          cacheHint: {tags: ['sanity-movie', 'sanity-movie:blade-runner']},
+        },
+      ],
+    })
+    expect(readCollectionLastModified(result)).toEqual(new Date('2026-01-01T00:00:00.000Z'))
+  })
+
+  it('supports custom idField fallback when mapId is not provided', async () => {
+    const client = createClientMock()
+    const fetchMock = vi.mocked(client.fetch)
+    fetchMock.mockResolvedValueOnce([
+      {slug: 'arrival', title: 'Arrival', publishedAt: '2026-02-02T10:00:00.000Z'},
+    ])
+
+    const loader = sanityLiveLoader({
+      client,
+      collectionName: 'movie',
+      collectionQuery: '*[_type == "movie"]',
+      entryQuery: '*[_type == "movie" && _id == $id][0]',
+      idField: 'slug',
+      lastModifiedField: 'publishedAt',
+    })
+
+    const result = await loader.loadCollection({filter: undefined})
+
+    expect(result).toMatchObject({
+      entries: [
+        {
+          id: 'arrival',
+          cacheHint: {tags: ['sanity-movie', 'sanity-movie:arrival']},
+        },
+      ],
+    })
+    expect(readCollectionLastModified(result)).toEqual(new Date('2026-02-02T10:00:00.000Z'))
+  })
+
+  it('returns undefined for loadEntry when no document matches', async () => {
+    const client = createClientMock()
+    const fetchMock = vi.mocked(client.fetch)
+    fetchMock.mockResolvedValueOnce(null)
+
+    const loader = sanityLiveLoader({
+      client,
+      collectionName: 'movie',
+      collectionQuery: '*[_type == "movie"]',
+      entryQuery: '*[_type == "movie" && _id == $id][0]',
+    })
+
+    const result = await loader.loadEntry({filter: {id: 'missing'}})
+
+    expect(fetchMock).toHaveBeenCalledWith('*[_type == "movie" && _id == $id][0]', {id: 'missing'}, undefined)
+    expect(result).toBeUndefined()
   })
 })
