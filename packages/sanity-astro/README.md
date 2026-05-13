@@ -164,7 +164,7 @@ const {entry} = await getLiveEntry('movie', Astro.params.id!)
 
 #### Visual Editing with live collections
 
-When you are using [Visual Editing](#enabling-visual-editing), configure each live loader with a preview-only `visualEditing` option so loader-backed content is fetched with drafts + stega settings:
+When you are using [Visual Editing](#enabling-visual-editing), configure a preview-only `visualEditing` default at the `defineSanityLiveCollections()` level so loader-backed content is fetched with drafts + stega settings:
 
 ```ts
 // src/live.config.ts
@@ -182,6 +182,7 @@ const liveLoaderVisualEditing = visualEditingEnabled
 
 const sanityLiveCollectionConfigs = defineSanityLiveCollections({
   client: sanityClient,
+  visualEditing: liveLoaderVisualEditing,
   collections: [
     {
       name: 'movie',
@@ -189,7 +190,6 @@ const sanityLiveCollectionConfigs = defineSanityLiveCollections({
       loader: {
         collectionQuery: `*[_type == "movie"] {...}`,
         entryQuery: `*[_type == "movie" && _id == $id][0] {...}`,
-        visualEditing: liveLoaderVisualEditing,
       },
     },
   ],
@@ -197,6 +197,7 @@ const sanityLiveCollectionConfigs = defineSanityLiveCollections({
 ```
 
 When `visualEditing.enabled` is `true`, the loader fetches with draft perspective, source-map aware responses, stega enabled, and requires `visualEditing.token`.
+If needed, individual collections can override defaults by setting `loader.visualEditing` on that collection.
 
 If you use `loader.mapData`, preserve string fields used for rendering overlays. Rebuilding all strings can strip stega metadata and prevent click-to-edit from attaching correctly.
 

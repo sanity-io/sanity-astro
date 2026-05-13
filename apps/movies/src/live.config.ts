@@ -25,6 +25,7 @@ const liveLoaderVisualEditing = visualEditingEnabled
 
 const sanityLiveCollectionConfigs = defineSanityLiveCollections({
   client: sanityClient,
+  visualEditing: liveLoaderVisualEditing,
   collections: [
     {
       name: 'movie',
@@ -32,7 +33,6 @@ const sanityLiveCollectionConfigs = defineSanityLiveCollections({
       loader: {
         collectionQuery: movieCollectionQuery,
         entryQuery: movieEntryQuery,
-        visualEditing: liveLoaderVisualEditing,
       },
     },
     {
@@ -41,7 +41,6 @@ const sanityLiveCollectionConfigs = defineSanityLiveCollections({
       loader: {
         collectionQuery: personCollectionQuery,
         entryQuery: personEntryQuery,
-        visualEditing: liveLoaderVisualEditing,
       },
     },
     {
@@ -50,7 +49,6 @@ const sanityLiveCollectionConfigs = defineSanityLiveCollections({
       loader: {
         collectionQuery: screeningCollectionQuery,
         entryQuery: screeningEntryQuery,
-        visualEditing: liveLoaderVisualEditing,
       },
     },
   ] as const,

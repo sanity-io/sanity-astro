@@ -6,6 +6,7 @@ import {
   type SanityLiveEntryFilter,
   type SanityClientInput,
   type SanityLiveLoaderOptions,
+  type SanityLiveVisualEditingOptions,
 } from './sanity-live-loader'
 
 export type SanityExplicitCollectionLoaderOptions<TData extends Record<string, unknown>> = Omit<
@@ -26,6 +27,7 @@ export interface DefineSanityLiveCollectionsOptions<
   TCollections extends readonly SanityLiveCollectionDefinition[] = readonly SanityLiveCollectionDefinition[],
 > {
   client: SanityClientInput
+  visualEditing?: SanityLiveVisualEditingOptions
   collections: TCollections
 }
 
@@ -71,10 +73,25 @@ export function defineSanityLiveCollections<const TCollections extends readonly 
         client: options.client,
         collectionName,
         ...definition.loader,
+        visualEditing: mergeVisualEditingOptions(options.visualEditing, definition.loader.visualEditing),
       }),
       schema: definition.schema,
     }
   }
 
   return collections as SanityLiveCollectionRecord<TCollections>
+}
+
+function mergeVisualEditingOptions(
+  defaults: SanityLiveVisualEditingOptions | undefined,
+  overrides: SanityLiveVisualEditingOptions | undefined,
+): SanityLiveVisualEditingOptions | undefined {
+  if (!defaults && !overrides) {
+    return undefined
+  }
+
+  return {
+    ...(defaults ?? {}),
+    ...(overrides ?? {}),
+  }
 }
