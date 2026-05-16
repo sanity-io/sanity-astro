@@ -168,10 +168,9 @@ describe('sanityLiveLoader mapping and cache behavior', () => {
       mapData: (document) => ({
         id: String(document.slug),
         title: String(document.title),
-        updated: String(document._updatedAt),
+        _updatedAt: String(document._updatedAt),
       }),
       mapId: (document) => String(document.id),
-      lastModifiedField: 'updated',
     })
 
     const result = await loader.loadCollection({filter: undefined})
@@ -188,11 +187,11 @@ describe('sanityLiveLoader mapping and cache behavior', () => {
     expect(readCollectionLastModified(result)).toEqual(new Date('2026-01-01T00:00:00.000Z'))
   })
 
-  it('supports custom idField fallback when mapId is not provided', async () => {
+  it('uses _id as the enforced fallback identifier', async () => {
     const client = createClientMock()
     const fetchMock = vi.mocked(client.fetch)
     fetchMock.mockResolvedValueOnce([
-      {slug: 'arrival', title: 'Arrival', publishedAt: '2026-02-02T10:00:00.000Z'},
+      {_id: 'arrival', slug: 'arrival', title: 'Arrival', _updatedAt: '2026-02-02T10:00:00.000Z'},
     ])
 
     const loader = sanityLiveLoader({
@@ -200,8 +199,6 @@ describe('sanityLiveLoader mapping and cache behavior', () => {
       collectionName: 'movie',
       collectionQuery: '*[_type == "movie"]',
       entryQuery: '*[_type == "movie" && _id == $id][0]',
-      idField: 'slug',
-      lastModifiedField: 'publishedAt',
     })
 
     const result = await loader.loadCollection({filter: undefined})

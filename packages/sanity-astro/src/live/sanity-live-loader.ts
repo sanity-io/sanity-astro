@@ -28,12 +28,10 @@ export interface SanityLiveLoaderOptions<TData extends Record<string, unknown>> 
   collectionName?: string
   collectionQuery: string
   entryQuery: string
-  idField?: string
   queryParams?: QueryParams
   mapData?: (document: Record<string, unknown>) => TData
   mapId?: (document: Record<string, unknown>) => string
   cacheTagPrefix?: string
-  lastModifiedField?: string
   visualEditing?: SanityLiveVisualEditingOptions
 }
 
@@ -74,10 +72,8 @@ export function sanityLiveLoader<TData extends Record<string, unknown>>(
   const client = resolveSanityClient(options.client)
   const collectionQuery = requireQuery(options.collectionQuery, 'collectionQuery', options.collectionName)
   const entryQuery = requireQuery(options.entryQuery, 'entryQuery', options.collectionName)
-  const idField = options.idField ?? '_id'
   const loaderIdentity = options.collectionName ?? 'collection'
   const cacheTagPrefix = options.cacheTagPrefix ?? `sanity-${loaderIdentity}`
-  const lastModifiedField = options.lastModifiedField ?? '_updatedAt'
 
   return {
     name: `sanity-live-loader:${loaderIdentity}`,
@@ -97,13 +93,13 @@ export function sanityLiveLoader<TData extends Record<string, unknown>>(
         const entries = documents
           .map((document) => mapDocument(document, options.mapData))
           .map((data): {id: string; data: TData; cacheHint: {tags: string[]; lastModified?: Date}} | undefined => {
-            const id = options.mapId?.(data) ?? extractString(data[idField]) ?? extractString(data._id)
+            const id = options.mapId?.(data) ?? extractString(data._id)
             if (!id) {
               return undefined
             }
 
             const tags = [cacheTagPrefix, `${cacheTagPrefix}:${id}`]
-            const lastModified = coerceDate(data[lastModifiedField])
+            const lastModified = coerceDate(data._updatedAt)
 
             return {
               id,
@@ -151,7 +147,7 @@ export function sanityLiveLoader<TData extends Record<string, unknown>>(
         }
 
         const data = mapDocument(document, options.mapData)
-        const id = options.mapId?.(data) ?? extractString(data[idField]) ?? extractString(data._id)
+        const id = options.mapId?.(data) ?? extractString(data._id)
 
         if (!id) {
           return {
@@ -160,7 +156,7 @@ export function sanityLiveLoader<TData extends Record<string, unknown>>(
         }
 
         const tags = [cacheTagPrefix, `${cacheTagPrefix}:${id}`]
-        const lastModified = coerceDate(data[lastModifiedField])
+        const lastModified = coerceDate(data._updatedAt)
 
         return {
           id,

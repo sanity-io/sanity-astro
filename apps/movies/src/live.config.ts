@@ -1,20 +1,12 @@
-import { defineLiveCollection } from 'astro:content'
-import { defineSanityLiveCollections } from '@sanity/astro/live-loader'
-import { sanityClient } from 'sanity:client'
-import { movieSchema, personSchema, screeningSchema } from './live/sanity-live-schemas'
-import {
-  movieCollectionQuery,
-  movieEntryQuery,
-  personCollectionQuery,
-  personEntryQuery,
-  screeningCollectionQuery,
-  screeningEntryQuery,
-} from './live/sanity-live-queries.ts'
+import {defineLiveCollection} from 'astro:content'
+import {movieLoader, personLoader, screeningLoader} from 'sanity:loader'
+import {sanityClient} from 'sanity:client'
+import {movieSchema, personSchema, screeningSchema} from './live/sanity-live-schemas'
 
 const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED === 'true'
 const visualEditingToken = import.meta.env.SANITY_API_READ_TOKEN
 
-const liveLoaderVisualEditing = visualEditingEnabled
+const loaderVisualEditing = visualEditingEnabled
   ? {
       enabled: true,
       token: visualEditingToken,
@@ -23,39 +15,22 @@ const liveLoaderVisualEditing = visualEditingEnabled
       enabled: false,
     }
 
-const sanityLiveCollectionConfigs = defineSanityLiveCollections({
+const loaderOptions = {
   client: sanityClient,
-  visualEditing: liveLoaderVisualEditing,
-  collections: [
-    {
-      name: 'movie',
-      schema: movieSchema,
-      loader: {
-        collectionQuery: movieCollectionQuery,
-        entryQuery: movieEntryQuery,
-      },
-    },
-    {
-      name: 'person',
-      schema: personSchema,
-      loader: {
-        collectionQuery: personCollectionQuery,
-        entryQuery: personEntryQuery,
-      },
-    },
-    {
-      name: 'screening',
-      schema: screeningSchema,
-      loader: {
-        collectionQuery: screeningCollectionQuery,
-        entryQuery: screeningEntryQuery,
-      },
-    },
-  ] as const,
-})
+  visualEditing: loaderVisualEditing,
+}
 
 export const collections = {
-  movie: defineLiveCollection(sanityLiveCollectionConfigs.movie),
-  person: defineLiveCollection(sanityLiveCollectionConfigs.person),
-  screening: defineLiveCollection(sanityLiveCollectionConfigs.screening),
+  movie: defineLiveCollection({
+    loader: movieLoader(loaderOptions),
+    schema: movieSchema,
+  }),
+  person: defineLiveCollection({
+    loader: personLoader(loaderOptions),
+    schema: personSchema,
+  }),
+  screening: defineLiveCollection({
+    loader: screeningLoader(loaderOptions),
+    schema: screeningSchema,
+  }),
 }

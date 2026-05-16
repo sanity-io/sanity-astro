@@ -13,12 +13,19 @@ const sanityAstroOptions = await loadSanityAstroOptions({
   cwd,
   explicitConfigPath: args.astroConfig,
 })
-const schemaOptions = sanityAstroOptions?.liveLoader?.schema
-const inputPath = resolve(cwd, args.input ?? schemaOptions?.input ?? './sanity.types.ts')
+const sanityCliOptions = await loadSanityCliOptions({cwd})
+const schemaOptions = sanityAstroOptions?.live?.schema ?? sanityAstroOptions?.liveLoader?.schema
+const configuredInputPath = resolve(
+  cwd,
+  args.input ?? schemaOptions?.input ?? sanityCliOptions?.typegen?.path ?? './sanity.types.ts',
+)
 const outputPath = resolve(
   cwd,
-  args.output ?? schemaOptions?.output ?? './src/live/sanity-live-schemas.generated.ts',
+  args.output ?? schemaOptions?.output ?? './.astro/sanity-live-schemas.generated.ts',
 )
+const inputPath = isSanityConfigPath(configuredInputPath)
+  ? await generateTypesFromSanityConfig(configuredInputPath)
+  : configuredInputPath
 
 await mkdir(dirname(outputPath), {recursive: true})
 await runTsToZod({
@@ -111,6 +118,30 @@ function normalizeCliPath(pathValue) {
   return `./${pathValue}`
 }
 
+function isSanityConfigPath(pathValue) {
+  return /sanity\.config\.(ts|js|mjs|cjs)$/.test(pathValue)
+}
+
+async function generateTypesFromSanityConfig(configPath) {
+  const generatedSchemaPath = resolve(cwd, '.astro/sanity.schema.generated.json')
+  const generatedTypesPath = resolve(cwd, '.astro/sanity.types.generated.ts')
+  const configForCli = normalizeCliPath(relative(cwd, configPath))
+  const schemaForCli = normalizeCliPath(relative(cwd, generatedSchemaPath))
+  const typesForCli = normalizeCliPath(relative(cwd, generatedTypesPath))
+
+  await mkdir(dirname(generatedSchemaPath), {recursive: true})
+  await runCommand('pnpm', ['exec', 'sanity', 'schema', 'extract', '--path', schemaForCli, '--config', configForCli], {
+    cwd,
+  })
+  await runCommand(
+    'pnpm',
+    ['exec', 'sanity', 'typegen', 'generate', '--schema', schemaForCli, '--output', typesForCli],
+    {cwd},
+  )
+
+  return generatedTypesPath
+}
+
 async function loadSanityAstroOptions({
   cwd,
   explicitConfigPath,
@@ -142,6 +173,16 @@ async function loadSanityAstroOptions({
   return undefined
 }
 
+async function loadSanityCliOptions({cwd}) {
+  const sanityCliPath = findSanityCliPath(cwd)
+  if (!sanityCliPath) {
+    return undefined
+  }
+
+  const module = await import(pathToFileURL(sanityCliPath).href)
+  return module.default
+}
+
 function findAstroConfigPath(cwd) {
   const candidates = [
     'astro.config.mjs',
@@ -149,6 +190,25 @@ function findAstroConfigPath(cwd) {
     'astro.config.cjs',
     'astro.config.mts',
     'astro.config.ts',
+  ]
+
+  for (const candidate of candidates) {
+    const absolutePath = resolve(cwd, candidate)
+    if (existsSync(absolutePath)) {
+      return absolutePath
+    }
+  }
+
+  return undefined
+}
+
+function findSanityCliPath(cwd) {
+  const candidates = [
+    'sanity.cli.ts',
+    'sanity.cli.mts',
+    'sanity.cli.js',
+    'sanity.cli.mjs',
+    'sanity.cli.cjs',
   ]
 
   for (const candidate of candidates) {

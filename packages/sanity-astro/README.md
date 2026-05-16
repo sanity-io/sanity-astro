@@ -102,7 +102,70 @@ If omitted, request logging is disabled.
 
 > Requires Astro 6+ for `defineLiveCollection()`.
 
-`@sanity/astro` includes a live loader helper that lets you define each collection explicitly with:
+`@sanity/astro` includes two ways to build Astro live collections:
+
+- **Generated loaders** from `sanity({live: ...})` + `sanity:loader`
+- **Explicit queries** with `defineSanityLiveCollections(...)`
+
+#### Generated loaders (recommended)
+
+Configure your loaders in `astro.config.*`:
+
+```ts
+// astro.config.mjs
+import {defineConfig} from 'astro/config'
+import sanity from '@sanity/astro'
+
+export default defineConfig({
+  integrations: [
+    sanity({
+      projectId: '<YOUR-PROJECT-ID>',
+      dataset: '<YOUR-DATASET-NAME>',
+      live: {
+        schema: {
+          input: './sanity.types.ts',
+        },
+        loaders: {
+          movie: {
+            type: 'movie',
+            projection: '_id,title,releaseDate,_updatedAt',
+            orderBy: ['_updatedAt', 'desc'],
+          },
+        },
+      },
+    }),
+  ],
+})
+```
+
+Then define collections with virtual modules:
+
+```ts
+// src/live.config.ts
+import {defineLiveCollection} from 'astro:content'
+import {sanityClient} from 'sanity:client'
+import {movieLoader} from 'sanity:loader'
+import {movieSchema} from './live/sanity-live-schemas'
+
+export const collections = {
+  movies: defineLiveCollection({
+    loader: movieLoader({client: sanityClient}),
+    schema: movieSchema,
+  }),
+}
+```
+
+Collection filtering uses `params`, and your query should reference those params:
+
+```ts
+const {entries} = await getLiveCollection('movies', {
+  filter: {params: {year: 1982}},
+})
+```
+
+#### Explicit queries
+
+`defineSanityLiveCollections(...)` lets you define each collection with:
 
 - an Astro collection `name`
 - a GROQ `collectionQuery`
@@ -148,8 +211,9 @@ export const collections = Object.fromEntries(
 ```
 
 `collectionQuery` is the source of truth for the collection shape. Your `schema` should validate the result of that query.
-`entryQuery` is required and should return one document that matches the same schema shape used by the collection.
-By default, cache hints use `_updatedAt` as `lastModified`. Set `loader.lastModifiedField` only when your query result uses a different timestamp field.
+Both `collectionQuery` and `entryQuery` are required.
+`entryQuery` should return one document that matches the same schema shape used by the collection.
+Cache hints always use `_updatedAt` as `lastModified`.
 
 Then, in a page:
 
@@ -213,7 +277,7 @@ Step 1 is optional. If you do not set an output path, the generator defaults to:
 ```ts
 sanity({
   // ...existing config
-  liveLoader: {
+  live: {
     schema: {
       output: './src/live/sanity-live-schemas.generated.ts',
     },
@@ -240,7 +304,8 @@ pnpm sanity:live:schemas
 This will:
 
 - read generated Sanity types from `./sanity.types.ts` (or your `--input`)
-- read output target from `sanity().liveLoader.schema.output` in `astro.config.*`
+- if `--input` and `live.schema.input` are omitted, fall back to `typegen.path` from `sanity.cli.*` when available
+- read output target from `sanity().live.schema.output` in `astro.config.*`
 - write the generated Zod file (for example `./src/live/sanity-live-schemas.generated.ts`)
 
 `sanity:live:schemas` uses:
