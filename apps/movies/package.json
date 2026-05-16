@@ -8,21 +8,27 @@
     "build": "astro check && astro build",
     "dev": "PUBLIC_SANITY_VISUAL_EDITING_ENABLED=true astro dev --port 4321",
     "preview": "astro preview",
-    "start": "astro dev --port 4321"
+    "start": "astro dev --port 4321",
+    "sanity:schema:extract": "sanity schema extract --path=./src/sanity.schema.json",
+    "sanity:typegen": "sanity typegen generate",
+    "sanity:live:schemas": "node ./node_modules/@sanity/astro/scripts/generate-live-schemas.mjs --names MovieDocument,PersonDocument,ScreeningDocument",
+    "sanity:sync-types": "pnpm sanity:schema:extract && pnpm sanity:live:schemas"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.5",
     "@astrojs/react": "^4.4.1",
-    "@astrojs/vercel": "^8.2.11",
+    "@astrojs/vercel": "^10.0.0",
     "@sanity/astro": "workspace:^",
     "@sanity/client": "^7.16.0",
     "@types/react": "^19.2.3",
     "@types/react-dom": "^19.2.3",
-    "astro": "5.4.1",
+    "astro": "^6.0.0",
+    "groq": "^5.24.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-icons": "^5.5.0",
     "sanity": "^5.0.1",
+    "ts-to-zod": "^5.1.0",
     "typescript": "^5.9.3"
   }
 }

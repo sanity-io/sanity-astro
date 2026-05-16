@@ -2,6 +2,8 @@
 import {Prism} from '@astrojs/prism'
 
 const {node} = Astro.props
+const code = typeof node?.code === 'string' ? node.code : ''
+const language = typeof node?.language === 'string' && node.language.length > 0 ? node.language : 'text'
 ---
 
-<Prism lang={node.language} code={node.code} />
+<Prism lang={language} code={code} />

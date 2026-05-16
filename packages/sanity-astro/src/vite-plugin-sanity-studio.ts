@@ -8,6 +8,8 @@ export function vitePluginSanityStudio(resolvedOptions: {
 }) {
   const virtualModuleId = 'sanity:studio'
   const resolvedVirtualModuleId = virtualModuleId
+  const reactDomClientShimModuleId = 'sanity:react-dom-client'
+  const resolvedReactDomClientShimModuleId = `\0${reactDomClientShimModuleId}`
 
   return {
     name: 'sanity:studio',
@@ -15,9 +17,28 @@ export function vitePluginSanityStudio(resolvedOptions: {
       if (id === virtualModuleId) {
         return resolvedVirtualModuleId
       }
+      if (id === 'react-dom/client') {
+        return resolvedReactDomClientShimModuleId
+      }
       return null
     },
     async load(id: string) {
+      if (id === resolvedReactDomClientShimModuleId) {
+        return `
+        import reactDomClientModule from "react-dom/client.js";
+
+        const reactDomClient =
+          reactDomClientModule &&
+          typeof reactDomClientModule === "object" &&
+          "default" in reactDomClientModule
+            ? reactDomClientModule.default
+            : reactDomClientModule;
+
+        export const createRoot = reactDomClient.createRoot;
+        export const hydrateRoot = reactDomClient.hydrateRoot;
+        export default reactDomClient;
+        `
+      }
       if (id === virtualModuleId) {
         const studioConfig = await this.resolve('/sanity.config')
         if (!studioConfig) {

@@ -98,6 +98,279 @@ To log server-side requests made with `sanity:client`, set `logClientRequests` i
 
 If omitted, request logging is disabled.
 
+### Astro 6 live collections from Sanity
+
+> Requires Astro 6+ for `defineLiveCollection()`.
+
+`@sanity/astro` includes two ways to build Astro live collections:
+
+- **Generated loaders** from `sanity({live: ...})` + `sanity:loader`
+- **Explicit queries** with `defineSanityLiveCollections(...)`
+
+#### Generated loaders (recommended)
+
+Configure your loaders in `astro.config.*`:
+
+```ts
+// astro.config.mjs
+import {defineConfig} from 'astro/config'
+import sanity from '@sanity/astro'
+
+export default defineConfig({
+  integrations: [
+    sanity({
+      projectId: '<YOUR-PROJECT-ID>',
+      dataset: '<YOUR-DATASET-NAME>',
+      live: {
+        schema: {
+          input: './sanity.types.ts',
+        },
+        loaders: {
+          movie: {
+            type: 'movie',
+            projection: '_id,title,releaseDate,_updatedAt',
+            orderBy: ['_updatedAt', 'desc'],
+          },
+        },
+      },
+    }),
+  ],
+})
+```
+
+Then define collections:
+
+```ts
+// src/live.config.ts
+import {defineLiveCollection} from 'astro:content'
+import {sanityClient} from 'sanity:client'
+import {movieLoader} from 'sanity:loader'
+import {movieSchema} from './live/sanity-live-schemas'
+
+export const collections = {
+  movies: defineLiveCollection({
+    loader: movieLoader({client: sanityClient}),
+    schema: movieSchema,
+  }),
+}
+```
+
+#### Explicit queries
+
+`defineSanityLiveCollections(...)` lets you define each collection with:
+
+- an Astro collection `name`
+- a GROQ `collectionQuery`
+- a GROQ `entryQuery`
+- a matching Zod `schema`
+
+1. Create collection schemas (you can generate these from Sanity typegen output).
+2. Define your live collections in `src/live.config.ts`.
+3. Query with `getLiveCollection()` / `getLiveEntry()`.
+
+```ts
+// src/live.config.ts
+import {defineLiveCollection} from 'astro:content'
+import {defineSanityLiveCollections} from '@sanity/astro/live-loader'
+import {sanityClient} from 'sanity:client'
+import {movieSchema, personSchema} from './live/sanity-live-schemas'
+
+const sanityLiveCollectionConfigs = defineSanityLiveCollections({
+  client: sanityClient,
+  collections: [
+    {
+      name: 'movie',
+      schema: movieSchema,
+      loader: {
+        collectionQuery: `*[_type == "movie"] | order(_updatedAt desc) {...}`,
+        entryQuery: `*[_type == "movie" && _id == $id][0] {...}`,
+      },
+    },
+    {
+      name: 'person',
+      schema: personSchema,
+      loader: {
+        collectionQuery: `*[_type == "person"] | order(name asc) {...}`,
+        entryQuery: `*[_type == "person" && _id == $id][0] {...}`,
+      },
+    },
+  ],
+})
+
+export const collections = Object.fromEntries(
+  Object.entries(sanityLiveCollectionConfigs).map(([name, config]) => [
+    name,
+    defineLiveCollection(config),
+  ]),
+)
+```
+
+`collectionQuery` is the source of truth for the collection shape. Your `schema` should validate the result of that query.
+Both `collectionQuery` and `entryQuery` are required.
+`entryQuery` should return one document that matches the same schema shape used by the collection.
+Cache hints always use `_updatedAt` as `lastModified`.
+
+Then, in a page:
+
+```ts
+---
+import {getLiveCollection, getLiveEntry} from 'astro:content'
+
+const {entries} = await getLiveCollection('movie')
+const {entry} = await getLiveEntry('movie', Astro.params.id!)
+---
+```
+
+Collection filtering uses `params`. If your GROQ query references parameters (for example `$year`), define that collection with explicit queries:
+
+```ts
+const sanityLiveCollectionConfigs = defineSanityLiveCollections({
+  client: sanityClient,
+  collections: [
+    {
+      name: 'movies',
+      schema: movieSchema,
+      loader: {
+        collectionQuery: `*[_type == "movie" && releaseYear == $year]{_id,title,releaseDate,_updatedAt}`,
+        entryQuery: `*[_type == "movie" && _id == $id][0]{_id,title,releaseDate,_updatedAt}`,
+      },
+    },
+  ],
+})
+```
+
+Then pass params at read-time:
+
+```ts
+const {entries} = await getLiveCollection('movies', {
+  filter: {params: {year: 1982}},
+})
+```
+
+#### Visual Editing with live collections
+
+When you are using [Visual Editing](#enabling-visual-editing), configure a preview-only `visualEditing` default at the `defineSanityLiveCollections()` level so loader-backed content is fetched with drafts + stega settings:
+
+```ts
+// src/live.config.ts
+const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED === 'true'
+const token = import.meta.env.SANITY_API_READ_TOKEN
+
+const liveLoaderVisualEditing = visualEditingEnabled
+  ? {
+      enabled: true,
+      token,
+    }
+  : {
+      enabled: false,
+    }
+
+const sanityLiveCollectionConfigs = defineSanityLiveCollections({
+  client: sanityClient,
+  visualEditing: liveLoaderVisualEditing,
+  collections: [
+    {
+      name: 'movie',
+      schema: movieSchema,
+      loader: {
+        collectionQuery: `*[_type == "movie"] {...}`,
+        entryQuery: `*[_type == "movie" && _id == $id][0] {...}`,
+      },
+    },
+  ],
+})
+```
+
+When `visualEditing.enabled` is `true`, the loader fetches with draft perspective, source-map aware responses, stega enabled, and requires `visualEditing.token`.
+If needed, individual collections can override defaults by setting `loader.visualEditing` on that collection.
+
+If you use `loader.mapData`, preserve string fields used for rendering overlays. Rebuilding all strings can strip stega metadata and prevent click-to-edit from attaching correctly.
+
+#### Generating Zod schemas from Sanity typegen
+
+Use this flow to generate the `sanity-live-schemas.generated.ts` file used by your live config.
+
+Step 1 is optional. If you do not set an output path, the generator defaults to:
+`./src/live/sanity-live-schemas.generated.ts`.
+
+1. Configure where generated schemas should be written in `astro.config.*`:
+
+```ts
+sanity({
+  // ...existing config
+  live: {
+    schema: {
+      output: './src/live/sanity-live-schemas.generated.ts',
+    },
+  },
+})
+```
+
+2. Make sure your app has the scripts:
+
+```bash
+sanity:schema:extract  # sanity schema extract --path=./src/sanity.schema.json
+sanity:typegen         # sanity typegen generate
+sanity:live:schemas    # node ./node_modules/@sanity/astro/scripts/generate-live-schemas.mjs
+```
+
+3. Run:
+
+```bash
+pnpm sanity:schema:extract
+pnpm sanity:live:schemas
+```
+
+This will:
+
+- if `--input` or `live.schema.input` is provided, use that type file as input (explicit/full-query path)
+- if no explicit input is provided and `sanity().live.loaders` is configured, generate temporary query definitions from those loaders and run `sanity typegen generate` (single source of truth with runtime queries)
+- otherwise, run `sanity typegen generate` using your configured query files (`sanity.cli.*` / `sanity-typegen.json`) and use `typegen.path` (or `./sanity.types.ts`) as input
+- read output target from `sanity().live.schema.output` in `astro.config.*`
+- write the generated Zod file (for example `./src/live/sanity-live-schemas.generated.ts`)
+
+Two supported paths:
+
+- **Generated-loader path**: define `sanity().live.loaders`, run `sanity:live:schemas`, and typegen input is derived from loader-generated queries.
+- **Explicit-query path**: define your own GROQ queries (for example with `defineQuery(...)`), let `sanity typegen generate` infer their result types, and run `sanity:live:schemas` (or pass `--input` / `live.schema.input` for a specific types file).
+
+`sanity:live:schemas` uses:
+
+- `node_modules/@sanity/astro/scripts/generate-live-schemas.mjs`
+- `ts-to-zod` for TS -> Zod conversion
+- a post-processing step to target `astro/zod`
+
+Note: `sanity-live-schemas.generated.ts` is generated. Keep your wrapper file (for example `sanity-live-schemas.ts`) as the stable import used by `src/live.config.ts`.
+
+Example wrapper:
+
+```ts
+// src/live/sanity-live-schemas.ts
+import {
+  movieDocumentSchema,
+  personDocumentSchema,
+  screeningDocumentSchema,
+} from './sanity-live-schemas.generated'
+
+export const movieSchema = movieDocumentSchema
+export const personSchema = personDocumentSchema
+export const screeningSchema = screeningDocumentSchema
+```
+
+Then import the schemas you need in `src/live.config.ts`.
+
+For reusable schema utilities, import from `@sanity/astro/live-loader/schemas`:
+
+```ts
+import {
+  defineSanityDocumentSchema,
+  createSanitySchemaMap,
+  z,
+} from '@sanity/astro/live-loader/schemas'
+```
+
+If you use custom projections/queries, keep generated schemas as a baseline and customize schemas so they match your query output.
+
 ### Embedding Sanity Studio on a route
 
 Sanity Studio is a customizable content workspace where you can edit your content. It‘s a Single Page Application that you can keep in its own repository, together with your Astro project as a monorepo, or embedded in your website.

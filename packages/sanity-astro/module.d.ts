@@ -6,6 +6,8 @@ declare module 'sanity:studio' {
   export const config: import('sanity').Config
 }
 
+declare module 'sanity:loader' {}
+
 declare module '*.astro' {
   const component: unknown
   export default component

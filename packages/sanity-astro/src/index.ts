@@ -1,15 +1,34 @@
 import type {AstroIntegration} from 'astro'
 import {vitePluginSanityClient} from './vite-plugin-sanity-client'
+import {vitePluginSanityLoader} from './vite-plugin-sanity-loader'
 import {vitePluginSanityStudio} from './vite-plugin-sanity-studio'
 import {vitePluginSanityStudioHashRouter} from './vite-plugin-sanity-studio-hash-router'
 import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-chunk-warning'
 import type {ClientConfig} from '@sanity/client'
 import {normalizeStudioBasePath, studioRoutePattern} from './studio-base-path'
+import {createSanityLoaderTypeDeclaration, type LiveLoadersConfig} from './live/loader-config'
+
+type LiveSchemaOptions = {
+  output?: string
+  input?: string
+  names?: string[]
+}
+
+type LegacyLiveLoaderOptions = {
+  schema?: LiveSchemaOptions
+}
+
+type LiveOptions = {
+  schema?: LiveSchemaOptions
+  loaders?: LiveLoadersConfig
+}
 
 type IntegrationOptions = ClientConfig & {
   studioBasePath?: string
   studioRouterHistory?: 'browser' | 'hash'
   logClientRequests?: 'dev' | 'build' | 'always'
+  live?: LiveOptions
+  liveLoader?: LegacyLiveLoaderOptions
 }
 
 const defaultClientConfig: ClientConfig = {
@@ -30,14 +49,20 @@ function resolveStudioRouterHistory(
 export default function sanityIntegration(
   integrationConfig: IntegrationOptions = {},
 ): AstroIntegration {
+  const live = normalizeLiveOptions(integrationConfig.live, integrationConfig.liveLoader)
   const studioBasePath = integrationConfig.studioBasePath
   const normalizedStudioBasePath = normalizeStudioBasePath(studioBasePath)
   const inputStudioRouterHistory = integrationConfig.studioRouterHistory
   const logClientRequests = integrationConfig.logClientRequests
+  let sanityLoaderTypes = createSanityLoaderTypeDeclaration(live.loaders)
+  const sanityLoaderTypesFilename = 'sanity-loader.d.ts'
+  let liveOptionsForScripts: LiveOptions = live
   const clientConfig = integrationConfig
   delete clientConfig.studioBasePath
   delete clientConfig.studioRouterHistory
   delete clientConfig.logClientRequests
+  delete clientConfig.live
+  delete clientConfig.liveLoader
 
   if (!!studioBasePath && studioBasePath.match(/https?:\/\//)) {
     throw new Error(
@@ -45,10 +70,29 @@ export default function sanityIntegration(
     )
   }
 
-  return {
+  const integration: AstroIntegration & {
+    __sanityAstroOptions?: {
+      live?: LiveOptions
+      liveLoader?: LegacyLiveLoaderOptions
+    }
+  } = {
     name: '@sanity/astro',
     hooks: {
-      'astro:config:setup': ({config, injectScript, injectRoute, updateConfig}) => {
+      'astro:config:setup': ({config, createCodegenDir, injectScript, injectRoute, updateConfig}) => {
+        const codegenDir = createCodegenDir()
+        if (!live.schema?.output) {
+          const defaultSchemaOutput = new URL('sanity-live-schemas.generated.ts', codegenDir).pathname
+          liveOptionsForScripts = {
+            ...live,
+            schema: {
+              ...(live.schema ?? {}),
+              output: defaultSchemaOutput,
+            },
+          }
+        }
+
+        sanityLoaderTypes = createSanityLoaderTypeDeclaration(liveOptionsForScripts.loaders)
+
         const studioRouterHistory = resolveStudioRouterHistory(
           inputStudioRouterHistory,
           config?.output,
@@ -57,6 +101,8 @@ export default function sanityIntegration(
           vite: {
             optimizeDeps: {
               include: [
+                'react-dom',
+                'react-dom/client',
                 'react-compiler-runtime',
                 'react-is',
                 'styled-components',
@@ -68,6 +114,7 @@ export default function sanityIntegration(
                 ...defaultClientConfig,
                 ...clientConfig,
               }, {logClientRequests}),
+              vitePluginSanityLoader(live.loaders),
               vitePluginSanityStudio({
                 studioBasePath: normalizedStudioBasePath,
                 studioRouterHistory,
@@ -107,7 +154,36 @@ export default function sanityIntegration(
           globalThis.sanityClient = sanityClient;
           `,
         )
+
+        integration.__sanityAstroOptions = {
+          live: liveOptionsForScripts,
+          liveLoader: {
+            schema: liveOptionsForScripts.schema,
+          },
+        }
+      },
+      'astro:config:done': ({injectTypes}) => {
+        injectTypes({
+          filename: sanityLoaderTypesFilename,
+          content: sanityLoaderTypes,
+        })
       },
     },
+  }
+
+  integration.__sanityAstroOptions = {
+    live,
+    liveLoader: {
+      schema: live.schema,
+    },
+  }
+
+  return integration
+}
+
+function normalizeLiveOptions(live: LiveOptions | undefined, legacyLiveLoader: LegacyLiveLoaderOptions | undefined): LiveOptions {
+  return {
+    ...(live ?? {}),
+    schema: live?.schema ?? legacyLiveLoader?.schema,
   }
 }
