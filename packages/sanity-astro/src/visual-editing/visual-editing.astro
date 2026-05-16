@@ -1,7 +1,7 @@
 ---
 import {VisualEditingComponent, type VisualEditingOptions} from './visual-editing-component'
 
-export interface Props extends VisualEditingOptions {
+export interface Props extends Pick<VisualEditingOptions, 'zIndex'> {
   enabled?: boolean
 }
 
