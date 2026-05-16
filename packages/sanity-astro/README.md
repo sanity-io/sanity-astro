@@ -138,7 +138,7 @@ export default defineConfig({
 })
 ```
 
-Then define collections with virtual modules:
+Then define collections:
 
 ```ts
 // src/live.config.ts
@@ -153,14 +153,6 @@ export const collections = {
     schema: movieSchema,
   }),
 }
-```
-
-Collection filtering uses `params`, and your query should reference those params:
-
-```ts
-const {entries} = await getLiveCollection('movies', {
-  filter: {params: {year: 1982}},
-})
 ```
 
 #### Explicit queries
@@ -206,7 +198,10 @@ const sanityLiveCollectionConfigs = defineSanityLiveCollections({
 })
 
 export const collections = Object.fromEntries(
-  Object.entries(sanityLiveCollectionConfigs).map(([name, config]) => [name, defineLiveCollection(config)]),
+  Object.entries(sanityLiveCollectionConfigs).map(([name, config]) => [
+    name,
+    defineLiveCollection(config),
+  ]),
 )
 ```
 
@@ -224,6 +219,32 @@ import {getLiveCollection, getLiveEntry} from 'astro:content'
 const {entries} = await getLiveCollection('movie')
 const {entry} = await getLiveEntry('movie', Astro.params.id!)
 ---
+```
+
+Collection filtering uses `params`. If your GROQ query references parameters (for example `$year`), define that collection with explicit queries:
+
+```ts
+const sanityLiveCollectionConfigs = defineSanityLiveCollections({
+  client: sanityClient,
+  collections: [
+    {
+      name: 'movies',
+      schema: movieSchema,
+      loader: {
+        collectionQuery: `*[_type == "movie" && releaseYear == $year]{_id,title,releaseDate,_updatedAt}`,
+        entryQuery: `*[_type == "movie" && _id == $id][0]{_id,title,releaseDate,_updatedAt}`,
+      },
+    },
+  ],
+})
+```
+
+Then pass params at read-time:
+
+```ts
+const {entries} = await getLiveCollection('movies', {
+  filter: {params: {year: 1982}},
+})
 ```
 
 #### Visual Editing with live collections
@@ -290,23 +311,28 @@ sanity({
 ```bash
 sanity:schema:extract  # sanity schema extract --path=./src/sanity.schema.json
 sanity:typegen         # sanity typegen generate
-sanity:live:schemas    # node ./node_modules/@sanity/astro/scripts/generate-live-schemas.mjs --input ./sanity.types.ts
+sanity:live:schemas    # node ./node_modules/@sanity/astro/scripts/generate-live-schemas.mjs
 ```
 
 3. Run:
 
 ```bash
 pnpm sanity:schema:extract
-pnpm sanity:typegen
 pnpm sanity:live:schemas
 ```
 
 This will:
 
-- read generated Sanity types from `./sanity.types.ts` (or your `--input`)
-- if `--input` and `live.schema.input` are omitted, fall back to `typegen.path` from `sanity.cli.*` when available
+- if `--input` or `live.schema.input` is provided, use that type file as input (explicit/full-query path)
+- if no explicit input is provided and `sanity().live.loaders` is configured, generate temporary query definitions from those loaders and run `sanity typegen generate` (single source of truth with runtime queries)
+- otherwise, run `sanity typegen generate` using your configured query files (`sanity.cli.*` / `sanity-typegen.json`) and use `typegen.path` (or `./sanity.types.ts`) as input
 - read output target from `sanity().live.schema.output` in `astro.config.*`
 - write the generated Zod file (for example `./src/live/sanity-live-schemas.generated.ts`)
+
+Two supported paths:
+
+- **Generated-loader path**: define `sanity().live.loaders`, run `sanity:live:schemas`, and typegen input is derived from loader-generated queries.
+- **Explicit-query path**: define your own GROQ queries (for example with `defineQuery(...)`), let `sanity typegen generate` infer their result types, and run `sanity:live:schemas` (or pass `--input` / `live.schema.input` for a specific types file).
 
 `sanity:live:schemas` uses:
 
@@ -320,7 +346,11 @@ Example wrapper:
 
 ```ts
 // src/live/sanity-live-schemas.ts
-import {movieDocumentSchema, personDocumentSchema, screeningDocumentSchema} from './sanity-live-schemas.generated'
+import {
+  movieDocumentSchema,
+  personDocumentSchema,
+  screeningDocumentSchema,
+} from './sanity-live-schemas.generated'
 
 export const movieSchema = movieDocumentSchema
 export const personSchema = personDocumentSchema
@@ -332,7 +362,11 @@ Then import the schemas you need in `src/live.config.ts`.
 For reusable schema utilities, import from `@sanity/astro/live-loader/schemas`:
 
 ```ts
-import {defineSanityDocumentSchema, createSanitySchemaMap, z} from '@sanity/astro/live-loader/schemas'
+import {
+  defineSanityDocumentSchema,
+  createSanitySchemaMap,
+  z,
+} from '@sanity/astro/live-loader/schemas'
 ```
 
 If you use custom projections/queries, keep generated schemas as a baseline and customize schemas so they match your query output.

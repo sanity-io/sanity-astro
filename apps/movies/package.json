@@ -11,8 +11,8 @@
     "start": "astro dev --port 4321",
     "sanity:schema:extract": "sanity schema extract --path=./src/sanity.schema.json",
     "sanity:typegen": "sanity typegen generate",
-    "sanity:live:schemas": "node ./node_modules/@sanity/astro/scripts/generate-live-schemas.mjs --input ./sanity.types.ts --names MovieDocument,PersonDocument,ScreeningDocument",
-    "sanity:sync-types": "pnpm sanity:schema:extract && pnpm sanity:typegen && pnpm sanity:live:schemas"
+    "sanity:live:schemas": "node ./node_modules/@sanity/astro/scripts/generate-live-schemas.mjs --names MovieDocument,PersonDocument,ScreeningDocument",
+    "sanity:sync-types": "pnpm sanity:schema:extract && pnpm sanity:live:schemas"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.5",

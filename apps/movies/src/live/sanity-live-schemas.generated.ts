@@ -271,61 +271,55 @@ export const sanityFileAssetSchema = z.object({
     source: sanityAssetSourceDataSchema.optional()
 });
 
-export const movieCollectionQueryResultSchema = z.array(z.object({
+export const sanityLiveLoadermovieCollectionQueryResultSchema = z.array(z.object({
     _id: z.string(),
     title: z.string().nullable(),
-    releaseDate: z.string().nullable()
+    releaseDate: z.string().nullable(),
+    _updatedAt: z.string()
 }));
 
-export const movieEntryQueryResultSchema = z.object({
+export const sanityLiveLoadermovieEntryQueryResultSchema = z.object({
     _id: z.string(),
     title: z.string().nullable(),
-    releaseDate: z.string().nullable()
+    releaseDate: z.string().nullable(),
+    _updatedAt: z.string()
 }).nullable();
 
-export const personCollectionQueryResultSchema = z.array(z.object({
+export const sanityLiveLoaderpersonCollectionQueryResultSchema = z.array(z.object({
     _id: z.string(),
-    _type: z.literal("person"),
-    _createdAt: z.string(),
-    _updatedAt: z.string(),
-    _rev: z.string(),
-    name: z.string().optional(),
-    slug: slugSchema.optional(),
-    image: z.object({
-        asset: sanityImageAssetReferenceSchema.optional(),
-        media: z.unknown().optional(),
-        hotspot: sanityImageHotspotSchema.optional(),
-        crop: sanityImageCropSchema.optional(),
-        _type: z.literal("image")
-    }).optional()
+    name: z.string().nullable(),
+    _updatedAt: z.string()
 }));
 
-export const screeningCollectionQueryResultSchema = z.array(z.object({
+export const sanityLiveLoaderpersonEntryQueryResultSchema = z.object({
     _id: z.string(),
-    _type: z.literal("screening"),
-    _createdAt: z.string(),
-    _updatedAt: z.string(),
-    _rev: z.string(),
-    title: z.string().optional(),
-    movie: movieReferenceSchema.optional(),
-    published: z.boolean().optional(),
-    location: geopointSchema.optional(),
-    beginAt: z.string().optional(),
-    endAt: z.string().optional(),
-    allowedGuests: z.union([z.literal("anyone"), z.literal("friends"), z.literal("members")]).optional(),
-    infoUrl: z.string().optional(),
-    ticket: z.object({
-        asset: sanityFileAssetReferenceSchema.optional(),
-        media: z.unknown().optional(),
-        _type: z.literal("file")
-    }).optional()
+    name: z.string().nullable(),
+    _updatedAt: z.string()
+}).nullable();
+
+export const sanityLiveLoaderscreeningCollectionQueryResultSchema = z.array(z.object({
+    _id: z.string(),
+    movie: movieReferenceSchema.nullable(),
+    screeningDate: z.null(),
+    theater: z.null(),
+    _updatedAt: z.string()
 }));
+
+export const sanityLiveLoaderscreeningEntryQueryResultSchema = z.object({
+    _id: z.string(),
+    movie: movieReferenceSchema.nullable(),
+    screeningDate: z.null(),
+    theater: z.null(),
+    _updatedAt: z.string()
+}).nullable();
 
 export const sanityClientSanityQueriesSchema = z.object({
-    "*[_type == \"movie\"] | order(_updatedAt desc) {\n  _id,\n  title,\n  releaseDate\n}": movieCollectionQueryResultSchema,
-    "*[_type == \"movie\" && _id == $id][0] {\n  _id,\n  title,\n  releaseDate\n}": movieEntryQueryResultSchema,
-    "*[_type == \"person\"] | order(name asc) {\n  ...,\n}": personCollectionQueryResultSchema,
-    "*[_type == \"screening\"] | order(beginAt desc) {\n  ...,\n}": screeningCollectionQueryResultSchema
+    "*[_type == \"movie\"] | order(_updatedAt desc){_id,title,releaseDate,_updatedAt}": sanityLiveLoadermovieCollectionQueryResultSchema,
+    "*[_type == \"movie\" && _id == $id][0]{_id,title,releaseDate,_updatedAt}": sanityLiveLoadermovieEntryQueryResultSchema,
+    "*[_type == \"person\"] | order(name asc){_id,name,_updatedAt}": sanityLiveLoaderpersonCollectionQueryResultSchema,
+    "*[_type == \"person\" && _id == $id][0]{_id,name,_updatedAt}": sanityLiveLoaderpersonEntryQueryResultSchema,
+    "*[_type == \"screening\"] | order(screeningDate asc){_id,movie,screeningDate,theater,_updatedAt}": sanityLiveLoaderscreeningCollectionQueryResultSchema,
+    "*[_type == \"screening\" && _id == $id][0]{_id,movie,screeningDate,theater,_updatedAt}": sanityLiveLoaderscreeningEntryQueryResultSchema
 });
 
 export const allSanitySchemaTypesSchema = z.union([personReferenceSchema, crewMemberSchema, castMemberSchema, plotSummariesSchema, plotSummarySchema, sanityImageAssetReferenceSchema, blockContentSchema, movieReferenceSchema, sanityFileAssetReferenceSchema, screeningSchema, geopointSchema, personSchema, sanityImageCropSchema, sanityImageHotspotSchema, slugSchema, movieSchema, sanityImagePaletteSwatchSchema, sanityImagePaletteSchema, sanityImageDimensionsSchema, sanityImageMetadataSchema, sanityFileAssetSchema, sanityAssetSourceDataSchema, sanityImageAssetSchema]);

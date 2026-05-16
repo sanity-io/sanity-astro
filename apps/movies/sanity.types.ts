@@ -318,75 +318,75 @@ export type AllSanitySchemaTypes =
 
 export declare const internalGroqTypeReferenceTo: unique symbol
 
-// Source: src/live/sanity-live-queries.ts
-// Variable: movieCollectionQuery
-// Query: *[_type == "movie"] | order(_updatedAt desc) {  _id,  title,  releaseDate}
-export type MovieCollectionQueryResult = Array<{
+// Source: src/sanity.live-loader.queries.generated.ts
+// Variable: __sanityLiveLoadermovieCollectionQuery
+// Query: *[_type == "movie"] | order(_updatedAt desc){_id,title,releaseDate,_updatedAt}
+export type SanityLiveLoadermovieCollectionQueryResult = Array<{
   _id: string
   title: string | null
   releaseDate: string | null
+  _updatedAt: string
 }>
 
-// Source: src/live/sanity-live-queries.ts
-// Variable: movieEntryQuery
-// Query: *[_type == "movie" && _id == $id][0] {  _id,  title,  releaseDate}
-export type MovieEntryQueryResult = {
+// Source: src/sanity.live-loader.queries.generated.ts
+// Variable: __sanityLiveLoadermovieEntryQuery
+// Query: *[_type == "movie" && _id == $id][0]{_id,title,releaseDate,_updatedAt}
+export type SanityLiveLoadermovieEntryQueryResult = {
   _id: string
   title: string | null
   releaseDate: string | null
+  _updatedAt: string
 } | null
 
-// Source: src/live/sanity-live-queries.ts
-// Variable: personCollectionQuery
-// Query: *[_type == "person"] | order(name asc) {  ...,}
-export type PersonCollectionQueryResult = Array<{
+// Source: src/sanity.live-loader.queries.generated.ts
+// Variable: __sanityLiveLoaderpersonCollectionQuery
+// Query: *[_type == "person"] | order(name asc){_id,name,_updatedAt}
+export type SanityLiveLoaderpersonCollectionQueryResult = Array<{
   _id: string
-  _type: 'person'
-  _createdAt: string
+  name: string | null
   _updatedAt: string
-  _rev: string
-  name?: string
-  slug?: Slug
-  image?: {
-    asset?: SanityImageAssetReference
-    media?: unknown
-    hotspot?: SanityImageHotspot
-    crop?: SanityImageCrop
-    _type: 'image'
-  }
 }>
 
-// Source: src/live/sanity-live-queries.ts
-// Variable: screeningCollectionQuery
-// Query: *[_type == "screening"] | order(beginAt desc) {  ...,}
-export type ScreeningCollectionQueryResult = Array<{
+// Source: src/sanity.live-loader.queries.generated.ts
+// Variable: __sanityLiveLoaderpersonEntryQuery
+// Query: *[_type == "person" && _id == $id][0]{_id,name,_updatedAt}
+export type SanityLiveLoaderpersonEntryQueryResult = {
   _id: string
-  _type: 'screening'
-  _createdAt: string
+  name: string | null
   _updatedAt: string
-  _rev: string
-  title?: string
-  movie?: MovieReference
-  published?: boolean
-  location?: Geopoint
-  beginAt?: string
-  endAt?: string
-  allowedGuests?: 'anyone' | 'friends' | 'members'
-  infoUrl?: string
-  ticket?: {
-    asset?: SanityFileAssetReference
-    media?: unknown
-    _type: 'file'
-  }
+} | null
+
+// Source: src/sanity.live-loader.queries.generated.ts
+// Variable: __sanityLiveLoaderscreeningCollectionQuery
+// Query: *[_type == "screening"] | order(screeningDate asc){_id,movie,screeningDate,theater,_updatedAt}
+export type SanityLiveLoaderscreeningCollectionQueryResult = Array<{
+  _id: string
+  movie: MovieReference | null
+  screeningDate: null
+  theater: null
+  _updatedAt: string
 }>
+
+// Source: src/sanity.live-loader.queries.generated.ts
+// Variable: __sanityLiveLoaderscreeningEntryQuery
+// Query: *[_type == "screening" && _id == $id][0]{_id,movie,screeningDate,theater,_updatedAt}
+export type SanityLiveLoaderscreeningEntryQueryResult = {
+  _id: string
+  movie: MovieReference | null
+  screeningDate: null
+  theater: null
+  _updatedAt: string
+} | null
 
 // Query TypeMap
 import '@sanity/client'
 declare module '@sanity/client' {
   interface SanityQueries {
-    '*[_type == "movie"] | order(_updatedAt desc) {\n  _id,\n  title,\n  releaseDate\n}': MovieCollectionQueryResult
-    '*[_type == "movie" && _id == $id][0] {\n  _id,\n  title,\n  releaseDate\n}': MovieEntryQueryResult
-    '*[_type == "person"] | order(name asc) {\n  ...,\n}': PersonCollectionQueryResult
-    '*[_type == "screening"] | order(beginAt desc) {\n  ...,\n}': ScreeningCollectionQueryResult
+    '*[_type == "movie"] | order(_updatedAt desc){_id,title,releaseDate,_updatedAt}': SanityLiveLoadermovieCollectionQueryResult
+    '*[_type == "movie" && _id == $id][0]{_id,title,releaseDate,_updatedAt}': SanityLiveLoadermovieEntryQueryResult
+    '*[_type == "person"] | order(name asc){_id,name,_updatedAt}': SanityLiveLoaderpersonCollectionQueryResult
+    '*[_type == "person" && _id == $id][0]{_id,name,_updatedAt}': SanityLiveLoaderpersonEntryQueryResult
+    '*[_type == "screening"] | order(screeningDate asc){_id,movie,screeningDate,theater,_updatedAt}': SanityLiveLoaderscreeningCollectionQueryResult
+    '*[_type == "screening" && _id == $id][0]{_id,movie,screeningDate,theater,_updatedAt}': SanityLiveLoaderscreeningEntryQueryResult
   }
 }

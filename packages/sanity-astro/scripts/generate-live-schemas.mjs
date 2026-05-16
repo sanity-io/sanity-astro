@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import {readFile, writeFile} from 'node:fs/promises'
+import {readFile, unlink, writeFile} from 'node:fs/promises'
 import {dirname, relative, resolve} from 'node:path'
 import {mkdir} from 'node:fs/promises'
 import {spawn} from 'node:child_process'
@@ -14,18 +14,21 @@ const sanityAstroOptions = await loadSanityAstroOptions({
   explicitConfigPath: args.astroConfig,
 })
 const sanityCliOptions = await loadSanityCliOptions({cwd})
+const liveLoaders = sanityAstroOptions?.live?.loaders
 const schemaOptions = sanityAstroOptions?.live?.schema ?? sanityAstroOptions?.liveLoader?.schema
-const configuredInputPath = resolve(
-  cwd,
-  args.input ?? schemaOptions?.input ?? sanityCliOptions?.typegen?.path ?? './sanity.types.ts',
-)
 const outputPath = resolve(
   cwd,
   args.output ?? schemaOptions?.output ?? './.astro/sanity-live-schemas.generated.ts',
 )
-const inputPath = isSanityConfigPath(configuredInputPath)
-  ? await generateTypesFromSanityConfig(configuredInputPath)
-  : configuredInputPath
+const explicitInput = args.input ?? schemaOptions?.input
+const inputPath = explicitInput
+  ? await resolveConfiguredInputPath(explicitInput)
+  : liveLoaders
+    ? await generateTypesFromLiveLoaders({
+        liveLoaders,
+        sanityCliOptions,
+      })
+    : await generateTypesFromConfiguredTypegen({sanityCliOptions})
 
 await mkdir(dirname(outputPath), {recursive: true})
 await runTsToZod({
@@ -120,6 +123,125 @@ function normalizeCliPath(pathValue) {
 
 function isSanityConfigPath(pathValue) {
   return /sanity\.config\.(ts|js|mjs|cjs)$/.test(pathValue)
+}
+
+async function resolveConfiguredInputPath(configuredInput) {
+  const configuredInputPath = resolve(cwd, configuredInput)
+  if (isSanityConfigPath(configuredInputPath)) {
+    return generateTypesFromSanityConfig(configuredInputPath)
+  }
+
+  return configuredInputPath
+}
+
+async function generateTypesFromLiveLoaders({liveLoaders, sanityCliOptions}) {
+  const generatedQueryFilePath = resolve(cwd, 'src/sanity.live-loader.queries.generated.ts')
+  const generatedTypesPath = resolve(cwd, sanityCliOptions?.typegen?.path ?? './sanity.types.ts')
+  const generatedQueryFile = createLiveLoaderTypegenQueryFile(liveLoaders)
+
+  await mkdir(dirname(generatedQueryFilePath), {recursive: true})
+  await writeFile(generatedQueryFilePath, generatedQueryFile)
+  try {
+    await runCommand('pnpm', ['exec', 'sanity', 'typegen', 'generate'], {cwd})
+  } finally {
+    try {
+      await unlink(generatedQueryFilePath)
+    } catch {
+      // noop
+    }
+  }
+
+  return generatedTypesPath
+}
+
+async function generateTypesFromConfiguredTypegen({sanityCliOptions}) {
+  const generatedTypesPath = resolve(cwd, sanityCliOptions?.typegen?.path ?? './sanity.types.ts')
+  await runCommand('pnpm', ['exec', 'sanity', 'typegen', 'generate'], {cwd})
+  return generatedTypesPath
+}
+
+function createLiveLoaderTypegenQueryFile(liveLoaders) {
+  const lines = ['import {defineQuery} from "groq"', '']
+  const loaders = Object.entries(liveLoaders)
+
+  for (const [loaderName, loaderConfig] of loaders) {
+    const collectionQuery = buildLiveLoaderCollectionQuery(loaderName, loaderConfig)
+    const entryQuery = buildLiveLoaderEntryQuery(loaderName, loaderConfig)
+    const baseName = createLoaderQuerySymbolName(loaderName)
+    const symbolPrefix = '__sanityLiveLoader'
+
+    lines.push(`export const ${symbolPrefix}${baseName}CollectionQuery = defineQuery(${JSON.stringify(collectionQuery)})`)
+    lines.push(`export const ${symbolPrefix}${baseName}EntryQuery = defineQuery(${JSON.stringify(entryQuery)})`)
+    lines.push('')
+  }
+
+  return `${lines.join('\n').trim()}\n`
+}
+
+function buildLiveLoaderCollectionQuery(loaderName, loaderConfig) {
+  const documentType = normalizeLoaderType(loaderName, loaderConfig?.type)
+  const projection = normalizeProjection(loaderConfig?.projection)
+  const orderBy = normalizeOrderBy(loaderName, loaderConfig?.orderBy)
+  return `*[_type == "${documentType}"]${orderBy}{${projection}}`
+}
+
+function buildLiveLoaderEntryQuery(loaderName, loaderConfig) {
+  const documentType = normalizeLoaderType(loaderName, loaderConfig?.type)
+  const projection = normalizeProjection(loaderConfig?.projection)
+  return `*[_type == "${documentType}" && _id == $id][0]{${projection}}`
+}
+
+function normalizeLoaderType(loaderName, type) {
+  if (typeof type !== 'string' || type.trim().length === 0) {
+    throw new Error(`Sanity live loader "${loaderName}" requires a non-empty "type" option.`)
+  }
+
+  return type.trim()
+}
+
+function normalizeProjection(projection) {
+  if (typeof projection !== 'string') {
+    return '...'
+  }
+
+  const normalized = projection.trim()
+  return normalized.length > 0 ? normalized : '...'
+}
+
+function normalizeOrderBy(loaderName, orderBy) {
+  if (!Array.isArray(orderBy) || orderBy.length !== 2) {
+    return ''
+  }
+
+  const [field, direction] = orderBy
+  if (typeof field !== 'string' || field.trim().length === 0) {
+    throw new Error(`Sanity live loader "${loaderName}" has an invalid "orderBy" field.`)
+  }
+
+  if (direction !== 'asc' && direction !== 'desc') {
+    throw new Error(`Sanity live loader "${loaderName}" has an invalid "orderBy" direction.`)
+  }
+
+  return ` | order(${field.trim()} ${direction})`
+}
+
+function createLoaderQuerySymbolName(loaderName) {
+  const segments = String(loaderName)
+    .split(/[^A-Za-z0-9]+/)
+    .filter(Boolean)
+
+  const baseName = segments
+    .map((segment, index) => {
+      const normalized = segment.charAt(0).toUpperCase() + segment.slice(1)
+      return index === 0 ? normalized.charAt(0).toLowerCase() + normalized.slice(1) : normalized
+    })
+    .join('')
+
+  if (!baseName) {
+    return 'sanity'
+  }
+
+  return /^[A-Za-z_$]/.test(baseName) ? baseName : `loader${baseName}`
 }
 
 async function generateTypesFromSanityConfig(configPath) {
