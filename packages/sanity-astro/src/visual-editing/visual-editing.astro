@@ -20,7 +20,6 @@ const {enabled, assureTypingInterval=1200, zIndex} = Astro.props
     // and if not defeated by negative value flag
     if (window.self === window.top) return
     if (assureTypingInterval <= 0) {
-      console.log ('PUBLIC_SANITY_ASSURE_TYPING_INTERVAL set negative, thus defeated.')
       return;
     }
 
@@ -34,9 +33,7 @@ const {enabled, assureTypingInterval=1200, zIndex} = Astro.props
       if (e.data?.type === 'presentation/preview-snapshots') {
         sessionStorage.setItem(FLAG, 'true');
         packetCount++;
-        // Verbose level: verifies packet flow without clutter
-        console.debug(`[Sanity Observer] Packet #${packetCount} buffered.`);
-      }
+     }
     });
 
     // 2. RECONCILE: Check for missed updates on page arrival
@@ -47,20 +44,12 @@ const {enabled, assureTypingInterval=1200, zIndex} = Astro.props
         // Clear flag immediately to ensure idempotency
         sessionStorage.removeItem(FLAG);
 
-        // Blue info: Formal acknowledgement of the blind window
-        console.info('%c[Sanity Sync] Blind window detected. Tail-end updates identified.', 'color: #0088ff; font-weight: bold;');
-
         // The 'Humanistic' pause for recursive queries to settle
         // n.b. we have to evaluate template-style, _and_ outside
         // the function call. These are Astro rules....
         setTimeout(() => {
-          // Yellow warning: The corrective sweep action
-          console.warn('%c[Sanity Sync] EXECUTING CORRECTIVE SWEEP.', 'color: #856404; font-weight: bold; background-color: #fff3cd; border: 1px solid #ffeeba; padding: 2px 4px;');
-          window.location.reload();
+         window.location.reload();
         }, assureTypingInterval); // must evaluate
-      } else {
-        // Green success: Confirmation of a high-fidelity 'atomic' load
-        console.log('%c[Sanity Sync] Page load stable. All characters accounted for.', 'color: #28a745;');
       }
     });
   })();
