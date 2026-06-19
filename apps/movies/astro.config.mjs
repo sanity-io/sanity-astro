@@ -1,3 +1,4 @@
+// @ts-check
 import {defineConfig} from 'astro/config'
 
 import react from '@astrojs/react'
@@ -14,6 +15,28 @@ export default defineConfig({
       studioBasePath: '/admin',
       studioRouterHistory: 'hash',
       logClientRequests: 'dev',
+      live: {
+        schema: {
+          output: './src/live/sanity-live-schemas.generated.ts',
+        },
+        loaders: {
+          movie: {
+            type: 'movie',
+            projection: '_id,title,releaseDate,_updatedAt',
+            orderBy: ['_updatedAt', 'desc'],
+          },
+          person: {
+            type: 'person',
+            projection: '_id,name,_updatedAt',
+            orderBy: ['name', 'asc'],
+          },
+          screening: {
+            type: 'screening',
+            projection: '_id,movie,screeningDate,theater,_updatedAt',
+            orderBy: ['screeningDate', 'asc'],
+          },
+        },
+      },
       stega: {
         studioUrl: {
           baseUrl: '/admin',

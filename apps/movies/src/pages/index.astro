@@ -1,13 +1,16 @@
 ---
 import Layout from '../layout.astro'
-import {loadQuery} from '../load-query'
+import {getLiveCollection} from 'astro:content'
 
-const {data: movies} = await loadQuery<Array<{_id: string; title: string}>>({
-  query: `*[_type == 'movie'] | order(title asc) {
-    _id,
-    title
-  }`,
-})
+const {entries, error} = await getLiveCollection('movie')
+const movies = (entries ?? []).map((entry) => ({
+  _id: entry.id,
+  title: entry.data.title ?? 'Untitled movie',
+}))
+
+if (error) {
+  throw error
+}
 ---
 
 <Layout title="Movies">
