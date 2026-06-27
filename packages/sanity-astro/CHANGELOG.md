@@ -5,6 +5,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.4.1](https://github.com/sanity-io/sanity-astro/compare/v3.4.0...v3.4.1) (2026-06-09)
+
+
+### Bug Fixes
+
+* **deps:** make peer dependencies include sanity 6.x ([#403](https://github.com/sanity-io/sanity-astro/issues/403)) ([ce4617e](https://github.com/sanity-io/sanity-astro/commit/ce4617e2bd45c8c157ac78e91bc895f8472812a3))
+
 ## [3.4.0](https://github.com/sanity-io/sanity-astro/compare/v3.3.1...v3.4.0) (2026-05-06)
 
 
