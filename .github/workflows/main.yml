@@ -82,4 +82,5 @@ jobs:
           cache: pnpm
           node-version: lts/*
       - run: pnpm install
+      - run: pnpm exec playwright install chromium --with-deps
       - run: pnpm --if-present --recursive test

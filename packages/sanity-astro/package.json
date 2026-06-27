@@ -50,7 +50,8 @@
     "copyStudio": "cp -r src/studio dist/studio",
     "dev": "vite build --watch",
     "prepublishOnly": "pnpm build",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:integration": "vitest run src/integration"
   },
   "dependencies": {
     "@sanity/visual-editing": "^5.2.1",
@@ -60,6 +61,7 @@
     "@sanity/client": "^7.16.0",
     "@types/serialize-javascript": "^5.0.4",
     "astro": "5.11.1",
+    "playwright": "^1.52.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "sanity": "^5.0.1",

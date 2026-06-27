@@ -55,8 +55,14 @@ export default function sanityIntegration(
         )
         updateConfig({
           vite: {
+            resolve: {
+              dedupe: ['react', 'react-dom', 'react-dom/client'],
+            },
             optimizeDeps: {
               include: [
+                'react',
+                'react-dom',
+                'react-dom/client',
                 'react-compiler-runtime',
                 'react-is',
                 'styled-components',
