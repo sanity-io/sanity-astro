@@ -3,6 +3,7 @@ import {vitePluginSanityClient} from './vite-plugin-sanity-client'
 import {vitePluginSanityStudio} from './vite-plugin-sanity-studio'
 import {vitePluginSanityStudioHashRouter} from './vite-plugin-sanity-studio-hash-router'
 import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-chunk-warning'
+import {vitePluginSanityModuleDedupe} from './vite-plugin-sanity-module-dedupe'
 import type {ClientConfig} from '@sanity/client'
 import {normalizeStudioBasePath, studioRoutePattern} from './studio-base-path'
 
@@ -55,21 +56,8 @@ export default function sanityIntegration(
         )
         updateConfig({
           vite: {
-            resolve: {
-              dedupe: ['react', 'react-dom', 'react-dom/client'],
-            },
-            optimizeDeps: {
-              include: [
-                'react',
-                'react-dom',
-                'react-dom/client',
-                'react-compiler-runtime',
-                'react-is',
-                'styled-components',
-                'lodash/startCase.js',
-              ],
-            },
             plugins: [
+              vitePluginSanityModuleDedupe(),
               vitePluginSanityClient({
                 ...defaultClientConfig,
                 ...clientConfig,

@@ -1,6 +1,7 @@
 import {describe, expect, it, vi} from 'vitest'
 import sanityIntegration from './index'
 import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-chunk-warning'
+import {SANITY_MODULE_DEDUPE, vitePluginSanityModuleDedupe} from './vite-plugin-sanity-module-dedupe'
 
 async function runSetup({
   output = 'static',
@@ -26,29 +27,31 @@ async function runSetup({
 }
 
 describe('sanity integration vite config', () => {
-  it('dedupes and pre-bundles react packages to prevent duplicate React in dev (#406)', async () => {
+  it('registers module dedupe plugin (#406)', async () => {
     const {updateConfig} = await runSetup()
+
+    const viteConfig = updateConfig.mock.calls[0][0].vite
+    const moduleDedupePlugin = viteConfig.plugins.find(
+      (plugin: {name?: string}) => plugin.name === 'sanity:module-dedupe',
+    )
 
     expect(updateConfig).toHaveBeenCalledWith(
       expect.objectContaining({
         vite: expect.objectContaining({
-          resolve: {
-            dedupe: ['react', 'react-dom', 'react-dom/client'],
-          },
-          optimizeDeps: {
-            include: [
-              'react',
-              'react-dom',
-              'react-dom/client',
-              'react-compiler-runtime',
-              'react-is',
-              'styled-components',
-              'lodash/startCase.js',
-            ],
-          },
+          plugins: expect.arrayContaining([moduleDedupePlugin]),
         }),
       }),
     )
+    expect(moduleDedupePlugin).toBeDefined()
+    expect((vitePluginSanityModuleDedupe() as {name?: string}).name).toBe('sanity:module-dedupe')
+    expect(SANITY_MODULE_DEDUPE).toEqual([
+      'react',
+      'react-dom',
+      'react-dom/client',
+      'styled-components',
+      'sanity',
+      '@sanity/ui',
+    ])
   })
 
   it('registers the studio chunk warning plugin as build-only', async () => {

@@ -1,10 +1,6 @@
 import sanity from '@sanity/astro'
-import {createRequire} from 'node:module'
 import {defineConfig} from 'astro/config'
 import react from '@astrojs/react'
-
-const require = createRequire(import.meta.url)
-const sanityPackageRoot = require.resolve('sanity/package.json').replace(/\/package\.json$/, '')
 
 // https://astro.build/config
 export default defineConfig({
@@ -24,16 +20,6 @@ export default defineConfig({
     react(),
   ],
   vite: {
-    resolve: {
-      alias: [
-        {
-          // Only alias the root `sanity` entry so subpaths like `sanity/structure` still resolve.
-          find: /^sanity$/,
-          replacement: sanityPackageRoot,
-        },
-      ],
-      dedupe: ['sanity', 'react', 'react-dom'],
-    },
     ssr: {
       // See: https://github.com/withastro/astro/issues/9192#issuecomment-1834192321
       external: ['prismjs'],
