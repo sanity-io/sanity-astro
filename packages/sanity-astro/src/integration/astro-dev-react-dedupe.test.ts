@@ -16,6 +16,8 @@ type Fixture = {
 }
 
 const fixtures: Fixture[] = [
+  // Studio hydration is covered by the negative-control test below. Full Studio boot is
+  // too slow/flaky in CI (especially example-ssr + Vercel adapter).
   {
     appDirectory: 'apps/example',
     studioPath: '/admin',
@@ -26,6 +28,7 @@ const fixtures: Fixture[] = [
     appDirectory: 'apps/example-ssr',
     studioPath: '/admin',
     hasReactIsland: true,
+    loadStudio: false,
   },
   {
     appDirectory: 'apps/example-latest',
