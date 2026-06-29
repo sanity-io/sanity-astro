@@ -70,6 +70,7 @@ jobs:
 
   unit-test:
     needs: build
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}

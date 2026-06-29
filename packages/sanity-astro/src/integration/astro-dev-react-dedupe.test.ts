@@ -100,11 +100,12 @@ async function assertReactHydration({
   }
 
   await page.goto(`${baseUrl}${studioPath}`, {waitUntil: 'domcontentloaded'})
-  await page
-    .locator('[data-ui="AstroStudioLayout"]')
-    .waitFor({state: 'attached', timeout: 120_000})
 
-  expect(await page.locator('astro-island:empty').count()).toBe(0)
+  // #406 breaks React island hydration before Studio UI mounts; avoid waiting on Sanity UI selectors.
+  await expect
+    .poll(async () => page.locator('astro-island:empty').count(), {timeout: 120_000})
+    .toBe(0)
+
   assertNoDuplicateModuleErrors(consoleErrors)
 }
 
