@@ -2,6 +2,7 @@ import path from 'node:path'
 import {describe, expect, it} from 'vitest'
 import {
   buildSanityModuleAliases,
+  resolveSanityModuleDedupe,
   resolveSanityOptimizeDeps,
   SANITY_MODULE_DEDUPE,
   SANITY_OPTIMIZE_DEPS_CANDIDATES,
@@ -20,11 +21,15 @@ type PluginLike = {
 }
 
 describe('vitePluginSanityModuleDedupe', () => {
-  it('dedupes react, styled-components, sanity, and @sanity/ui (#406)', () => {
+  it('dedupes react, styled-components, sanity, and @sanity/ui when installed (#406)', () => {
     const plugin = vitePluginSanityModuleDedupe() as PluginLike
     const config = plugin.config?.({}, {command: 'serve', mode: 'development'})
+    const dedupe = resolveSanityModuleDedupe(process.cwd())
 
-    expect(config?.resolve?.dedupe).toEqual([...SANITY_MODULE_DEDUPE])
+    expect(config?.resolve?.dedupe).toEqual(dedupe)
+    expect(dedupe.every((dependency) => SANITY_MODULE_DEDUPE.includes(dependency as never))).toBe(
+      true,
+    )
     expect(plugin.enforce).toBe('pre')
   })
 

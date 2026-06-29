@@ -46,6 +46,12 @@ export function resolveSanityOptimizeDeps(projectRoot: string): string[] {
   )
 }
 
+export function resolveSanityModuleDedupe(projectRoot: string): string[] {
+  return SANITY_MODULE_DEDUPE.filter((dependency) =>
+    canResolveDependency(projectRoot, dependency),
+  )
+}
+
 export function buildSanityModuleAliases(projectRoot: string) {
   const aliases: Array<{find: RegExp; replacement: string}> = []
 
@@ -78,12 +84,14 @@ export function vitePluginSanityModuleDedupe(): PluginOption {
       const alias = buildSanityModuleAliases(projectRoot)
       const optimizeDepsInclude = resolveSanityOptimizeDeps(projectRoot)
 
+      const dedupe = resolveSanityModuleDedupe(projectRoot)
+
       return {
         optimizeDeps: {
           include: optimizeDepsInclude,
         },
         resolve: {
-          dedupe: [...SANITY_MODULE_DEDUPE],
+          dedupe,
           ...(alias.length > 0 ? {alias} : {}),
         },
       }
