@@ -114,24 +114,34 @@ function waitForServerReady({
 export async function startAstroDevServer({
   appDirectory,
   timeoutMs = 180_000,
+  disableModuleDedupe = false,
+  env = {},
 }: {
   appDirectory: string
   timeoutMs?: number
+  disableModuleDedupe?: boolean
+  env?: Record<string, string>
 }): Promise<DevServerHandle> {
   const port = await getAvailablePort()
   const baseUrl = `http://127.0.0.1:${port}`
   const appRoot = path.resolve(repoRoot, appDirectory)
   const astroBin = path.join(appRoot, 'node_modules', '.bin', 'astro')
 
-  const childProcess = spawn(astroBin, ['dev', '--host', '127.0.0.1', '--port', String(port)], {
-    cwd: appRoot,
-    env: {
-      ...process.env,
-      CI: 'true',
-      NO_COLOR: '1',
+  const childProcess = spawn(
+    astroBin,
+    ['dev', '--host', '127.0.0.1', '--port', String(port), '--force'],
+    {
+      cwd: appRoot,
+      env: {
+        ...process.env,
+        CI: 'true',
+        NO_COLOR: '1',
+        ...env,
+        ...(disableModuleDedupe ? {SANITY_ASTRO_DISABLE_MODULE_DEDUPE: '1'} : {}),
+      },
+      stdio: ['ignore', 'pipe', 'pipe'],
     },
-    stdio: ['ignore', 'pipe', 'pipe'],
-  })
+  )
 
   await waitForServerReady({process: childProcess, baseUrl, timeoutMs})
 
@@ -158,6 +168,24 @@ export async function startAstroDevServer({
           resolve()
         })
       })
+
+      try {
+        const astroStop = spawn(astroBin, ['dev', 'stop'], {
+          cwd: appRoot,
+          stdio: 'ignore',
+        })
+        await new Promise<void>((resolve) => {
+          astroStop.once('exit', () => resolve())
+          setTimeout(() => {
+            if (astroStop.exitCode === null && !astroStop.killed) {
+              astroStop.kill('SIGTERM')
+            }
+            resolve()
+          }, 3_000)
+        })
+      } catch {
+        // Best-effort cleanup for Astro's dev lock file.
+      }
     },
   }
 }

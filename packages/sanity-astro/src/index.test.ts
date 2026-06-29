@@ -43,7 +43,8 @@ describe('sanity integration vite config', () => {
       }),
     )
     expect(moduleDedupePlugin).toBeDefined()
-    expect((vitePluginSanityModuleDedupe() as {name?: string}).name).toBe('sanity:module-dedupe')
+    expect((moduleDedupePlugin as {apply?: string}).apply).toBe('serve')
+    expect((vitePluginSanityModuleDedupe() as {apply?: string}).apply).toBe('serve')
     expect(SANITY_MODULE_DEDUPE).toEqual([
       'react',
       'react-dom',
@@ -52,6 +53,21 @@ describe('sanity integration vite config', () => {
       'sanity',
       '@sanity/ui',
     ])
+  })
+
+  it('skips module dedupe plugin when SANITY_ASTRO_DISABLE_MODULE_DEDUPE is set (integration tests)', async () => {
+    process.env.SANITY_ASTRO_DISABLE_MODULE_DEDUPE = '1'
+    try {
+      const {updateConfig} = await runSetup()
+      const viteConfig = updateConfig.mock.calls[0][0].vite
+      const moduleDedupePlugin = viteConfig.plugins.find(
+        (plugin: {name?: string}) => plugin.name === 'sanity:module-dedupe',
+      )
+
+      expect(moduleDedupePlugin).toBeUndefined()
+    } finally {
+      delete process.env.SANITY_ASTRO_DISABLE_MODULE_DEDUPE
+    }
   })
 
   it('registers the studio chunk warning plugin as build-only', async () => {

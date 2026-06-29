@@ -4,6 +4,7 @@ import {fileURLToPath} from 'node:url'
 import {chromium, type ConsoleMessage, type Page} from 'playwright'
 import {beforeAll, describe, expect, it} from 'vitest'
 import {startAstroDevServer} from './dev-server'
+import {collectDuplicateModuleErrors} from './duplicate-module-errors'
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 
@@ -11,6 +12,7 @@ type Fixture = {
   appDirectory: string
   studioPath: string
   hasReactIsland: boolean
+  loadStudio?: boolean
 }
 
 const fixtures: Fixture[] = [
@@ -18,6 +20,7 @@ const fixtures: Fixture[] = [
     appDirectory: 'apps/example',
     studioPath: '/admin',
     hasReactIsland: true,
+    loadStudio: false,
   },
   {
     appDirectory: 'apps/example-ssr',
@@ -28,11 +31,13 @@ const fixtures: Fixture[] = [
     appDirectory: 'apps/example-latest',
     studioPath: '/admin',
     hasReactIsland: true,
+    loadStudio: false,
   },
   {
     appDirectory: 'apps/movies',
     studioPath: '/admin',
     hasReactIsland: false,
+    loadStudio: false,
   },
 ]
 
@@ -62,15 +67,7 @@ function trackConsoleErrors(page: Page) {
 }
 
 function assertNoDuplicateModuleErrors(consoleErrors: string[]) {
-  const duplicateModuleErrors = consoleErrors.filter(
-    (message) =>
-      message.includes('Invalid hook call') ||
-      message.includes("several instances of 'styled-components'") ||
-      message.includes("reading 'v2'") ||
-      message.includes('Duplicate instances of context'),
-  )
-
-  expect(duplicateModuleErrors).toEqual([])
+  expect(collectDuplicateModuleErrors(consoleErrors)).toEqual([])
 }
 
 async function assertReactHydration({
@@ -78,18 +75,28 @@ async function assertReactHydration({
   baseUrl,
   studioPath,
   hasReactIsland,
+  loadStudio = true,
   consoleErrors,
 }: {
   page: Page
   baseUrl: string
   studioPath: string
   hasReactIsland: boolean
+  loadStudio?: boolean
   consoleErrors: string[]
 }) {
   if (hasReactIsland) {
     await page.goto(`${baseUrl}/`, {waitUntil: 'domcontentloaded'})
     await page.locator('marquee').waitFor({state: 'visible', timeout: 60_000})
     expect(await page.locator('astro-island:empty').count()).toBe(0)
+  }
+
+  if (!loadStudio) {
+    if (!hasReactIsland) {
+      await page.goto(`${baseUrl}/`, {waitUntil: 'domcontentloaded'})
+    }
+    assertNoDuplicateModuleErrors(consoleErrors)
+    return
   }
 
   await page.goto(`${baseUrl}${studioPath}`, {waitUntil: 'domcontentloaded'})
@@ -120,6 +127,7 @@ describe.sequential('astro dev duplicate React regression (#406)', () => {
           baseUrl: devServer.baseUrl,
           studioPath: fixture.studioPath,
           hasReactIsland: fixture.hasReactIsland,
+          loadStudio: fixture.loadStudio,
           consoleErrors,
         })
       } finally {
@@ -129,4 +137,29 @@ describe.sequential('astro dev duplicate React regression (#406)', () => {
       }
     },
   )
+
+  it('reproduces duplicate module errors when module dedupe is disabled (negative control)', async () => {
+    const devServer = await startAstroDevServer({
+      appDirectory: 'apps/example',
+      disableModuleDedupe: true,
+    })
+    const browser = await chromium.launch({headless: true})
+    const page = await browser.newPage()
+    const consoleErrors = trackConsoleErrors(page)
+
+    try {
+      await page.goto(`${devServer.baseUrl}/`, {waitUntil: 'domcontentloaded'})
+      await page.locator('marquee').waitFor({state: 'visible', timeout: 60_000})
+      await page.goto(`${devServer.baseUrl}/admin`, {waitUntil: 'domcontentloaded'})
+
+      const duplicateModuleErrors = collectDuplicateModuleErrors(consoleErrors)
+      const emptyIslands = await page.locator('astro-island:empty').count()
+
+      expect(duplicateModuleErrors.length + emptyIslands).toBeGreaterThan(0)
+    } finally {
+      await page.close()
+      await browser.close()
+      await devServer.stop()
+    }
+  })
 })

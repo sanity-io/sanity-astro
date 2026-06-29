@@ -54,21 +54,28 @@ export default function sanityIntegration(
           inputStudioRouterHistory,
           config?.output,
         )
+        const vitePlugins = [
+          ...(process.env.SANITY_ASTRO_DISABLE_MODULE_DEDUPE
+            ? []
+            : [vitePluginSanityModuleDedupe()]),
+          vitePluginSanityClient(
+            {
+              ...defaultClientConfig,
+              ...clientConfig,
+            },
+            {logClientRequests},
+          ),
+          vitePluginSanityStudio({
+            studioBasePath: normalizedStudioBasePath,
+            studioRouterHistory,
+          }),
+          vitePluginSanityStudioHashRouter(),
+          vitePluginSanityStudioChunkWarning(),
+        ]
+
         updateConfig({
           vite: {
-            plugins: [
-              vitePluginSanityModuleDedupe(),
-              vitePluginSanityClient({
-                ...defaultClientConfig,
-                ...clientConfig,
-              }, {logClientRequests}),
-              vitePluginSanityStudio({
-                studioBasePath: normalizedStudioBasePath,
-                studioRouterHistory,
-              }),
-              vitePluginSanityStudioHashRouter(),
-              vitePluginSanityStudioChunkWarning(),
-            ],
+            plugins: vitePlugins,
           },
         })
         // only load this route if `studioBasePath` is set

@@ -84,3 +84,4 @@ jobs:
       - run: pnpm install
       - run: pnpm exec playwright install chromium --with-deps
       - run: pnpm --if-present --recursive test
+      - run: pnpm --filter @sanity/astro test:integration

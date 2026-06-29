@@ -1,7 +1,14 @@
 import {createRequire} from 'node:module'
 import path from 'node:path'
-import type {PluginOption} from 'vite'
+import type {PluginOption, UserConfig} from 'vite'
 
+/**
+ * Dev-only Vite dedupe for embedded Studio + @astrojs/react islands (#406).
+ *
+ * Vite can load the same logical package through pre-bundled and direct paths even
+ * when npm reports a single copy. Pair resolve.dedupe with optimizeDeps.include.
+ * The studio chunk-size warning plugin (apply: 'build') is not involved in dev.
+ */
 export const SANITY_MODULE_DEDUPE = [
   'react',
   'react-dom',
@@ -11,6 +18,10 @@ export const SANITY_MODULE_DEDUPE = [
   '@sanity/ui',
 ] as const
 
+/**
+ * Pre-bundle during dev alongside resolve.dedupe. Includes Sanity-adjacent CJS/deep
+ * imports that Vite would otherwise discover lazily.
+ */
 export const SANITY_OPTIMIZE_DEPS_CANDIDATES = [
   'react',
   'react-dom',
@@ -78,12 +89,12 @@ export function buildSanityModuleAliases(projectRoot: string) {
 export function vitePluginSanityModuleDedupe(): PluginOption {
   return {
     name: 'sanity:module-dedupe',
+    apply: 'serve',
     enforce: 'pre',
-    config() {
-      const projectRoot = process.cwd()
+    config(config: UserConfig) {
+      const projectRoot = config.root ?? process.cwd()
       const alias = buildSanityModuleAliases(projectRoot)
       const optimizeDepsInclude = resolveSanityOptimizeDeps(projectRoot)
-
       const dedupe = resolveSanityModuleDedupe(projectRoot)
 
       return {

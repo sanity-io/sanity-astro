@@ -51,7 +51,7 @@
     "dev": "vite build --watch",
     "prepublishOnly": "pnpm build",
     "test": "vitest run",
-    "test:integration": "vitest run src/integration"
+    "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
     "@sanity/visual-editing": "^5.2.1",
