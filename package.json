@@ -4,11 +4,13 @@
   "scripts": {
     "build": "turbo run build",
     "build:example": "turbo run build --filter=example...",
+    "build:example-latest": "turbo run build --filter=example-latest...",
     "build:example-ssr": "turbo run build --filter=example-ssr...",
     "build:movies": "turbo run build --filter=movies...",
     "clean": "turbo run clean && rimraf .turbo && rimraf node_modules",
     "dev": "pnpm --filter @sanity/astro build && turbo run dev",
     "dev:example": "pnpm --filter @sanity/astro build && turbo run dev --filter=example",
+    "dev:example-latest": "pnpm --filter @sanity/astro build && turbo run dev --filter=example-latest",
     "dev:example-ssr": "pnpm --filter @sanity/astro build && turbo run dev --filter=example-ssr",
     "dev:movies": "pnpm --filter @sanity/astro build && turbo run dev --filter=movies",
     "format": "prettier --write .",
