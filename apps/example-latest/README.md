@@ -15,4 +15,7 @@ Run it with:
 
 ```sh
 pnpm dev:example-latest
+pnpm build:example-latest
 ```
+
+> **Note:** This app is excluded from the monorepo `pnpm build` CI task until [#406](https://github.com/sanity-io/sanity-astro/issues/406) lands. Sanity 6 + Astro 7 currently hit duplicate-module resolution errors in this workspace without the module-dedupe fix. Use `pnpm build:example-latest` to build locally.

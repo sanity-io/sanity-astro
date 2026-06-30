@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "astro": "astro",
-    "build": "astro build",
+    "build:app": "astro build",
     "clean": "rimraf .astro rimraf dist && rimraf .turbo && rimraf node_modules",
     "dev": "astro dev --port 4324",
     "preview": "astro preview",

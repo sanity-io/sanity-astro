@@ -4,7 +4,7 @@
   "scripts": {
     "build": "turbo run build",
     "build:example": "turbo run build --filter=example...",
-    "build:example-latest": "turbo run build --filter=example-latest...",
+    "build:example-latest": "pnpm --filter example-latest build:app",
     "build:example-ssr": "turbo run build --filter=example-ssr...",
     "build:movies": "turbo run build --filter=movies...",
     "clean": "turbo run clean && rimraf .turbo && rimraf node_modules",
