@@ -70,6 +70,7 @@ jobs:
 
   unit-test:
     needs: build
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
@@ -82,4 +83,7 @@ jobs:
           cache: pnpm
           node-version: lts/*
       - run: pnpm install
+      - run: pnpm --filter @sanity/astro exec playwright install chromium --with-deps
       - run: pnpm --if-present --recursive test
+      - run: pnpm --filter @sanity/astro build
+      - run: pnpm --filter @sanity/astro test:integration

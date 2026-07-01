@@ -16,6 +16,9 @@ export default defineConfig(() => {
         name,
         fileName: (format) => (format === 'es' ? `${name}.mjs` : `${name}.js`),
       },
+      rollupOptions: {
+        external: [/^node:/, 'vite', 'astro', '@sanity/client'],
+      },
     },
     plugins: [
       dts({
