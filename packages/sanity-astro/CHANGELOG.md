@@ -5,6 +5,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.4.2](https://github.com/sanity-io/sanity-astro/compare/v3.4.1...v3.4.2) (2026-07-01)
+
+
+### Bug Fixes
+
+* duplicate React in astro dev ([#406](https://github.com/sanity-io/sanity-astro/issues/406)) ([#411](https://github.com/sanity-io/sanity-astro/issues/411)) ([c322325](https://github.com/sanity-io/sanity-astro/commit/c3223253b83174cc363de8d3ae54bbfdf21be600))
+
 ## [3.4.1](https://github.com/sanity-io/sanity-astro/compare/v3.4.0...v3.4.1) (2026-06-09)
 
 
