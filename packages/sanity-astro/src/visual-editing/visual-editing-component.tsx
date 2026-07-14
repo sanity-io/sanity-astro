@@ -5,9 +5,19 @@ import {
 } from '@sanity/visual-editing/react'
 import {applyPresentationHistoryUpdate, getPresentationUrl, shouldPublishUrl} from './history'
 
-export type VisualEditingOptions = Pick<InternalVisualEditingOptions, 'zIndex'>
+export type VisualEditingOptions = Pick<
+  InternalVisualEditingOptions,
+  'zIndex' | 'refresh' | 'history'
+>
 type HistoryAdapter = NonNullable<InternalVisualEditingOptions['history']>
 type HistoryNavigate = Parameters<HistoryAdapter['subscribe']>[0]
+
+const defaultRefresh: NonNullable<InternalVisualEditingOptions['refresh']> = () => {
+  return new Promise((resolve) => {
+    window.location.reload()
+    resolve()
+  })
+}
 
 export function VisualEditingComponent(props: VisualEditingOptions) {
   const navigateRef = React.useRef<HistoryNavigate | undefined>()
@@ -16,8 +26,13 @@ export function VisualEditingComponent(props: VisualEditingOptions) {
   const optimisticUrlRef = React.useRef<string | undefined>()
   const optimisticUntilRef = React.useRef(0)
   const clearNavigateTimeoutRef = React.useRef<number | undefined>()
+  const hasCustomHistory = Boolean(props.history)
 
   React.useEffect(() => {
+    // Skip the default URL sync when the consumer supplies their own history adapter.
+    if (hasCustomHistory) {
+      return
+    }
     const publishUrl = (url: string, force = false) => {
       const navigate = navigateRef.current
       if (!navigate) {
@@ -106,9 +121,9 @@ export function VisualEditingComponent(props: VisualEditingOptions) {
       window.history.pushState = nativePushState
       window.history.replaceState = nativeReplaceState
     }
-  }, [])
+  }, [hasCustomHistory])
 
-  const history = React.useMemo<HistoryAdapter>(
+  const defaultHistory = React.useMemo<HistoryAdapter>(
     () => ({
       subscribe: (_navigate) => {
         window.clearTimeout(clearNavigateTimeoutRef.current)
@@ -140,14 +155,9 @@ export function VisualEditingComponent(props: VisualEditingOptions) {
   return (
     <InternalVisualEditing
       portal
-      history={history}
+      history={props.history ?? defaultHistory}
       zIndex={props.zIndex}
-      refresh={() => {
-        return new Promise((resolve) => {
-          window.location.reload()
-          resolve()
-        })
-      }}
+      refresh={props.refresh ?? defaultRefresh}
     />
   )
 }

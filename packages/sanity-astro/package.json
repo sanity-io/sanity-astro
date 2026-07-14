@@ -34,6 +34,10 @@
     "./visual-editing": {
       "import": "./dist/visual-editing/index.ts",
       "default": "./dist/visual-editing/index.ts"
+    },
+    "./visual-editing/component": {
+      "types": "./src/visual-editing/visual-editing-component.tsx",
+      "default": "./src/visual-editing/visual-editing-component.tsx"
     }
   },
   "types": "./dist/types/index.d.ts",

@@ -287,6 +287,46 @@ In the example above, `enabled` is controlled using an [environment variable](ht
 PUBLIC_SANITY_VISUAL_EDITING_ENABLED="true"
 ```
 
+#### Customizing how the preview refreshes
+
+By default `VisualEditing` reloads the whole page with `window.location.reload()` whenever the Studio reports a change. If you'd rather refresh another way, for example re-fetching data and swapping the DOM in place, pass your own `refresh` function.
+
+`refresh` is a function, and Astro can't serialize functions through to a client component, so it isn't accepted on the `.astro` `VisualEditing` component. Instead, import the React component from `@sanity/astro/visual-editing/component` and render it as a `client:only` island:
+
+```tsx
+// src/components/VisualEditing.tsx
+import {VisualEditingComponent} from '@sanity/astro/visual-editing/component'
+
+export default function VisualEditing() {
+  return (
+    <VisualEditingComponent
+      refresh={(payload) => {
+        // Return a promise so the overlay shows a loading state until it resolves.
+        return new Promise((resolve) => {
+          // ...your custom refresh here, then:
+          resolve()
+        })
+      }}
+    />
+  )
+}
+```
+
+```astro
+---
+// src/layouts/Layout.astro
+import VisualEditing from '../components/VisualEditing'
+const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED === 'true'
+---
+
+<body>
+  <slot />
+  {visualEditingEnabled && <VisualEditing client:only="react" />}
+</body>
+```
+
+The `payload` tells you why the refresh fired: `payload.source` is `'manual'` when the editor clicks refresh in Presentation, or `'mutation'` when a document changes. The same subpath also accepts a `history` prop if you need to take over URL syncing.
+
 ### 2. Add the Presentation tool to the Studio
 
 Follow the instructions on [how to configure the Presentation tool][presentation-tool].
