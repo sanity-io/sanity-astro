@@ -275,10 +275,11 @@ const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLE
 
 `VisualEditing` is needed to render Overlays. It's a React component under the hood, so you'll need the [React integration for Astro][astro-react] if you don't already use that at this point.
 
-`VisualEditing` takes two props:
+`VisualEditing` takes these props:
 
 - `enabled`: so you can control whether or not visual editing is enabled depending on your environment.
 - `zIndex` (optional): allows you to change the `z-index` of overlay elements.
+- `keepStegaOnCopy` (optional): by default, Visual Editing strips stega from the clipboard on copy. Pass `keepStegaOnCopy` to opt out and leave stega in copied text.
 
 In the example above, `enabled` is controlled using an [environment variable](https://docs.astro.build/en/guides/environment-variables/):
 
@@ -307,6 +308,11 @@ export default function VisualEditing() {
           resolve()
         })
       }}
+      onSuspiciousStega={(reports) => {
+        for (const report of reports) {
+          console.warn(`Stega found in ${report.kind}`, report)
+        }
+      }}
     />
   )
 }
@@ -325,7 +331,7 @@ const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLE
 </body>
 ```
 
-The `payload` tells you why the refresh fired: `payload.source` is `'manual'` when the editor clicks refresh in Presentation, or `'mutation'` when a document changes. The same subpath also accepts a `history` prop if you need to take over URL syncing.
+The `payload` tells you why the refresh fired: `payload.source` is `'manual'` when the editor clicks refresh in Presentation, or `'mutation'` when a document changes. The same subpath also accepts `history` if you need to take over URL syncing, and `onSuspiciousStega` for opt-in reporting when stega appears in unsafe placements (`class`, `href`, `<head>`, scripts, and similar).
 
 ### 2. Add the Presentation tool to the Studio
 

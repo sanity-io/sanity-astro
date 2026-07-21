@@ -1,13 +1,16 @@
 import React from 'react'
 import {
   VisualEditing as InternalVisualEditing,
+  type SuspiciousStegaReport,
   type VisualEditingOptions as InternalVisualEditingOptions,
 } from '@sanity/visual-editing/react'
 import {applyPresentationHistoryUpdate, getPresentationUrl, shouldPublishUrl} from './history'
 
+export type {SuspiciousStegaReport}
+
 export type VisualEditingOptions = Pick<
   InternalVisualEditingOptions,
-  'zIndex' | 'refresh' | 'history'
+  'zIndex' | 'refresh' | 'history' | 'keepStegaOnCopy' | 'onSuspiciousStega'
 >
 type HistoryAdapter = NonNullable<InternalVisualEditingOptions['history']>
 type HistoryNavigate = Parameters<HistoryAdapter['subscribe']>[0]
@@ -158,6 +161,8 @@ export function VisualEditingComponent(props: VisualEditingOptions) {
       history={props.history ?? defaultHistory}
       zIndex={props.zIndex}
       refresh={props.refresh ?? defaultRefresh}
+      keepStegaOnCopy={props.keepStegaOnCopy}
+      onSuspiciousStega={props.onSuspiciousStega}
     />
   )
 }
