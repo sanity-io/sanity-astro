@@ -5,6 +5,14 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.5.0](https://github.com/sanity-io/sanity-astro/compare/v3.4.2...v3.5.0) (2026-07-22)
+
+
+### Features
+
+* expose keepStegaOnCopy and onSuspiciousStega on VisualEditing ([#417](https://github.com/sanity-io/sanity-astro/issues/417)) ([97fd3a4](https://github.com/sanity-io/sanity-astro/commit/97fd3a468f2271cff04ad8556026ee678faefd68))
+* forward refresh and history props on VisualEditing ([#401](https://github.com/sanity-io/sanity-astro/issues/401)) ([7341edf](https://github.com/sanity-io/sanity-astro/commit/7341edf0914fa8ec35c59b1ce1f396f60a2216a7))
+
 ## [3.4.2](https://github.com/sanity-io/sanity-astro/compare/v3.4.1...v3.4.2) (2026-07-01)
 
 
