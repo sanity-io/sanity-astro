@@ -1,11 +1,15 @@
 ---
 import {VisualEditingComponent, type VisualEditingOptions} from './visual-editing-component'
 
-export interface Props extends Pick<VisualEditingOptions, 'zIndex'> {
+export interface Props extends Pick<VisualEditingOptions, 'zIndex' | 'keepStegaOnCopy'> {
   enabled?: boolean
 }
 
-const {enabled, zIndex} = Astro.props
+const {enabled, zIndex, keepStegaOnCopy} = Astro.props
 ---
 
-{enabled ? <VisualEditingComponent client:only="react" zIndex={zIndex} /> : null}
+{
+  enabled ? (
+    <VisualEditingComponent client:only="react" zIndex={zIndex} keepStegaOnCopy={keepStegaOnCopy} />
+  ) : null
+}
