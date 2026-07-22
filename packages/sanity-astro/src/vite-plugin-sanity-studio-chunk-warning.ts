@@ -64,7 +64,10 @@ export function collectStudioChunkFiles(chunksByFileName: Map<string, ChunkLike>
   return studioChunkFiles
 }
 
-export function formatLargeChunkWarning(limitInKb: number, oversizedChunkFileNames: string[]): string {
+export function formatLargeChunkWarning(
+  limitInKb: number,
+  oversizedChunkFileNames: string[],
+): string {
   const chunkList = oversizedChunkFileNames.map((fileName) => `- ${fileName}`).join('\n')
   return `Some chunks are larger than ${limitInKb} kB after minification. Consider:
 ${chunkList}
