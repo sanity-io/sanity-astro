@@ -58,9 +58,7 @@ export function resolveSanityOptimizeDeps(projectRoot: string): string[] {
 }
 
 export function resolveSanityModuleDedupe(projectRoot: string): string[] {
-  return SANITY_MODULE_DEDUPE.filter((dependency) =>
-    canResolveDependency(projectRoot, dependency),
-  )
+  return SANITY_MODULE_DEDUPE.filter((dependency) => canResolveDependency(projectRoot, dependency))
 }
 
 export function buildSanityModuleAliases(projectRoot: string) {

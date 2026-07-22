@@ -121,9 +121,7 @@ export default defineConfig({
   dataset: '<YOUR-DATASET-NAME>',
   plugins: [structureTool()],
   schema: {
-    types: [
-      /* your content types here*/
-    ],
+    types: [/* your content types here*/],
   },
 })
 ```

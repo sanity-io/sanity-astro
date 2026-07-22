@@ -1,7 +1,10 @@
 import {describe, expect, it, vi} from 'vitest'
 import sanityIntegration from './index'
 import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-chunk-warning'
-import {SANITY_MODULE_DEDUPE, vitePluginSanityModuleDedupe} from './vite-plugin-sanity-module-dedupe'
+import {
+  SANITY_MODULE_DEDUPE,
+  vitePluginSanityModuleDedupe,
+} from './vite-plugin-sanity-module-dedupe'
 
 async function runSetup({
   output = 'static',
