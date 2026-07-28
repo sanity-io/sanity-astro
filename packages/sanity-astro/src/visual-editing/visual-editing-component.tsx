@@ -134,6 +134,9 @@ export function VisualEditingComponent(props: VisualEditingOptions) {
         const currentUrl = getPresentationUrl(window.location)
         lastUrlRef.current = currentUrl
         lastPublishedAtRef.current = Date.now()
+        // Report the URL on every subscribe, since Presentation can't navigate the frame
+        // until it has one and an MPA has no router event to report it from.
+        _navigate({type: 'push', title: document.title, url: currentUrl})
         return () => {
           // Keep navigation publishing alive briefly for immediate link clicks
           // after edit mode is toggled off, then release it to respect off mode.
