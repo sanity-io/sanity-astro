@@ -331,7 +331,9 @@ const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLE
 </body>
 ```
 
-The `payload` tells you why the refresh fired: `payload.source` is `'manual'` when the editor clicks refresh in Presentation, or `'mutation'` when a document changes. The same subpath also accepts `history` if you need to take over URL syncing, and `onSuspiciousStega` for opt-in reporting when stega appears in unsafe placements (`class`, `href`, `<head>`, scripts, and similar).
+The `payload` tells you why the refresh fired: `payload.source` is `'manual'` when the editor clicks refresh in Presentation, or `'mutation'` when a document changes.
+
+`VisualEditingComponent` accepts every option that `<VisualEditing />` from `@sanity/visual-editing/react` does, and forwards them all. Beyond `refresh`, the ones worth knowing about are `history` if you need to take over URL syncing, `onSuspiciousStega` for opt-in reporting when stega appears in unsafe placements (`class`, `href`, `<head>`, scripts, and similar), `onPerspectiveChange` to keep server-side fetching on the same perspective as the Studio driving the preview, and the alpha `components` / `plugins` resolvers for custom overlay UI such as an insert menu on an array field. `refresh` and `history` fall back to the defaults above when you don't pass them; everything else is passed straight through.
 
 ### 2. Add the Presentation tool to the Studio
 
