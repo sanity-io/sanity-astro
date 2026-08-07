@@ -1,7 +1,8 @@
 import {defineConfig} from 'sanity'
-import {structureTool} from 'sanity/structure'
-import {schemaTypes} from './schemaTypes'
 import {defineDocuments, defineLocations, presentationTool} from 'sanity/presentation'
+import {structureTool} from 'sanity/structure'
+
+import {schemaTypes} from './schemaTypes'
 
 const branchUrl =
   (import.meta.env?.['VERCEL_BRANCH_URL'] as string | undefined) ??

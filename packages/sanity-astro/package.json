@@ -4,20 +4,27 @@
   "description": "Official Sanity Astro integration",
   "keywords": [
     "astro-integration",
-    "withastro",
-    "sanity"
+    "sanity",
+    "withastro"
   ],
   "homepage": "https://www.sanity.io/plugins/sanity-astro",
   "bugs": {
     "url": "https://github.com/sanity-io/sanity-astro/issues"
   },
+  "license": "MIT",
+  "author": "Sanity.io <hello@sanity.io>",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sanity-io/sanity-astro.git",
     "directory": "packages/sanity-astro"
   },
-  "license": "MIT",
-  "author": "Sanity.io <hello@sanity.io>",
+  "files": [
+    "dist",
+    "src/studio",
+    "src/visual-editing",
+    "module.d.ts"
+  ],
+  "types": "./dist/types/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
@@ -40,13 +47,9 @@
       "default": "./src/visual-editing/visual-editing-component.tsx"
     }
   },
-  "types": "./dist/types/index.d.ts",
-  "files": [
-    "dist",
-    "src/studio",
-    "src/visual-editing",
-    "module.d.ts"
-  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "rimraf dist && vite build && pnpm copyStudio && pnpm copy:visual-editing",
     "clean": "rimraf dist && rimraf .turbo && rimraf node_modules",
@@ -86,8 +89,5 @@
   },
   "engines": {
     "node": ">=20.19.0 || >=22.12.0"
-  },
-  "publishConfig": {
-    "access": "public"
   }
 }

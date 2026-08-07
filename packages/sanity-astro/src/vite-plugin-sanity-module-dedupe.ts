@@ -1,5 +1,6 @@
 import {createRequire} from 'node:module'
 import path from 'node:path'
+
 import type {PluginOption, UserConfig} from 'vite'
 
 /**
@@ -58,9 +59,7 @@ export function resolveSanityOptimizeDeps(projectRoot: string): string[] {
 }
 
 export function resolveSanityModuleDedupe(projectRoot: string): string[] {
-  return SANITY_MODULE_DEDUPE.filter((dependency) =>
-    canResolveDependency(projectRoot, dependency),
-  )
+  return SANITY_MODULE_DEDUPE.filter((dependency) => canResolveDependency(projectRoot, dependency))
 }
 
 export function buildSanityModuleAliases(projectRoot: string) {

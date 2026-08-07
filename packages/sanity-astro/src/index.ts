@@ -1,11 +1,12 @@
-import type {AstroIntegration} from 'astro'
-import {vitePluginSanityClient} from './vite-plugin-sanity-client'
-import {vitePluginSanityStudio} from './vite-plugin-sanity-studio'
-import {vitePluginSanityStudioHashRouter} from './vite-plugin-sanity-studio-hash-router'
-import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-chunk-warning'
-import {vitePluginSanityModuleDedupe} from './vite-plugin-sanity-module-dedupe'
 import type {ClientConfig} from '@sanity/client'
+import type {AstroIntegration} from 'astro'
+
 import {normalizeStudioBasePath, studioRoutePattern} from './studio-base-path'
+import {vitePluginSanityClient} from './vite-plugin-sanity-client'
+import {vitePluginSanityModuleDedupe} from './vite-plugin-sanity-module-dedupe'
+import {vitePluginSanityStudio} from './vite-plugin-sanity-studio'
+import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-chunk-warning'
+import {vitePluginSanityStudioHashRouter} from './vite-plugin-sanity-studio-hash-router'
 
 type IntegrationOptions = ClientConfig & {
   studioBasePath?: string

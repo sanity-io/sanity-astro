@@ -1,5 +1,5 @@
-import {defineField, defineType} from 'sanity'
 import {MdLocalPlay as icon} from 'react-icons/md'
+import {defineField, defineType} from 'sanity'
 
 export default defineType({
   name: 'screening',

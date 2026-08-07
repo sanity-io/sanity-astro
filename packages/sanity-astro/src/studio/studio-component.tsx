@@ -1,8 +1,8 @@
-import React from 'react'
 import {createHashHistory, type History, type Listener} from 'history'
+import React from 'react'
+import {Studio} from 'sanity'
 // @ts-ignore
 import {config} from 'sanity:studio'
-import {Studio} from 'sanity'
 
 if (!config) {
   throw new Error(

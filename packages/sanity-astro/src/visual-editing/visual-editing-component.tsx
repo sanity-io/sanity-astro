@@ -1,9 +1,10 @@
-import React from 'react'
 import {
   VisualEditing as InternalVisualEditing,
   type SuspiciousStegaReport,
   type VisualEditingOptions as InternalVisualEditingOptions,
 } from '@sanity/visual-editing/react'
+import React from 'react'
+
 import {applyPresentationHistoryUpdate, getPresentationUrl, shouldPublishUrl} from './history'
 
 export type {SuspiciousStegaReport}
