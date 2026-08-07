@@ -18,10 +18,26 @@ Each app also mounts an **embedded Sanity Studio at `/admin`** (e.g. `http://loc
 ### Non-obvious gotchas
 
 - **Build the library before/with dev.** Apps depend on `@sanity/astro` via `workspace:^` and consume its `dist/`. The root `dev:*` scripts already run `pnpm --filter @sanity/astro build` first, so always start apps via those root scripts (not `astro dev` directly). If you change library source in `packages/sanity-astro`, rebuild it (`pnpm --filter @sanity/astro build`, or `pnpm --filter @sanity/astro dev` for watch mode) for apps to pick up changes.
-- **`movies` requires a secret.** Its dev script sets `PUBLIC_SANITY_VISUAL_EDITING_ENABLED=true`, which forces Draft Mode and throws `The SANITY_API_READ_TOKEN environment variable is required in Draft Mode` (HTTP 500) unless `SANITY_API_READ_TOKEN` is provided. For a token-free demo use `example` instead. Put the token in `apps/movies/.env` (gitignored) as `SANITY_API_READ_TOKEN=...`; it must be a **viewer** (or higher) token for the project the app targets. The committed config points at Sanity's public `movies` demo project (`4j2qnyob`), so the token must belong to a Sanity account with access to that project. To demo against a project you own instead, temporarily change `projectId`/`dataset` in `apps/movies/astro.config.mjs` and seed a `movie` document (fields `title` + `slug`; the homepage queries `*[_type == 'movie']`).
+- **`movies` requires a secret.** Its dev script sets `PUBLIC_SANITY_VISUAL_EDITING_ENABLED=true`, which forces Draft Mode and throws `The SANITY_API_READ_TOKEN environment variable is required in Draft Mode` (HTTP 500) unless a token is provided. For a token-free demo use `example` instead. The token must be a **viewer** (or higher) token for the project the app targets — the committed config points at Sanity's public `movies` demo project (`4j2qnyob`), so the token must belong to a Sanity account with access to that project. See **Providing the `movies` token** below for how to wire it in. To demo against a project you own instead, temporarily change `projectId`/`dataset` in `apps/movies/astro.config.mjs` and seed a `movie` document (fields `title` + `slug`; the homepage queries `*[_type == 'movie']`).
 - **Tokens are project-scoped.** A Sanity API token only works against its own project host; used against a different project's host the Query API returns HTTP 401 `Session does not match project host`. So a token for one projectId cannot authenticate requests for another.
 - **The token must live in a `.env` file, not just the process env.** `load-query.ts` reads `import.meta.env.SANITY_API_READ_TOKEN`, and Astro/Vite only expose *non-`PUBLIC_`* vars to `import.meta.env` when they come from a `.env` file. A token exported into the shell / injected as a process env var is NOT picked up — put it in `apps/movies/.env`.
 - **`pnpm lint` executes 0 tasks.** No workspace package defines a `lint` script, so `turbo run lint` reports "No tasks were executed" (this matches CI and is expected — not a failure). Running `eslint` directly currently fails because the shared `eslint-config-custom` pulls in `eslint-config-next`, whose parser needs `next` (not installed). The effective style gate is Prettier: `pnpm format` (write) or `npx prettier --check .`. Note some files in the repo are already not Prettier-clean on `main`.
 - **Unit tests:** `pnpm --filter @sanity/astro test` (vitest). **Integration tests** (`pnpm --filter @sanity/astro test:integration`) use Playwright and require Chromium: `pnpm --filter @sanity/astro exec playwright install chromium --with-deps`, and a freshly built `dist/`.
 - **Node/pnpm:** `@sanity/astro` requires Node `>=20.19.0 || >=22.12.0`; `packageManager` is pinned to `pnpm@9.15.9`.
 - For embedded Studio login to work against a Sanity project, the dev origin (e.g. `http://localhost:4322`) must be allow-listed in that project's CORS settings.
+
+### Providing the `movies` token
+
+The `movies` app's Draft Mode token is supplied as a **dedicated Cursor secret** named `SANITY_MOVIES_API_READ_TOKEN` (kept separate from `SANITY_API_READ_TOKEN`, which is scoped to the `example*` apps' project `3do82whm`). Set it to a **Viewer** API token for project `4j2qnyob` (mint at `https://www.sanity.io/manage/project/4j2qnyob/api`).
+
+Because Astro/Vite only reads non-`PUBLIC_` vars from a `.env` file (not the process env), the injected secret must be copied into `apps/movies/.env` (gitignored) under the name the app actually reads (`SANITY_API_READ_TOKEN`). Run this once per VM (the value comes from the injected secret):
+
+```bash
+printf 'PUBLIC_SANITY_VISUAL_EDITING_ENABLED=true\nSANITY_API_READ_TOKEN=%s\n' "$SANITY_MOVIES_API_READ_TOKEN" > apps/movies/.env
+```
+
+To make this automatic on every boot, add the same guarded command to the environment's update/setup script:
+
+```bash
+[ -n "$SANITY_MOVIES_API_READ_TOKEN" ] && printf 'PUBLIC_SANITY_VISUAL_EDITING_ENABLED=true\nSANITY_API_READ_TOKEN=%s\n' "$SANITY_MOVIES_API_READ_TOKEN" > apps/movies/.env
+```
