@@ -30,7 +30,7 @@ jobs:
           path: packages/sanity-astro
 
       # Publish to NPM on new releases
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         if: ${{ steps.release.outputs.releases_created == 'true' }}
       - uses: pnpm/action-setup@v4
         if: ${{ steps.release.outputs.releases_created == 'true' }}
