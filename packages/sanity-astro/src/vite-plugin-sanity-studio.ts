@@ -1,5 +1,6 @@
 import type {PartialDeep} from 'type-fest'
 import type {PluginOption} from 'vite'
+
 import {normalizeStudioBasePath} from './studio-base-path'
 
 export function vitePluginSanityStudio(resolvedOptions: {

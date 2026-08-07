@@ -13,16 +13,14 @@
     "dev:example-latest": "pnpm --filter @sanity/astro build && turbo run dev --filter=example-latest",
     "dev:example-ssr": "pnpm --filter @sanity/astro build && turbo run dev --filter=example-ssr",
     "dev:movies": "pnpm --filter @sanity/astro build && turbo run dev --filter=movies",
-    "format": "prettier --write .",
+    "format": "oxfmt",
     "lint": "turbo run lint"
   },
   "devDependencies": {
-    "@sanity/prettier-config": "^1.0.3",
     "@turbo/gen": "^1.13.4",
     "eslint": "^8.57.1",
     "eslint-config-custom": "*",
-    "prettier": "^3.5.3",
-    "prettier-plugin-astro": "^0.14.1",
+    "oxfmt": "^0.61.0",
     "rimraf": "^5.0.7",
     "turbo": "^1.13.4"
   },

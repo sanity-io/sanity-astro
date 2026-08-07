@@ -1,4 +1,5 @@
 import {describe, expect, it, vi} from 'vitest'
+
 import {applyPresentationHistoryUpdate, getPresentationUrl, shouldPublishUrl} from './history'
 
 describe('visual editing history helpers', () => {

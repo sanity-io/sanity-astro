@@ -1,5 +1,6 @@
-import {defineConfig, type Plugin} from 'vite'
 import path from 'path'
+
+import {defineConfig, type Plugin} from 'vite'
 import dts from 'vite-plugin-dts'
 
 const name = 'sanity-astro'

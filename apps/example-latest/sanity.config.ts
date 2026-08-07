@@ -2,6 +2,7 @@ import {visionTool} from '@sanity/vision'
 import {defineConfig} from 'sanity'
 import {structureTool} from 'sanity/structure'
 import {sanityClient} from 'sanity:client'
+
 import {schemaTypes} from './schemas'
 
 const {projectId, dataset} = sanityClient.config()

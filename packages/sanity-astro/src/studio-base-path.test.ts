@@ -1,4 +1,5 @@
 import {describe, expect, it} from 'vitest'
+
 import {normalizeStudioBasePath, studioRoutePattern} from './studio-base-path'
 
 describe('studio base path helpers', () => {

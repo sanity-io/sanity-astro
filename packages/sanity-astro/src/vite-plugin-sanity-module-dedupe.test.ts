@@ -1,5 +1,7 @@
 import path from 'node:path'
+
 import {describe, expect, it} from 'vitest'
+
 import {
   buildSanityModuleAliases,
   resolveSanityModuleDedupe,
@@ -15,10 +17,12 @@ type PluginLike = {
   config?: (
     config: {root?: string},
     env: {command: string; mode: string},
-  ) => {
-    optimizeDeps?: {include?: string[]}
-    resolve?: {dedupe?: string[]; alias?: unknown[]}
-  } | undefined
+  ) =>
+    | {
+        optimizeDeps?: {include?: string[]}
+        resolve?: {dedupe?: string[]; alias?: unknown[]}
+      }
+    | undefined
 }
 
 describe('vitePluginSanityModuleDedupe', () => {
@@ -57,9 +61,9 @@ describe('vitePluginSanityModuleDedupe', () => {
 
     expect(config?.optimizeDeps?.include).toEqual(resolved)
     expect(resolved.length).toBeGreaterThan(0)
-    expect(resolved.every((dependency) => SANITY_OPTIMIZE_DEPS_CANDIDATES.includes(dependency as never))).toBe(
-      true,
-    )
+    expect(
+      resolved.every((dependency) => SANITY_OPTIMIZE_DEPS_CANDIDATES.includes(dependency as never)),
+    ).toBe(true)
   })
 
   it('aliases consuming-project module roots for sanity and styled-components', () => {

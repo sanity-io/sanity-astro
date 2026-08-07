@@ -1,8 +1,10 @@
 import {existsSync} from 'node:fs'
 import path from 'node:path'
 import {fileURLToPath} from 'node:url'
+
 import {chromium, type ConsoleMessage, type Page} from 'playwright'
 import {beforeAll, describe, expect, it} from 'vitest'
+
 import {startAstroDevServer} from './dev-server'
 import {collectDuplicateModuleErrors} from './duplicate-module-errors'
 

@@ -1,6 +1,6 @@
 import type {ClientConfig} from '@sanity/client'
-import type {PartialDeep} from 'type-fest'
 import serialize from 'serialize-javascript'
+import type {PartialDeep} from 'type-fest'
 import type {PluginOption} from 'vite'
 
 const virtualModuleId = 'sanity:client'

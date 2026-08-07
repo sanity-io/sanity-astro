@@ -1,5 +1,5 @@
 ---
-name: Prettier
+name: Format
 
 on:
   push:
@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   run:
-    name: Can the code be prettier? 🤔
+    name: Can the code be formatted? 🤔
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,10 +22,6 @@ jobs:
           cache: pnpm
           node-version: lts/*
       - run: pnpm install --dev --ignore-scripts
-      - uses: actions/cache@v4
-        with:
-          path: node_modules/.cache/prettier/.prettier-cache
-          key: prettier-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm format
       - run: git restore .github/workflows
       - uses: actions/create-github-app-token@v2
@@ -36,9 +32,9 @@ jobs:
       - uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7
         with:
           body: I ran `pnpm format` 🧑‍💻
-          branch: actions/prettier
-          commit-message: "chore(prettier): 🤖 ✨"
+          branch: actions/format
+          commit-message: 'chore(format): 🤖 ✨'
           labels: 🤖 bot
           sign-commits: true
-          title: "chore(prettier): 🤖 ✨"
+          title: 'chore(format): 🤖 ✨'
           token: ${{ steps.generate-token.outputs.token }}
