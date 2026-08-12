@@ -1,0 +1,19 @@
+{
+  "name": "@repo/ailf",
+  "version": "0.0.0",
+  "private": true,
+  "description": "AI Literacy Framework (AILF) evaluation configuration for @sanity/astro",
+  "type": "module",
+  "scripts": {
+    "ailf": "ailf",
+    "ailf:smoke": "AILF_CLASSIFICATION=adhoc ailf run --remote --debug",
+    "ailf:validate": "ailf validate tasks .ailf/tasks"
+  },
+  "devDependencies": {
+    "@sanity/ailf": "^7.36.0",
+    "@sanity/astro": "workspace:^"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}
