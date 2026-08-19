@@ -101,12 +101,13 @@ export default defineConfig({
 
 // === Part 4: Image URL helper (src/lib/image.ts) ===
 //
-// import imageUrlBuilder from '@sanity/image-url'
-// import type {SanityImageSource} from '@sanity/image-url/lib/types/types'
+// import {createImageUrlBuilder, type SanityImageSource} from '@sanity/image-url'
 // import {sanityClient} from 'sanity:client'
 //
+// const builder = createImageUrlBuilder(sanityClient)
+//
 // export function urlFor(source: SanityImageSource) {
-//   return imageUrlBuilder(sanityClient).image(source)
+//   return builder.image(source)
 // }
 
 // === Part 5: Homepage (src/pages/index.astro) ===
