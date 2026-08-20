@@ -5,6 +5,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.5.1](https://github.com/sanity-io/sanity-astro/compare/v3.5.0...v3.5.1) (2026-08-20)
+
+
+### Bug Fixes
+
+* allow `@sanity/client` v8 ([#433](https://github.com/sanity-io/sanity-astro/issues/433)) ([6470d3c](https://github.com/sanity-io/sanity-astro/commit/6470d3c87c437fa1e1a137a010d774b4b2f521a9))
+
 ## [3.5.0](https://github.com/sanity-io/sanity-astro/compare/v3.4.2...v3.5.0) (2026-07-22)
 
 
