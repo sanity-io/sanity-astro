@@ -1,0 +1,63 @@
+---
+import {getLiveEntry} from 'astro:content'
+
+import CtaBanner from '../components/CtaBanner.astro'
+import Hero from '../components/Hero.astro'
+import Highlights from '../components/Highlights.astro'
+import Partners from '../components/Partners.astro'
+import Testimonial from '../components/Testimonial.astro'
+import Layout from '../layouts/Layout.astro'
+import {ogImageUrl} from '../sanity/image'
+
+const filter = {
+  audience: Astro.locals.audience,
+  preview: Astro.locals.preview,
+}
+
+const [settingsEntry, pageEntry] = await Promise.all([
+  getLiveEntry('siteSettings', filter),
+  getLiveEntry('homePage', filter),
+])
+
+const settings = settingsEntry.entry?.data
+const page = pageEntry.entry?.data
+
+if (!settings || !page) {
+  throw (
+    settingsEntry.error ??
+    pageEntry.error ??
+    new Error('Home page content is missing. Seed the dataset with `pnpm seed`.')
+  )
+}
+
+const liveTags = [
+  ...new Set([
+    ...(settingsEntry.entry?.cacheHint?.tags ?? []),
+    ...(pageEntry.entry?.cacheHint?.tags ?? []),
+  ]),
+]
+
+// Forward the loaders' cache hints: the response is cached on the CDN (keyed
+// per cookie combination by the Vary header from middleware) until one of its
+// sync tags is invalidated. Previews must never be response-cached, so their
+// hints only feed the live-update island and nothing is forwarded for them.
+if (!Astro.locals.preview.enabled) {
+  for (const {entry} of [settingsEntry, pageEntry]) {
+    if (entry?.cacheHint) Astro.cache.set(entry)
+  }
+}
+---
+
+<Layout
+  title={page.seo.title}
+  description={page.seo.description}
+  ogImage={page.seo.ogImage ? ogImageUrl(page.seo.ogImage) : undefined}
+  liveTags={liveTags}
+  settings={settings}
+>
+  <Hero hero={page.hero} />
+  <Partners heading={page.partnersHeading} partners={page.partners} />
+  <Highlights heading={page.highlightsHeading} highlights={page.highlights} />
+  <Testimonial testimonial={page.testimonial} />
+  <CtaBanner cta={page.cta} />
+</Layout>

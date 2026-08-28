@@ -1,0 +1,6 @@
+{
+  "path": "../observatory/src/**/*.ts",
+  "schema": "./schema.json",
+  "generates": "../observatory/src/sanity/sanity.types.ts",
+  "overloadClientMethods": true
+}

@@ -1,0 +1,101 @@
+---
+import {getLiveEntry} from 'astro:content'
+
+import Layout from '../layouts/Layout.astro'
+import {ogImageUrl} from '../sanity/image'
+
+const filter = {
+  audience: Astro.locals.audience,
+  preview: Astro.locals.preview,
+}
+
+const [settingsEntry, pageEntry] = await Promise.all([
+  getLiveEntry('siteSettings', filter),
+  getLiveEntry('visitPage', filter),
+])
+
+const settings = settingsEntry.entry?.data
+const page = pageEntry.entry?.data
+
+if (!settings || !page) {
+  throw (
+    settingsEntry.error ??
+    pageEntry.error ??
+    new Error('Visit page content is missing. Seed the dataset with `pnpm seed`.')
+  )
+}
+
+const liveTags = [
+  ...new Set([
+    ...(settingsEntry.entry?.cacheHint?.tags ?? []),
+    ...(pageEntry.entry?.cacheHint?.tags ?? []),
+  ]),
+]
+
+// Forward the loaders' cache hints: the response is cached on the CDN (keyed
+// per cookie combination by the Vary header from middleware) until one of its
+// sync tags is invalidated. Previews must never be response-cached, so their
+// hints only feed the live-update island and nothing is forwarded for them.
+if (!Astro.locals.preview.enabled) {
+  for (const {entry} of [settingsEntry, pageEntry]) {
+    if (entry?.cacheHint) Astro.cache.set(entry)
+  }
+}
+---
+
+<Layout
+  title={page.seo.title}
+  description={page.seo.description}
+  ogImage={page.seo.ogImage ? ogImageUrl(page.seo.ogImage) : undefined}
+  liveTags={liveTags}
+  settings={settings}
+>
+  <section class="py-[clamp(4rem,10vw,7rem)]">
+    <div class="mx-auto max-w-6xl px-[clamp(1.25rem,4vw,2.5rem)]">
+      <header class="max-w-[44rem]">
+        <h1 class="text-[clamp(2rem,4.5vw,3rem)]">{page.heading}</h1>
+        <p class="mt-4 text-lg text-ink-muted">{page.tagline}</p>
+      </header>
+      <div class="mt-14 grid grid-cols-[repeat(auto-fit,minmax(17rem,1fr))] items-start gap-6">
+        {
+          page.tiers?.map((tier) => (
+            <article
+              class:list={[
+                'flex flex-col gap-4 rounded-card border border-line bg-surface p-8',
+                {
+                  'border-accent shadow-[0_16px_40px_-24px_rgba(251,191,36,0.35)]':
+                    tier.highlighted === true,
+                },
+              ]}
+            >
+              <h2 class="text-lg">{tier.name}</h2>
+              <p class="flex items-baseline gap-2">
+                <span class="text-4xl font-bold tracking-[-0.02em]">{tier.price}</span>
+                {tier.period && <span class="text-sm text-ink-faint">{tier.period}</span>}
+              </p>
+              <p class="text-ink-muted">{tier.description}</p>
+              <ul class="m-0 grid list-none gap-2 p-0 text-ink-muted">
+                {tier.features?.map((feature) => (
+                  <li class="before:mr-2 before:font-bold before:text-accent-ink before:content-['✓']">
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              <a
+                class:list={[
+                  'mt-auto inline-block rounded-full border px-6 py-3 text-center font-semibold no-underline transition-colors duration-150',
+                  tier.highlighted === true
+                    ? 'border-transparent bg-accent text-page hover:bg-accent-strong'
+                    : 'border-line bg-surface text-ink hover:border-ink-faint',
+                ]}
+                href={tier.cta.href}
+              >
+                {tier.cta.label}
+              </a>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+</Layout>

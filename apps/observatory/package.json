@@ -1,0 +1,32 @@
+{
+  "name": "observatory",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "astro build && node scripts/fixVercelAssetCaching.mjs",
+    "check": "astro check",
+    "dev": "astro dev",
+    "postinstall": "astro sync",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/vercel": "^11.0.5",
+    "@sanity/client": "^8.0.0",
+    "@sanity/image-url": "^2.1.1",
+    "@sanity/preview-url-secret": "^4.1.4",
+    "@sanity/visual-editing-standalone": "^2.0.0",
+    "@vercel/functions": "^3.9.3",
+    "astro": "^7.2.1",
+    "groq": "^6.9.2"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@tailwindcss/vite": "^4.3.3",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.3"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}
