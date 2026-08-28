@@ -51,7 +51,7 @@ if (!Astro.locals.preview.enabled) {
 <Layout
   title={page.seo.title}
   description={page.seo.description}
-  ogImage={page.seo.ogImage ? ogImageUrl(page.seo.ogImage) : undefined}
+  ogImage={page.seo.ogImage?.asset ? ogImageUrl(page.seo.ogImage) : undefined}
   liveTags={liveTags}
   settings={settings}
 >
