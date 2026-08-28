@@ -122,7 +122,7 @@ backlog for streamlining the integration.
 | Visual Editing overlays                           | `VisualEditing.astro` + standalone runtime + router fixes | Partial: `VisualEditing` component, no `ClientRouter` fixes |
 | Draft mode (signed cookie, enable/disable routes) | `src/lib/preview.ts` + 2 API routes                       | Missing                                                     |
 | Perspective & variant switching from Presentation | 2 API routes + cookie plumbing                            | Missing                                                     |
-| Live collections loader with sync-tag cache hints | `src/sanity/loader.ts` + `fetch.ts`                       | Missing (`loadQuery` exists; no tags, no live loader)       |
+| Live collections loader with sync-tag cache hints | `src/sanity/loader.ts` + `fetch.ts`                       | Missing (`loadQuery` is a documented app-level pattern)     |
 | Live updates island + CDN tag purge endpoint      | `SanityLive.astro` + `/api/invalidate-tags`               | Missing                                                     |
 | Image service (CDN-native `astro:assets`)         | `imageService.ts` + `image.ts` + `SanityImage.astro`      | Missing (docs point at `@sanity/image-url` manually)        |
 | Personalization middleware (variants beta)        | `src/middleware.ts` + `src/lib/audience.ts`               | Missing                                                     |
