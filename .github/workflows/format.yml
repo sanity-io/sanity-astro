@@ -24,7 +24,7 @@ jobs:
       - run: pnpm install --dev --ignore-scripts
       - run: pnpm format
       - run: git restore .github/workflows
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3
         id: generate-token
         with:
           app-id: ${{ secrets.ECOSPARK_APP_ID }}
