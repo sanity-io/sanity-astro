@@ -9,10 +9,7 @@ import {applyPresentationHistoryUpdate, getPresentationUrl, shouldPublishUrl} fr
 
 export type {SuspiciousStegaReport}
 
-export type VisualEditingOptions = Pick<
-  InternalVisualEditingOptions,
-  'zIndex' | 'refresh' | 'history' | 'keepStegaOnCopy' | 'onSuspiciousStega'
->
+export type VisualEditingOptions = InternalVisualEditingOptions
 type HistoryAdapter = NonNullable<InternalVisualEditingOptions['history']>
 type HistoryNavigate = Parameters<HistoryAdapter['subscribe']>[0]
 
@@ -158,12 +155,10 @@ export function VisualEditingComponent(props: VisualEditingOptions) {
 
   return (
     <InternalVisualEditing
+      {...props}
       portal
       history={props.history ?? defaultHistory}
-      zIndex={props.zIndex}
       refresh={props.refresh ?? defaultRefresh}
-      keepStegaOnCopy={props.keepStegaOnCopy}
-      onSuspiciousStega={props.onSuspiciousStega}
     />
   )
 }
