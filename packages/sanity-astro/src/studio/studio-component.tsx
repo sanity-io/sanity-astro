@@ -98,7 +98,7 @@ export function StudioComponent(props: {history?: 'browser' | 'hash'}) {
         maxHeight: '100dvh',
         overscrollBehavior: 'none',
         WebkitFontSmoothing: 'antialiased',
-        overflow: 'hidden',
+        overflow: 'auto',
       }}
     >
       <Studio config={config} unstable_history={history} />
