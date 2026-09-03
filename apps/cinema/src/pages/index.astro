@@ -1,0 +1,57 @@
+---
+import {getCollection} from 'astro:content'
+
+import MovieCard from '../components/MovieCard.astro'
+import Layout from '../layouts/Layout.astro'
+import {releaseYear} from '../lib/format'
+
+const movies = (await getCollection('movies')).sort(
+  (a, b) => b.data.popularity - a.data.popularity,
+)
+const years = movies.map((movie) => releaseYear(movie.data.releaseDate))
+const earliest = Math.min(...years)
+const latest = Math.max(...years)
+---
+
+<Layout title="Marquee" description="A film programme built with Astro, Sanity and the Content Layer.">
+  <section class="max-w-2xl">
+    <p class="eyebrow">Now showing</p>
+    <h1
+      class="mt-4 font-display text-5xl font-semibold leading-[1.02] tracking-tight text-ink-50 sm:text-6xl"
+    >
+      Science fiction, back on the big screen.
+    </h1>
+    <p class="mt-6 text-lg leading-relaxed text-ink-300">
+      {movies.length} films from {earliest} to {latest}, ordered by popularity. Every page is
+      prerendered from Sanity's Content Lake at build time.
+    </p>
+  </section>
+
+  {
+    movies.length > 0 ? (
+      <section aria-labelledby="films" class="mt-16">
+        <div class="flex items-baseline justify-between border-b border-white/5 pb-4">
+          <h2 id="films" class="font-display text-lg font-medium text-ink-50">
+            The programme
+          </h2>
+          <p class="text-sm text-ink-400">{movies.length} films</p>
+        </div>
+        <ul class="mt-8 grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-5">
+          {movies.map((movie, index) => (
+            <li>
+              <MovieCard movie={movie} loading={index < 5 ? 'eager' : 'lazy'} />
+            </li>
+          ))}
+        </ul>
+      </section>
+    ) : (
+      <section class="mt-16 rounded-lg border border-dashed border-white/10 p-12 text-center">
+        <p class="font-display text-xl text-ink-50">Nothing on the bill yet.</p>
+        <p class="mt-2 text-ink-400">
+          Add a movie with a slug and a poster in the <a href="/admin" class="text-accent">Studio</a>{' '}
+          and rebuild.
+        </p>
+      </section>
+    )
+  }
+</Layout>
