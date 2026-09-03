@@ -20,43 +20,31 @@
   },
   "files": [
     "dist",
-    "src/studio",
-    "src/visual-editing",
     "module.d.ts"
   ],
-  "types": "./dist/types/index.d.ts",
+  "type": "module",
+  "types": "./dist/index.d.mts",
   "exports": {
     ".": {
-      "types": "./dist/types/index.d.ts",
-      "module": "./dist/sanity-astro.mjs",
-      "default": "./dist/sanity-astro.mjs"
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
     },
     "./module": "./module.d.ts",
     "./studio/studio-route.astro": "./dist/studio/studio-route.astro",
     "./studio/studio-route-hash.astro": "./dist/studio/studio-route-hash.astro",
-    "./studio/studio-component.tsx": {
-      "types": "./src/studio/studio-component.tsx",
-      "default": "./src/studio/studio-component.tsx"
-    },
-    "./visual-editing": {
-      "import": "./dist/visual-editing/index.ts",
-      "default": "./dist/visual-editing/index.ts"
-    },
-    "./visual-editing/component": {
-      "types": "./src/visual-editing/visual-editing-component.tsx",
-      "default": "./src/visual-editing/visual-editing-component.tsx"
-    }
+    "./studio/studio-component.tsx": "./dist/studio/studio-component.tsx",
+    "./visual-editing": "./dist/visual-editing/index.ts",
+    "./visual-editing/component": "./dist/visual-editing/visual-editing-component.tsx",
+    "./package.json": "./package.json"
   },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "build": "rimraf dist && vite build && pnpm copyStudio && pnpm copy:visual-editing",
-    "check:package": "publint --strict && attw --pack . --profile esm-only --exclude-entrypoints ./studio/studio-route.astro ./studio/studio-route-hash.astro",
+    "build": "tsdown --config-loader native",
+    "check:package": "publint --strict && attw --pack . --profile esm-only --exclude-entrypoints ./studio/studio-route.astro ./studio/studio-route-hash.astro ./visual-editing",
     "clean": "rimraf dist && rimraf .turbo && rimraf node_modules",
-    "copy:visual-editing": "cp -r src/visual-editing dist/visual-editing",
-    "copyStudio": "cp -r src/studio dist/studio",
-    "dev": "vite build --watch",
+    "dev": "tsdown --config-loader native --watch",
     "lint": "oxlint",
     "prepublishOnly": "pnpm build",
     "test": "vitest run --coverage",
@@ -79,10 +67,10 @@
     "react-dom": "^19.2.3",
     "sanity": "^5.31.1",
     "serialize-javascript": "^6.0.2",
+    "tsdown": "^0.23.0",
     "type-fest": "^4.41.0",
     "typescript": "^5.9",
     "vite": "^6.2.0",
-    "vite-plugin-dts": "^4.5.4",
     "vitest": "^4.0.18"
   },
   "peerDependencies": {

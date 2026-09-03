@@ -5,7 +5,7 @@ import {
 } from '@sanity/visual-editing/react'
 import React from 'react'
 
-import {applyPresentationHistoryUpdate, getPresentationUrl, shouldPublishUrl} from './history'
+import {applyPresentationHistoryUpdate, getPresentationUrl, shouldPublishUrl} from './history.js'
 
 export type {SuspiciousStegaReport}
 
