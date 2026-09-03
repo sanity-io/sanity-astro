@@ -8,12 +8,9 @@ import plotSummary from './plotSummary'
 import screening from './screening'
 
 export const schemaTypes = [
-  // Document types
   movie,
   person,
   screening,
-
-  // Other types
   blockContent,
   plotSummary,
   plotSummaries,

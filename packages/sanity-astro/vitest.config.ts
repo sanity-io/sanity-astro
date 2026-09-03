@@ -5,7 +5,6 @@ import {defineConfig} from 'vitest/config'
 export default defineConfig({
   resolve: {
     alias: {
-      // Astro's Vite plugin provides this virtual module at runtime; tests mock it per case.
       'sanity:studio': fileURLToPath(
         new URL('./src/studio/sanity-studio.stub.ts', import.meta.url),
       ),

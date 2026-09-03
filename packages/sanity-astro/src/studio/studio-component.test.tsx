@@ -31,9 +31,7 @@ async function renderStudio(studioConfig: unknown, history?: 'browser' | 'hash')
 
 let roots: Array<{root: Root; container: HTMLElement}> = []
 
-// Returns whether the component's capture-phase handler claimed the click. The bubble-phase
-// listener then cancels the event so jsdom does not attempt a real navigation.
-function clickAnchor(href: string, init: MouseEventInit = {}): boolean {
+function studioClaimsClick(href: string, init: MouseEventInit = {}): boolean {
   const anchor = document.createElement('a')
   anchor.href = href
   document.body.appendChild(anchor)
@@ -134,7 +132,7 @@ describe('StudioComponent', () => {
       'hash',
     )
 
-    expect(clickAnchor('/blog')).toBe(true)
+    expect(studioClaimsClick('/blog')).toBe(true)
     expect(window.location.hash).toBe('#/blog')
   })
 
@@ -147,10 +145,10 @@ describe('StudioComponent', () => {
       'hash',
     )
 
-    expect(clickAnchor('/somewhere-else')).toBe(false)
-    expect(clickAnchor('https://example.com/blog')).toBe(false)
-    expect(clickAnchor('/blog', {metaKey: true})).toBe(false)
-    expect(clickAnchor('/blog', {button: 1})).toBe(false)
+    expect(studioClaimsClick('/somewhere-else')).toBe(false)
+    expect(studioClaimsClick('https://example.com/blog')).toBe(false)
+    expect(studioClaimsClick('/blog', {metaKey: true})).toBe(false)
+    expect(studioClaimsClick('/blog', {button: 1})).toBe(false)
     expect(window.location.hash).toBe('#/marketing')
   })
 })

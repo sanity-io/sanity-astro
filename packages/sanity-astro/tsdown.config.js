@@ -1,7 +1,5 @@
 import {defineConfig} from 'tsdown'
 
-// `src/studio` and `src/visual-editing` ship as source: they contain `.astro` and
-// React components that the consuming Astro project compiles with its own Vite.
 export default defineConfig({
   entry: ['src/index.ts', 'src/loader.ts'],
   format: 'esm',

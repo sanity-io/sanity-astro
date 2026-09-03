@@ -1,4 +1,3 @@
-// @ts-check
 import {defineField, defineType} from 'sanity'
 
 export default defineType({
