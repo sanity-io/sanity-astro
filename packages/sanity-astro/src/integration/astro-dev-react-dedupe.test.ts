@@ -47,7 +47,7 @@ const fixtures: Fixture[] = [
 ]
 
 function assertSanityAstroIsBuilt() {
-  const distEntry = path.join(packageRoot, 'dist/sanity-astro.mjs')
+  const distEntry = path.join(packageRoot, 'dist/index.mjs')
   if (!existsSync(distEntry)) {
     throw new Error(
       'Missing @sanity/astro build output. Run `pnpm --filter @sanity/astro build` before integration tests.',
