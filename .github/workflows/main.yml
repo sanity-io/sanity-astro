@@ -70,6 +70,7 @@ jobs:
           node-version: ${{ matrix.node }}
       - run: pnpm install
       - run: pnpm --if-present --recursive prepublishOnly
+      - run: pnpm --filter @sanity/astro test
 
   unit-test:
     needs: build
@@ -87,6 +88,5 @@ jobs:
           node-version: lts/*
       - run: pnpm install
       - run: pnpm --filter @sanity/astro exec playwright install chromium --with-deps
-      - run: pnpm --if-present --recursive test
-      - run: pnpm --filter @sanity/astro build
-      - run: pnpm --filter @sanity/astro test:integration
+      - run: pnpm test
+      - run: pnpm test:integration

@@ -44,6 +44,12 @@ const fixtures: Fixture[] = [
     hasReactIsland: false,
     loadStudio: false,
   },
+  {
+    appDirectory: 'apps/cinema',
+    studioPath: '/admin',
+    hasReactIsland: false,
+    loadStudio: false,
+  },
 ]
 
 function assertSanityAstroIsBuilt() {

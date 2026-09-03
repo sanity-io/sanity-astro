@@ -1,13 +1,5 @@
 {
   "extends": "astro/tsconfigs/strict",
-  "compilerOptions": {
-    // `@sanity/astro` is a workspace link, so its type imports of `astro/loaders` resolve to the
-    // library's own Astro devDependency. Point them at this app's Astro instead, as a published
-    // install would.
-    "paths": {
-      "astro/loaders": ["./node_modules/astro/dist/content/loaders/index.d.ts"]
-    }
-  },
   "include": [".astro/types.d.ts", "**/*"],
   "exclude": ["dist"]
 }

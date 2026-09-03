@@ -26,7 +26,3 @@ Other scripts in `apps/cinema`: `pnpm build`, `pnpm preview`, and `pnpm typechec
 The app reads the public movies demo dataset (project `4j2qnyob`, dataset `production`) from Sanity's CDN. It needs no API token. To edit content in the embedded Studio you need access to that project and the dev origin in its CORS allow list, so for your own content change `projectId` and `dataset` in `astro.config.mjs` and `sanity.config.ts`.
 
 `schemaTypes/` holds the movies schema so the Studio can open the same documents the site renders.
-
-## Note on `tsconfig.json`
-
-`@sanity/astro` is a workspace link in this monorepo, so its type imports of `astro/loaders` resolve to the library's own Astro devDependency. The `paths` entry points them at this app's Astro instead, which is what a published install does on its own. Drop it when you copy the app out of the monorepo.
