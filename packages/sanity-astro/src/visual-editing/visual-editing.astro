@@ -24,11 +24,14 @@ const {enabled, assureTypingInterval = 1200, zIndex, keepStegaOnCopy} = Astro.pr
     }
 
     const FLAG = 'sanity_sync_needed'
+    let reloading = false
 
     // 1. OBSERVE: Monitor the Studio's snapshot stream
     window.addEventListener('message', (e) => {
-      // Catching the v5.6+ Snapshot volume
-      if (e.data?.type === 'presentation/preview-snapshots') {
+      // Catching the v5.6+ Snapshot volume. Once the corrective reload is
+      // underway, late snapshots must not re-arm the flag or the reloaded
+      // page would schedule yet another reload.
+      if (!reloading && e.data?.type === 'presentation/preview-snapshots') {
         sessionStorage.setItem(FLAG, 'true')
       }
     })
@@ -36,18 +39,27 @@ const {enabled, assureTypingInterval = 1200, zIndex, keepStegaOnCopy} = Astro.pr
     // 2. RECONCILE: Check for missed updates on page arrival
     window.addEventListener('load', () => {
       const needsSync = sessionStorage.getItem(FLAG) === 'true'
+      if (!needsSync) return
 
-      if (needsSync) {
-        // Clear flag immediately to ensure idempotency
+      // Only a Visual Editing refresh (location.reload) leaves a typing gap
+      // to cover. Ordinary navigations already render fresh content, so the
+      // flag carried over from the previous page is stale: drop it.
+      const isReload = performance.getEntriesByType('navigation')[0]?.type === 'reload'
+      if (!isReload) {
         sessionStorage.removeItem(FLAG)
-
-        // The 'Humanistic' pause for recursive queries to settle
-        // n.b. we have to evaluate template-style, _and_ outside
-        // the function call. These are Astro rules....
-        setTimeout(() => {
-          window.location.reload()
-        }, assureTypingInterval) // must evaluate
+        return
       }
+
+      // The 'Humanistic' pause for recursive queries to settle
+      // n.b. we have to evaluate template-style, _and_ outside
+      // the function call. These are Astro rules....
+      setTimeout(() => {
+        // Clear right before reloading so this single reload consumes any
+        // snapshots that arrived during the pause instead of chaining another
+        reloading = true
+        sessionStorage.removeItem(FLAG)
+        window.location.reload()
+      }, assureTypingInterval) // must evaluate
     })
   })()
 </script>
