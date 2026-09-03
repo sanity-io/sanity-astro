@@ -1,0 +1,54 @@
+---
+import comet from '../assets/icons/comet.svg'
+import dome from '../assets/icons/dome.svg'
+import moon from '../assets/icons/moon.svg'
+import orbit from '../assets/icons/orbit.svg'
+import school from '../assets/icons/school.svg'
+import telescope from '../assets/icons/telescope.svg'
+import type {HOME_PAGE_QUERY_RESULT} from '../sanity/sanity.types'
+
+interface Props {
+  heading: string
+  highlights: NonNullable<HOME_PAGE_QUERY_RESULT>['highlights']
+}
+
+const {heading, highlights} = Astro.props
+
+/**
+ * Inlined icon components keyed by the `icon` values in the studio's
+ * highlight schema. Inlining avoids an icon font or sprite request.
+ */
+const HIGHLIGHT_ICONS: Readonly<Record<string, typeof dome>> = {
+  dome,
+  telescope,
+  orbit,
+  comet,
+  moon,
+  school,
+}
+---
+
+<section id="highlights" class="py-[clamp(4rem,10vw,7rem)]">
+  <div class="mx-auto max-w-6xl px-[clamp(1.25rem,4vw,2.5rem)]">
+    <h2 class="max-w-[40ch] text-[clamp(1.75rem,3.5vw,2.5rem)]">{heading}</h2>
+    <div class="mt-12 grid grid-cols-[repeat(auto-fit,minmax(16rem,1fr))] gap-8">
+      {
+        highlights?.map((highlight) => {
+          const Icon = HIGHLIGHT_ICONS[highlight.icon] ?? dome
+          return (
+            <article class="rounded-card border border-line bg-surface p-7">
+              <div
+                class="inline-flex rounded-control bg-accent-soft p-2.5 text-accent-ink"
+                aria-hidden="true"
+              >
+                <Icon />
+              </div>
+              <h3 class="mt-5 text-lg">{highlight.title}</h3>
+              <p class="mt-2 text-ink-muted">{highlight.body}</p>
+            </article>
+          )
+        })
+      }
+    </div>
+  </div>
+</section>

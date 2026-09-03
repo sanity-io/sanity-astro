@@ -1,0 +1,79 @@
+---
+import '../styles/global.css'
+
+import {Font} from 'astro:assets'
+import {PUBLIC_SANITY_VARIANTS_ENABLED} from 'astro:env/server'
+import {ClientRouter} from 'astro:transitions'
+
+import AudienceToolbar from '../components/AudienceToolbar.astro'
+import ExitPreview from '../components/ExitPreview.astro'
+import Footer from '../components/Footer.astro'
+import Header from '../components/Header.astro'
+import SanityLive from '../components/SanityLive.astro'
+import VisualEditing from '../components/VisualEditing.astro'
+import {LIVE_EVENTS_ORIGIN} from '../sanity/liveEvents'
+import type {SITE_SETTINGS_QUERY_RESULT} from '../sanity/sanity.types'
+
+interface Props {
+  title: string
+  description: string
+  ogImage?: string | undefined
+  /** Sync tags of the content this page renders, for live updates. */
+  liveTags?: string[] | undefined
+  settings: NonNullable<SITE_SETTINGS_QUERY_RESULT>
+}
+
+const {title, description, ogImage, liveTags = [], settings} = Astro.props
+const {audience, preview} = Astro.locals
+
+// Published-content live updates run in preview too: Visual Editing streams
+// draft edits, while the toast catches publishes from elsewhere.
+const live = liveTags.length > 0
+
+// Personalization happens per request; the canonical URL is always the clean
+// path so variants never register as separate (duplicate) pages.
+const canonical = new URL(Astro.url.pathname, Astro.site)
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#070b17" />
+    <Font cssVariable="--font-space-grotesk" preload />
+    {/* Warm the connection for the live events EventSource before it opens. */}
+    {live && <link rel="preconnect" href={LIVE_EVENTS_ORIGIN} crossorigin />}
+    <meta property="og:site_name" content={settings.siteTitle} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    <meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
+    {
+      /* Soft navigation between pages; while previewing, Visual Editing's
+    history adapter keeps Presentation in sync with the router. */
+    }
+    <ClientRouter />
+  </head>
+  <body class="flex min-h-screen flex-col bg-page font-sans text-base leading-[1.6] text-ink">
+    <a
+      class="absolute left-4 -top-full z-10 rounded-control bg-surface px-4 py-2 focus-visible:top-4"
+      href="#main">Skip to content</a
+    >
+    <Header settings={settings} currentPath={Astro.url.pathname} />
+    <main id="main" class="flex-1">
+      <slot />
+    </main>
+    <Footer settings={settings} />
+    {preview.enabled && <VisualEditing />}
+    {preview.enabled && <ExitPreview />}
+    {!preview.enabled && PUBLIC_SANITY_VARIANTS_ENABLED && <AudienceToolbar audience={audience} />}
+    {live && <SanityLive tags={liveTags} />}
+  </body>
+</html>

@@ -1,0 +1,38 @@
+---
+import type {HOME_PAGE_QUERY_RESULT} from '../sanity/sanity.types'
+import SanityImage from './SanityImage.astro'
+
+interface Props {
+  testimonial: NonNullable<HOME_PAGE_QUERY_RESULT>['testimonial']
+}
+
+const {testimonial} = Astro.props
+const attribution = [testimonial.role, testimonial.affiliation].filter(Boolean).join(', ')
+---
+
+<section class="border-y border-line bg-surface py-[clamp(4rem,10vw,7rem)]">
+  <div class="mx-auto max-w-6xl px-[clamp(1.25rem,4vw,2.5rem)]">
+    <figure class="mx-auto max-w-[46rem] text-center">
+      <blockquote>
+        <p
+          class="text-[clamp(1.25rem,2.5vw,1.625rem)] leading-[1.4] font-medium tracking-[-0.01em]"
+        >
+          “{testimonial.quote}”
+        </p>
+      </blockquote>
+      <figcaption class="mt-8 flex items-center justify-center gap-3.5">
+        <SanityImage
+          image={testimonial.avatar}
+          width={48}
+          height={48}
+          layout="fixed"
+          class="size-12 rounded-full"
+        />
+        <span class="flex flex-col text-left leading-[1.35]">
+          <strong>{testimonial.name}</strong>
+          <span class="text-sm text-ink-faint">{attribution}</span>
+        </span>
+      </figcaption>
+    </figure>
+  </div>
+</section>

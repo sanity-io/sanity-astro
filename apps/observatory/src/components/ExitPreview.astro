@@ -1,0 +1,44 @@
+---
+// Shown when draft preview is active outside the Presentation iframe (e.g.
+// "open preview in a new tab"), where there is no studio chrome to exit from.
+const exitHref = `/api/preview/disable?redirect=${encodeURIComponent(Astro.url.pathname)}`
+---
+
+<exit-preview>
+  <aside
+    class="fixed bottom-4 left-4 z-60 items-center gap-2.5 rounded-full border border-line bg-panel px-3.5 py-2 text-[0.8125rem] font-medium text-panel-ink shadow-[0_8px_24px_-8px_rgba(2,6,23,0.9)] [&:not([hidden])]:flex"
+    aria-label="Preview status"
+    hidden
+  >
+    <span>Previewing drafts</span>
+    {
+      /* Exiting deletes the preview cookies, so the link must not be prefetched,
+    and the full-page navigation tears down the visual editing runtime. */
+    }
+    <a
+      class="font-semibold text-accent-ink"
+      href={exitHref}
+      data-astro-prefetch="false"
+      data-astro-reload>Exit</a
+    >
+  </aside>
+</exit-preview>
+
+<script>
+  /**
+   * Whether this window is framed can only be known in the browser: the
+   * ClientRouter fetches pages without an iframe fetch destination, and the
+   * same session can be opened framed and in its own tab at once. Inside
+   * Presentation's iframe the studio provides the preview chrome, so the pill
+   * stays hidden there.
+   */
+  class ExitPreview extends HTMLElement {
+    connectedCallback(): void {
+      if (window.self === window.top) {
+        this.querySelector('aside')?.removeAttribute('hidden')
+      }
+    }
+  }
+
+  customElements.define('exit-preview', ExitPreview)
+</script>
