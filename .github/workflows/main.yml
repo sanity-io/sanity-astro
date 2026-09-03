@@ -29,8 +29,11 @@ jobs:
           cache: pnpm
           node-version: lts/*
       - run: pnpm install --ignore-scripts
+      - run: pnpm format:check
       - run: pnpm lint
+      - run: pnpm typecheck
       - run: pnpm build
+      - run: pnpm check:package
 
   test:
     needs: build
