@@ -10,7 +10,7 @@ export default defineConfig({
     onlyBundle: ['serialize-javascript', 'randombytes'],
   },
   copy: [
-    {from: ['src/studio/**/*', '!**/*.test.*'], to: 'dist/studio'},
+    {from: ['src/studio/**/*', '!**/*.test.*', '!**/*.stub.*'], to: 'dist/studio'},
     {from: ['src/visual-editing/**/*', '!**/*.test.*'], to: 'dist/visual-editing'},
   ],
 })

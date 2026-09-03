@@ -97,6 +97,37 @@ describe('StudioComponent', () => {
     expect(listener).toHaveBeenCalledWith(expect.objectContaining({pathname: '/desk'}))
   })
 
+  it('exposes the full history surface Studio reads from', async () => {
+    const props = await renderStudio({name: 'default', basePath: '/'}, 'hash')
+    const history = props.unstable_history as unknown as {
+      action: string
+      location: {pathname: string}
+      createHref: (to: string) => string
+      push: (to: string) => void
+      replace: (to: string) => void
+      go: (delta: number) => void
+      back: () => void
+      forward: () => void
+      block: (blocker: unknown) => () => void
+    }
+
+    history.push('/desk/movie')
+    expect(history.action).toBe('PUSH')
+    expect(history.location.pathname).toBe('/desk/movie')
+    expect(history.createHref('/vision')).toBe('#/vision')
+
+    history.replace('/vision')
+    expect(history.action).toBe('REPLACE')
+    expect(window.location.hash).toBe('#/vision')
+
+    const unblock = history.block(() => {})
+    expect(typeof unblock).toBe('function')
+    unblock()
+    for (const method of [history.go, history.back, history.forward]) {
+      expect(typeof method).toBe('function')
+    }
+  })
+
   it('seeds an empty hash with the first workspace path', async () => {
     await renderStudio(
       [
