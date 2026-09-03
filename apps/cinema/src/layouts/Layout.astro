@@ -1,0 +1,67 @@
+---
+import '@fontsource-variable/bricolage-grotesque'
+import '../styles/global.css'
+
+import {ClientRouter} from 'astro:transitions'
+
+interface Props {
+  title: string
+  description: string
+}
+
+const {title, description} = Astro.props
+const siteName = 'Marquee'
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title === siteName ? title : `${title} · ${siteName}`}</title>
+    <ClientRouter />
+  </head>
+  <body class="flex min-h-svh flex-col">
+    <header class="border-b border-white/5">
+      <div
+        class="mx-auto flex w-full max-w-6xl items-center justify-between gap-6 px-6 py-5 sm:px-8"
+      >
+        <a
+          href="/"
+          class="font-display text-xl font-semibold tracking-tight text-ink-50 hover:text-accent transition-colors"
+        >
+          {siteName}
+          <span class="ml-2 hidden text-sm font-normal text-ink-400 sm:inline">Film programme</span>
+        </a>
+        <nav class="flex items-center gap-6 text-sm">
+          <a href="/" class="text-ink-300 transition-colors hover:text-ink-50">Films</a>
+          <a
+            href="/admin"
+            class="rounded-full border border-white/10 px-3.5 py-1.5 text-ink-200 transition-colors hover:border-accent/60 hover:text-accent"
+          >
+            Studio
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="mx-auto w-full max-w-6xl flex-1 px-6 pt-12 pb-24 sm:px-8">
+      <slot />
+    </main>
+
+    <footer class="border-t border-white/5">
+      <div
+        class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-6 py-8 text-sm text-ink-400 sm:flex-row sm:items-center sm:justify-between sm:px-8"
+      >
+        <p>
+          Content from Sanity's movies demo dataset (project <code class="text-ink-300">4j2qnyob</code
+          >), read from the public CDN without a token.
+        </p>
+        <p>Built with Astro 7 and @sanity/astro</p>
+      </div>
+    </footer>
+  </body>
+</html>

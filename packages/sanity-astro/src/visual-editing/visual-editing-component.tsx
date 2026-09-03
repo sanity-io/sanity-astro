@@ -5,7 +5,7 @@ import {
 } from '@sanity/visual-editing/react'
 import React from 'react'
 
-import {applyPresentationHistoryUpdate, getPresentationUrl, shouldPublishUrl} from './history'
+import {applyPresentationHistoryUpdate, getPresentationUrl, shouldPublishUrl} from './history.js'
 
 export type {SuspiciousStegaReport}
 
@@ -24,12 +24,12 @@ const defaultRefresh: NonNullable<InternalVisualEditingOptions['refresh']> = () 
 }
 
 export function VisualEditingComponent(props: VisualEditingOptions) {
-  const navigateRef = React.useRef<HistoryNavigate | undefined>()
+  const navigateRef = React.useRef<HistoryNavigate | undefined>(undefined)
   const lastUrlRef = React.useRef('')
   const lastPublishedAtRef = React.useRef(0)
-  const optimisticUrlRef = React.useRef<string | undefined>()
+  const optimisticUrlRef = React.useRef<string | undefined>(undefined)
   const optimisticUntilRef = React.useRef(0)
-  const clearNavigateTimeoutRef = React.useRef<number | undefined>()
+  const clearNavigateTimeoutRef = React.useRef<number | undefined>(undefined)
   const hasCustomHistory = Boolean(props.history)
 
   React.useEffect(() => {

@@ -1,0 +1,48 @@
+---
+import {createImageUrlBuilder, type SanityImageSource} from '@sanity/image-url'
+import {sanityClient} from 'sanity:client'
+
+interface Props {
+  image: SanityImageSource
+  alt: string
+  /** width / height. Every candidate in `srcset` is cropped to this ratio around the hotspot. */
+  aspectRatio: number
+  sizes: string
+  widths?: number[]
+  loading?: 'lazy' | 'eager'
+  fetchpriority?: 'high' | 'low' | 'auto'
+  class?: string
+}
+
+const {
+  image,
+  alt,
+  aspectRatio,
+  sizes,
+  widths = [320, 640, 960, 1280],
+  loading = 'lazy',
+  fetchpriority,
+  class: className,
+} = Astro.props
+
+const builder = createImageUrlBuilder(sanityClient)
+const heightFor = (width: number) => Math.round(width / aspectRatio)
+const urlFor = (width: number) =>
+  builder.image(image).width(width).height(heightFor(width)).fit('crop').auto('format').url()
+
+const largest = Math.max(...widths)
+const srcset = widths.map((width) => `${urlFor(width)} ${width}w`).join(', ')
+---
+
+<img
+  src={urlFor(largest)}
+  srcset={srcset}
+  sizes={sizes}
+  width={largest}
+  height={heightFor(largest)}
+  alt={alt}
+  loading={loading}
+  decoding="async"
+  fetchpriority={fetchpriority}
+  class={className}
+/>

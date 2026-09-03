@@ -1,0 +1,36 @@
+---
+import type {CollectionEntry} from 'astro:content'
+
+import {releaseYear} from '../lib/format'
+import SanityImage from './SanityImage.astro'
+
+interface Props {
+  movie: CollectionEntry<'movies'>
+  loading?: 'lazy' | 'eager'
+}
+
+const {movie, loading = 'lazy'} = Astro.props
+const {title, releaseDate, poster} = movie.data
+---
+
+<a href={`/movies/${movie.id}`} class="card-link group">
+  <div class="poster-frame aspect-[2/3]" transition:name={`poster-${movie.id}`}>
+    <SanityImage
+      image={poster}
+      alt={`Poster for ${title}`}
+      aspectRatio={2 / 3}
+      widths={[320, 640, 960]}
+      sizes="(min-width: 1024px) 220px, (min-width: 640px) 30vw, 45vw"
+      loading={loading}
+      class="poster-frame-img"
+    />
+  </div>
+  <div class="mt-3 flex items-baseline justify-between gap-3">
+    <h2
+      class="font-display text-base font-semibold leading-snug text-ink-50 transition-colors group-hover:text-accent"
+    >
+      {title}
+    </h2>
+    <span class="shrink-0 text-sm text-ink-400 tabular-nums">{releaseYear(releaseDate)}</span>
+  </div>
+</a>
