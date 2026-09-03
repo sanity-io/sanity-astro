@@ -52,28 +52,35 @@
   },
   "scripts": {
     "build": "rimraf dist && vite build && pnpm copyStudio && pnpm copy:visual-editing",
+    "check:package": "publint --strict && attw --pack . --profile esm-only --exclude-entrypoints ./studio/studio-route.astro ./studio/studio-route-hash.astro",
     "clean": "rimraf dist && rimraf .turbo && rimraf node_modules",
     "copy:visual-editing": "cp -r src/visual-editing dist/visual-editing",
     "copyStudio": "cp -r src/studio dist/studio",
     "dev": "vite build --watch",
+    "lint": "oxlint",
     "prepublishOnly": "pnpm build",
-    "test": "vitest run",
-    "test:integration": "vitest run --config vitest.integration.config.ts"
+    "test": "vitest run --coverage",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@sanity/visual-editing": "^6.1.1",
     "history": "^5.3.0"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
     "@sanity/client": "^8.2.0",
     "@types/serialize-javascript": "^5.0.4",
+    "@vitest/coverage-v8": "^4",
     "astro": "5.11.1",
     "playwright": "^1.52.0",
+    "publint": "^0.3.24",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "sanity": "^5.31.1",
     "serialize-javascript": "^6.0.2",
     "type-fest": "^4.41.0",
+    "typescript": "^5.9",
     "vite": "^6.2.0",
     "vite-plugin-dts": "^4.5.4",
     "vitest": "^4.0.18"

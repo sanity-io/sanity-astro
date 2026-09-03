@@ -1,0 +1,30 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "import", "react"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "rules": {
+    "no-unused-vars": ["error", {"argsIgnorePattern": "^_", "varsIgnorePattern": "^_"}],
+    "import/no-cycle": "error"
+  },
+  "overrides": [
+    {
+      "files": ["**/*.d.ts"],
+      "rules": {"typescript/triple-slash-reference": "off"}
+    }
+  ],
+  "env": {
+    "builtin": true,
+    "browser": true,
+    "node": true
+  },
+  "ignorePatterns": [
+    "**/dist/**",
+    "**/.astro/**",
+    "**/.vercel/**",
+    "**/node_modules/**",
+    "**/coverage/**"
+  ]
+}
