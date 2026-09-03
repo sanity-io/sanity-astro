@@ -1,4 +1,4 @@
-import {existsSync} from 'node:fs'
+import {existsSync, readFileSync} from 'node:fs'
 import path from 'node:path'
 import {fileURLToPath} from 'node:url'
 
@@ -47,7 +47,10 @@ const fixtures: Fixture[] = [
 ]
 
 function assertSanityAstroIsBuilt() {
-  const distEntry = path.join(packageRoot, 'dist/index.mjs')
+  const packageJson = JSON.parse(readFileSync(path.join(packageRoot, 'package.json'), 'utf8')) as {
+    exports: {'.': {default: string}}
+  }
+  const distEntry = path.join(packageRoot, packageJson.exports['.'].default)
   if (!existsSync(distEntry)) {
     throw new Error(
       'Missing @sanity/astro build output. Run `pnpm --filter @sanity/astro build` before integration tests.',
