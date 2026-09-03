@@ -39,19 +39,19 @@ const movie = z.object({
 type MovieDocument = z.infer<typeof movie>
 type PersonDocument = z.infer<typeof personSummary>
 
-const MOVIES_QUERY = /* groq */ `*[_type == "movie" && defined(slug.current) && defined(poster.asset)] | order(popularity desc) {
+const MOVIES_QUERY = /* groq */ `*[_type == "movie" && defined(slug.current) && defined(poster.asset) && defined(releaseDate)] | order(popularity desc) {
   _id,
   title,
   slug,
   releaseDate,
-  popularity,
+  "popularity": coalesce(popularity, 0),
   poster,
-  overview,
-  "castMembers": castMembers[defined(person->slug.current)] {
+  "overview": coalesce(overview, []),
+  "castMembers": coalesce(castMembers[defined(person->slug.current)] {
     _key,
     characterName,
     person->{_id, name, "slug": slug.current, image}
-  }
+  }, [])
 }`
 
 const PEOPLE_QUERY = /* groq */ `*[_type == "person" && defined(slug.current)] | order(name asc) {

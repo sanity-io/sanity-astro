@@ -22,8 +22,11 @@ const latest = Math.max(...years)
       Science fiction, back on the big screen.
     </h1>
     <p class="mt-6 text-lg leading-relaxed text-ink-300">
-      {movies.length} films from {earliest} to {latest}, ordered by popularity. Every page is
-      prerendered from Sanity's Content Lake at build time.
+      {
+        movies.length > 0 &&
+          `${movies.length} films from ${earliest} to ${latest}, ordered by popularity.`
+      }{' '}
+      Every page is prerendered from Sanity's Content Lake at build time.
     </p>
   </section>
 
@@ -48,8 +51,8 @@ const latest = Math.max(...years)
       <section class="mt-16 rounded-lg border border-dashed border-white/10 p-12 text-center">
         <p class="font-display text-xl text-ink-50">Nothing on the bill yet.</p>
         <p class="mt-2 text-ink-400">
-          Add a movie with a slug and a poster in the <a href="/admin" class="text-accent">Studio</a>{' '}
-          and rebuild.
+          Add a movie with a slug, a poster and a release date in the{' '}
+          <a href="/admin" class="text-accent">Studio</a> and rebuild.
         </p>
       </section>
     )
