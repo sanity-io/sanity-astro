@@ -9,8 +9,7 @@ const movies = (await getCollection('movies')).sort(
   (a, b) => b.data.popularity - a.data.popularity,
 )
 const years = movies.map((movie) => releaseYear(movie.data.releaseDate))
-const earliest = Math.min(...years)
-const latest = Math.max(...years)
+const yearRange = years.length > 0 ? ` from ${Math.min(...years)} to ${Math.max(...years)}` : ''
 ---
 
 <Layout title="Marquee" description="A film programme built with Astro, Sanity and the Content Layer.">
@@ -22,7 +21,7 @@ const latest = Math.max(...years)
       Science fiction, back on the big screen.
     </h1>
     <p class="mt-6 text-lg leading-relaxed text-ink-300">
-      {movies.length} films from {earliest} to {latest}, ordered by popularity. Every page is
+      {movies.length} films{yearRange}, ordered by popularity. Every page is
       prerendered from Sanity's Content Lake at build time.
     </p>
   </section>

@@ -1,5 +1,5 @@
 import {spawn} from 'node:child_process'
-import {readFile, rm} from 'node:fs/promises'
+import {readFile} from 'node:fs/promises'
 import path from 'node:path'
 import {fileURLToPath} from 'node:url'
 
@@ -33,8 +33,6 @@ describe('astro build with @sanity/astro (apps/example, static output)', () => {
   let buildOutput = ''
 
   beforeAll(async () => {
-    await rm(path.join(appRoot, 'dist'), {recursive: true, force: true})
-    await rm(path.join(appRoot, '.astro'), {recursive: true, force: true})
     buildOutput = await runAstroBuild(appRoot)
   })
 

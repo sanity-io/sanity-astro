@@ -34,7 +34,10 @@ async function generateStudioModule(
   }
 
   return load.call(
-    {resolve: async () => (studioConfigSource === null ? null : {id: configPath})},
+    {
+      resolve: async () =>
+        studioConfigSource === null ? null : {id: pathToFileURL(configPath).href},
+    },
     'sanity:studio',
   ) as Promise<string>
 }
