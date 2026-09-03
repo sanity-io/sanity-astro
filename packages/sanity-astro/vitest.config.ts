@@ -1,6 +1,16 @@
+import {fileURLToPath} from 'node:url'
+
 import {defineConfig} from 'vitest/config'
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      // Astro's Vite plugin provides this virtual module at runtime; tests mock it per case.
+      'sanity:studio': fileURLToPath(
+        new URL('./src/studio/sanity-studio.stub.ts', import.meta.url),
+      ),
+    },
+  },
   test: {
     hookTimeout: 240_000,
     testTimeout: 240_000,
@@ -8,13 +18,18 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/**/*.{ts,tsx}'],
-      exclude: ['src/**/*.test.{ts,tsx}', 'src/**/*.d.ts', 'src/integration/**'],
+      exclude: [
+        'src/**/*.test.{ts,tsx}',
+        'src/**/*.stub.ts',
+        'src/**/*.d.ts',
+        'src/integration/**',
+      ],
       reporter: ['text', 'json-summary'],
       thresholds: {
-        statements: 36,
-        branches: 27,
-        functions: 37,
-        lines: 35,
+        statements: 80,
+        branches: 75,
+        functions: 75,
+        lines: 80,
       },
     },
   },

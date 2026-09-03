@@ -62,9 +62,12 @@
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
     "@sanity/client": "^8.2.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
     "@types/serialize-javascript": "^5.0.4",
     "@vitest/coverage-v8": "^4",
     "astro": "5.11.1",
+    "jsdom": "^30.0.1",
     "playwright": "^1.52.0",
     "publint": "^0.3.24",
     "react": "^19.2.3",
