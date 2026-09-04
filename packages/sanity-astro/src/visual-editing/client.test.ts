@@ -11,10 +11,10 @@ type EnableOptions = {
 }
 
 const {disposeSpy, enableVisualEditing} = vi.hoisted(() => {
-  const disposeSpy = vi.fn()
+  const dispose = vi.fn()
   return {
-    disposeSpy,
-    enableVisualEditing: vi.fn((_options: EnableOptions) => disposeSpy),
+    disposeSpy: dispose,
+    enableVisualEditing: vi.fn((_options: EnableOptions) => dispose),
   }
 })
 

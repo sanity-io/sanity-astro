@@ -74,7 +74,10 @@ export function createRefresher(options: RefreshOptions): Refresher {
 
   const pump = async () => {
     pumping = true
-    while (dirty && !disposed) {
+    while (dirty) {
+      if (disposed) {
+        break
+      }
       dirty = false
       try {
         await morph()

@@ -1,8 +1,13 @@
-import {createBrowserHistoryAdapter, type HistoryAdapter} from './history'
-import {createLiveText} from './live-text'
-import {fetchDocument, morphDocument} from './morph'
-import {createRefresher, type HistoryRefresh, type RefreshStrategy} from './refresh'
-import {reloadPreservingScroll, restoreScroll} from './scroll'
+import {createBrowserHistoryAdapter, type HistoryAdapter} from './history.js'
+import {createLiveText} from './live-text.js'
+import {fetchDocument, morphDocument} from './morph.js'
+import {
+  createRefresher,
+  type HistoryRefresh,
+  type Refresher,
+  type RefreshStrategy,
+} from './refresh.js'
+import {reloadPreservingScroll, restoreScroll} from './scroll.js'
 
 export interface Runtime {
   history: HistoryAdapter
@@ -26,8 +31,8 @@ const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve,
 export function createRuntime(strategy: RefreshStrategy): Runtime {
   restoreScroll()
   const history = createBrowserHistoryAdapter()
-  let schedule = () => {}
-  const liveText = createLiveText({onRemoteChange: () => schedule()})
+  let refresher: Refresher | undefined
+  const liveText = createLiveText({onRemoteChange: () => refresher?.schedule()})
 
   const morph = async () => {
     for (let attempt = 0; ; attempt++) {
@@ -41,19 +46,19 @@ export function createRuntime(strategy: RefreshStrategy): Runtime {
     }
   }
 
-  const refresher = createRefresher({
+  refresher = createRefresher({
     strategy,
     morph,
     reload: () => reloadPreservingScroll(),
   })
-  schedule = refresher.schedule
+  const {refresh, dispose: disposeRefresher} = refresher
 
   return {
     history,
-    refresh: refresher.refresh,
+    refresh,
     dispose: () => {
       liveText.dispose()
-      refresher.dispose()
+      disposeRefresher()
       history.dispose()
     },
   }

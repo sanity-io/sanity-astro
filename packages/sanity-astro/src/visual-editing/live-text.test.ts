@@ -9,9 +9,9 @@ const {fakeActor, listeners, setDocuments, setEmpty, isEmpty} = vi.hoisted(() =>
   const handlers = new Map<string, Set<(event: {id: string}) => void>>()
   let documents: Record<string, unknown> = {}
   let empty = false
-  const listeners = new Set<() => void>()
+  const listenerSet = new Set<() => void>()
 
-  const fakeActor = {
+  const actorStub = {
     on(event: string, handler: (event: {id: string}) => void) {
       let set = handlers.get(event)
       if (!set) {
@@ -46,8 +46,8 @@ const {fakeActor, listeners, setDocuments, setEmpty, isEmpty} = vi.hoisted(() =>
   }
 
   return {
-    fakeActor,
-    listeners,
+    fakeActor: actorStub,
+    listeners: listenerSet,
     setDocuments(next: Record<string, unknown>) {
       documents = next
     },

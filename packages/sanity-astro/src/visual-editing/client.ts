@@ -1,7 +1,7 @@
 import {enableVisualEditing} from '@sanity/visual-editing/enable-visual-editing'
 
-import type {RefreshStrategy} from './refresh'
-import {createRuntime} from './runtime'
+import type {RefreshStrategy} from './refresh.js'
+import {createRuntime} from './runtime.js'
 
 /** Serializable options the `.astro` component hands to the browser through `data-config`. */
 export interface VisualEditingConfig {

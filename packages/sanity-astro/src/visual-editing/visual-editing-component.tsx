@@ -5,8 +5,8 @@ import {
 } from '@sanity/visual-editing/react'
 import React from 'react'
 
-import type {RefreshStrategy} from './refresh'
-import {createRuntime, type Runtime} from './runtime'
+import type {RefreshStrategy} from './refresh.js'
+import {createRuntime, type Runtime} from './runtime.js'
 
 export type {SuspiciousStegaReport}
 
@@ -32,6 +32,9 @@ export function VisualEditingComponent(props: VisualEditingOptions) {
 
   React.useEffect(() => {
     const next = createRuntime(strategy)
+    // The runtime installs window listeners, so it cannot be built during render; one extra
+    // render at mount is the price of keeping StrictMode's double-invoked initializers clean.
+    // oxlint-disable-next-line react/set-state-in-effect
     setRuntime(next)
     return () => next.dispose()
   }, [strategy])
