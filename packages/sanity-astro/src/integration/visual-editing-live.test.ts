@@ -184,6 +184,12 @@ describe.sequential('Visual Editing live preview in the React-free apps/minimal'
     ] as const)
 
     await expect.poll(() => stegaFree(title), {timeout: 3_000, interval: 50}).toBe(value)
+    // Literal text beside the expression puts the value mid-node, which the patcher has to
+    // locate by its stega payload rather than by comparing the whole node.
+    const prefixed = frame.locator('.newest')
+    await expect
+      .poll(() => stegaFree(prefixed), {timeout: 3_000, interval: 50})
+      .toBe(`Newest release: ${value}`)
     expect(await readMarker(frame), 'the text patch must not navigate').toBe(marker)
     expect(
       await sampleText(title, 5_000),
