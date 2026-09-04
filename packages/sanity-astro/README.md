@@ -323,13 +323,14 @@ const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLE
 </html>
 ```
 
-`VisualEditing` is needed to render Overlays. It's a React component under the hood, so you'll need the [React integration for Astro][astro-react] if you don't already use that at this point.
+`VisualEditing` renders the Overlays from a plain `<script>`. It does not need the [React integration for Astro][astro-react] or any React component in your project, so a site built only from `.astro` files gets Visual Editing by adding this one component. See [`apps/minimal`](https://github.com/sanity-io/sanity-astro/tree/main/apps/minimal) for a React-free setup.
 
 `VisualEditing` takes these props:
 
 - `enabled`: so you can control whether or not visual editing is enabled depending on your environment.
 - `zIndex` (optional): allows you to change the `z-index` of overlay elements.
 - `keepStegaOnCopy` (optional): by default, Visual Editing strips stega from the clipboard on copy. Pass `keepStegaOnCopy` to opt out and leave stega in copied text.
+- `refresh` (optional): `'morph'` (default) or `'reload'`. See [How the preview refreshes](#how-the-preview-refreshes).
 
 In the example above, `enabled` is controlled using an [environment variable](https://docs.astro.build/en/guides/environment-variables/):
 
@@ -338,11 +339,28 @@ In the example above, `enabled` is controlled using an [environment variable](ht
 PUBLIC_SANITY_VISUAL_EDITING_ENABLED="true"
 ```
 
-#### Customizing how the preview refreshes
+#### How the preview refreshes
 
-By default `VisualEditing` reloads the whole page with `window.location.reload()` whenever the Studio reports a change. If you'd rather refresh another way, for example re-fetching data and swapping the DOM in place, pass your own `refresh` function.
+Edits reach the page in two steps, neither of which reloads it.
 
-`refresh` is a function, and Astro can't serialize functions through to a client component, so it isn't accepted on the `.astro` `VisualEditing` component. Instead, import the React component from `@sanity/astro/visual-editing/component` and render it as a `client:only` island:
+1. **Instant text.** Presentation streams document changes to the overlays. `VisualEditing` listens to that stream and rewrites the stega-encoded text nodes rendered from the changed document as soon as the change arrives, before any request to your server. A node is rewritten only when your page was seen rendering that field verbatim and the node still shows a value the field held before. Text your page transformed (truncated, formatted, upper-cased) and text built from several fields are left to the server render.
+2. **In-place morph.** Half a second after the last change, `VisualEditing` fetches the current URL and patches the live DOM with [idiomorph](https://github.com/bigskysoftware/idiomorph) so it matches the fresh server HTML. Everything the text patch cannot express (ordering, images, dates, references, conditionally rendered markup) updates here. Scroll position, focus, form state and the Presentation connection survive because the document never navigates. If the server has not caught up with the change yet, the fetch retries briefly, and a settle pass runs one second later.
+
+The morph keeps what the server render cannot describe. Client-injected roots stay (the overlay host, Astro's dev toolbar, Vite's error overlay), as do head resources (`<style>`, `<script>` other than JSON-LD, stylesheet and preload `<link>`s) and `<html>`/`<body>` attributes. Head metadata (`<title>`, `<meta>`, canonical links, JSON-LD) is reconciled, since the server owns it. Hydrated `<astro-island>` elements keep their client-rendered subtree and receive the new `props` attribute, which Astro re-hydrates from. Form controls the visitor has typed in or toggled keep their value. Mark any other element whose client state must survive (a chat widget, a cookie banner, a media player) with Astro's `transition:persist` attribute.
+
+When the fetch fails, the response is not HTML, or the fresh HTML introduces a `<script>` the page does not have yet, `VisualEditing` falls back to a full reload and restores the scroll position afterwards. The script case exists because a script parsed from a fetched document can be inserted but never executed, so only a reload gives it the behaviour the server intended. Pass `refresh="reload"` to always reload instead:
+
+```astro
+<VisualEditing enabled={visualEditingEnabled} refresh="reload" />
+```
+
+Visual Editing needs fresh HTML per request, so run the site with `astro dev` or an SSR adapter while previewing.
+
+Two limits are worth knowing. Values rendered from a release perspective are not patched instantly, because the overlays stream the draft and published forms of a document but not its version form; those update through the morph. And the overlay chunk is emitted into your build output whether or not `enabled` is true, exactly as the previous React island was; a page with Visual Editing off never fetches it.
+
+#### Custom refresh and history handling (deprecated)
+
+If you need a custom `refresh` or `history` function, the React component from `@sanity/astro/visual-editing/component` still accepts them. It wraps the same runtime as the `.astro` component and needs the [React integration for Astro][astro-react]. It is deprecated and will be removed in the next major release; open an issue if the `.astro` component's `refresh` prop does not cover your case.
 
 ```tsx
 // src/components/VisualEditing.tsx
@@ -469,14 +487,14 @@ const {data: movies} = await loadQuery<Array<{title: string}>>({
 
 The `apps` folder holds runnable examples. Each one is a standalone Astro project that reads published content from a hosted Sanity dataset, so they run without an API token unless noted.
 
-| App                                                                                              | Shows                                                                                                         | Run from the repo root    |
-| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- | ------------------------- |
-| [`apps/minimal`](https://github.com/sanity-io/sanity-astro/tree/main/apps/minimal)               | The smallest setup: one page fetching with `sanity:client`, no React, no Studio                               | `pnpm dev:minimal`        |
-| [`apps/cinema`](https://github.com/sanity-io/sanity-astro/tree/main/apps/cinema)                 | Astro 7, content collections through `sanityLoader`, Tailwind CSS 4, embedded Studio on static output         | `pnpm dev:cinema`         |
-| [`apps/example`](https://github.com/sanity-io/sanity-astro/tree/main/apps/example)               | Blog with Portable Text, images and an embedded Studio, on Astro 5                                            | `pnpm dev:example`        |
-| [`apps/example-latest`](https://github.com/sanity-io/sanity-astro/tree/main/apps/example-latest) | The same blog on the newest Astro and Sanity releases                                                         | `pnpm dev:example-latest` |
-| [`apps/example-ssr`](https://github.com/sanity-io/sanity-astro/tree/main/apps/example-ssr)       | The blog rendered on the server with the Vercel adapter                                                       | `pnpm dev:example-ssr`    |
-| [`apps/movies`](https://github.com/sanity-io/sanity-astro/tree/main/apps/movies)                 | Server rendering, Visual Editing and the Presentation tool. Needs `SANITY_API_READ_TOKEN`; see the app README | `pnpm dev:movies`         |
+| App                                                                                              | Shows                                                                                                                                                            | Run from the repo root    |
+| ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| [`apps/minimal`](https://github.com/sanity-io/sanity-astro/tree/main/apps/minimal)               | The smallest setup: one page fetching with `sanity:client`, no React, no Studio. Visual Editing without React when `PUBLIC_SANITY_VISUAL_EDITING_ENABLED` is set | `pnpm dev:minimal`        |
+| [`apps/cinema`](https://github.com/sanity-io/sanity-astro/tree/main/apps/cinema)                 | Astro 7, content collections through `sanityLoader`, Tailwind CSS 4, embedded Studio on static output                                                            | `pnpm dev:cinema`         |
+| [`apps/example`](https://github.com/sanity-io/sanity-astro/tree/main/apps/example)               | Blog with Portable Text, images and an embedded Studio, on Astro 5                                                                                               | `pnpm dev:example`        |
+| [`apps/example-latest`](https://github.com/sanity-io/sanity-astro/tree/main/apps/example-latest) | The same blog on the newest Astro and Sanity releases                                                                                                            | `pnpm dev:example-latest` |
+| [`apps/example-ssr`](https://github.com/sanity-io/sanity-astro/tree/main/apps/example-ssr)       | The blog rendered on the server with the Vercel adapter                                                                                                          | `pnpm dev:example-ssr`    |
+| [`apps/movies`](https://github.com/sanity-io/sanity-astro/tree/main/apps/movies)                 | Server rendering, Visual Editing and the Presentation tool. Needs `SANITY_API_READ_TOKEN`; see the app README                                                    | `pnpm dev:movies`         |
 
 ### Resources
 
