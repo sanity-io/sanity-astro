@@ -1,6 +1,6 @@
 import {createBrowserHistoryAdapter, type HistoryAdapter} from './history.js'
 import {createLiveText} from './live-text.js'
-import {fetchDocument, morphDocument} from './morph.js'
+import {fetchDocument, hasNewExecutableScript, morphDocument} from './morph.js'
 import {createRefresher, type HistoryRefresh, type RefreshStrategy} from './refresh.js'
 import {reloadPreservingScroll, restoreScroll} from './scroll.js'
 
@@ -28,6 +28,14 @@ export interface Runtime {
  * After the last delay the HTML is applied as is; the settle pass and text patches finish it.
  */
 const STALE_RETRY_DELAYS_MS = [250, 250, 500]
+
+/** Rejects the morph so the refresher falls back to a reload, which does run the new script. */
+class NewScriptError extends Error {
+  constructor() {
+    super('Fresh HTML introduces a script a morph cannot execute')
+    this.name = 'NewScriptError'
+  }
+}
 
 const sleep = (ms: number, signal: AbortSignal) =>
   new Promise<void>((resolve) => {
@@ -73,6 +81,9 @@ export function createRuntime(options: RuntimeOptions): Runtime {
         return
       }
       if (attempt >= STALE_RETRY_DELAYS_MS.length || !liveText.isStale(next.body)) {
+        if (hasNewExecutableScript(document, next)) {
+          throw new NewScriptError()
+        }
         morphDocument(document, next)
         liveText.patchAll()
         return

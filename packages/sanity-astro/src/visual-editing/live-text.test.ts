@@ -211,6 +211,25 @@ describe('createLiveText', () => {
     live.dispose()
   })
 
+  it('leaves a text node that carries more than one stega source to the morph', () => {
+    const node = document.createElement('p')
+    node.append(
+      document.createTextNode(
+        `${encode('Arrival', 'drafts.movie-lab-1')} ${encode('2016', 'drafts.movie-lab-1', 'year')}`,
+      ),
+    )
+    document.body.appendChild(node)
+    const live = createLiveText({onRemoteChange: vi.fn()})
+    loadDocument('drafts.movie-lab-1', {title: 'Arrival', year: '2016'})
+
+    mutateDocument('drafts.movie-lab-1', {title: 'Sicario', year: '2015'})
+
+    expect(node.textContent).toContain('Arrival')
+    expect(node.textContent).toContain('2016')
+
+    live.dispose()
+  })
+
   it('only patches fields the page has been seen rendering verbatim', () => {
     const verbatim = mountEncoded('Arrival', 'drafts.movie-lab-1')
     const shouted = mountEncoded('ARRIVAL', 'drafts.movie-lab-1', 'tagline')

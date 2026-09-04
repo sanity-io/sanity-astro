@@ -3,7 +3,7 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {createRuntime} from './runtime'
 
-const {liveText, morphDocument, fetchDocument} = vi.hoisted(() => ({
+const {liveText, morphDocument, hasNewExecutableScript, fetchDocument} = vi.hoisted(() => ({
   liveText: {
     patch: vi.fn(() => 0),
     patchAll: vi.fn(() => 0),
@@ -11,6 +11,7 @@ const {liveText, morphDocument, fetchDocument} = vi.hoisted(() => ({
     dispose: vi.fn(),
   },
   morphDocument: vi.fn(),
+  hasNewExecutableScript: vi.fn(() => false),
   fetchDocument: vi.fn(async () => new DOMParser().parseFromString('<p>fresh</p>', 'text/html')),
 }))
 
@@ -21,7 +22,7 @@ vi.mock('./live-text', () => ({
   }),
 }))
 
-vi.mock('./morph', () => ({fetchDocument, morphDocument}))
+vi.mock('./morph', () => ({fetchDocument, hasNewExecutableScript, morphDocument}))
 
 let remoteChange: ((id: string, doc: unknown) => void) | undefined
 const manual = {source: 'manual', livePreviewEnabled: false} as const
@@ -30,6 +31,7 @@ afterEach(() => {
   vi.useRealTimers()
   vi.clearAllMocks()
   liveText.isStale.mockReturnValue(false)
+  hasNewExecutableScript.mockReturnValue(false)
   fetchDocument.mockImplementation(async () =>
     new DOMParser().parseFromString('<p>fresh</p>', 'text/html'),
   )
@@ -97,6 +99,23 @@ describe('createRuntime', () => {
     resolveFetch(new DOMParser().parseFromString('<p>route a</p>', 'text/html'))
     await refreshed
 
+    expect(morphDocument).not.toHaveBeenCalled()
+
+    runtime.dispose()
+  })
+
+  it('reloads instead of morphing when the fresh HTML introduces a script', async () => {
+    const reload = vi.fn()
+    vi.spyOn(window.sessionStorage, 'setItem').mockImplementation(() => {})
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {...window.location, reload, href: 'http://localhost/'},
+    })
+    hasNewExecutableScript.mockReturnValue(true)
+    const runtime = createRuntime({strategy: 'morph'})
+
+    void runtime.refresh(manual)
+    await vi.waitFor(() => expect(reload).toHaveBeenCalledTimes(1))
     expect(morphDocument).not.toHaveBeenCalled()
 
     runtime.dispose()

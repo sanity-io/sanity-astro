@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
-import {fetchDocument, morphDocument, RefreshFetchError} from './morph'
+import {fetchDocument, hasNewExecutableScript, morphDocument, RefreshFetchError} from './morph'
 
 function htmlDocument(html: string) {
   return new DOMParser().parseFromString(html, 'text/html')
@@ -134,6 +134,27 @@ describe('morphDocument', () => {
     expect(document.contains(banner)).toBe(false)
   })
 
+  it('keeps a form control the visitor has typed in, and syncs a pristine one', () => {
+    document.body.innerHTML =
+      '<form><input id="typed" value="server"><input id="pristine" value="server"><textarea id="note">server</textarea></form>'
+    const typed = document.getElementById('typed') as HTMLInputElement
+    const pristine = document.getElementById('pristine') as HTMLInputElement
+    const note = document.getElementById('note') as HTMLTextAreaElement
+    typed.value = 'half-filled'
+    note.value = 'my draft'
+
+    morphDocument(
+      document,
+      htmlDocument(
+        '<html><body><form><input id="typed" value="fresh"><input id="pristine" value="fresh"><textarea id="note">fresh</textarea></form></body></html>',
+      ),
+    )
+
+    expect(typed.value).toBe('half-filled')
+    expect(note.value).toBe('my draft')
+    expect(pristine.value).toBe('fresh')
+  })
+
   it('keeps the subtree of a server-rendered persisted element when it is matched', () => {
     document.body.innerHTML =
       '<div data-astro-transition-persist="player"><span id="state">playing 0:42</span></div>'
@@ -148,6 +169,40 @@ describe('morphDocument', () => {
 
     expect(state.textContent).toBe('playing 0:42')
     expect(document.contains(state)).toBe(true)
+  })
+})
+
+describe('hasNewExecutableScript', () => {
+  it('flags a script the live document does not have', () => {
+    document.body.innerHTML = '<script src="/a.js"></script>'
+
+    expect(
+      hasNewExecutableScript(
+        document,
+        htmlDocument(
+          '<html><body><script src="/a.js"></script><script src="/b.js"></script></body></html>',
+        ),
+      ),
+    ).toBe(true)
+  })
+
+  it('ignores unchanged scripts, removed scripts and data blocks', () => {
+    document.body.innerHTML = '<script src="/a.js"></script><script src="/gone.js"></script>'
+
+    expect(
+      hasNewExecutableScript(
+        document,
+        htmlDocument('<html><body><script src="/a.js"></script></body></html>'),
+      ),
+    ).toBe(false)
+    expect(
+      hasNewExecutableScript(
+        document,
+        htmlDocument(
+          '<html><body><script src="/a.js"></script><script type="application/ld+json">{"a":1}</script></body></html>',
+        ),
+      ),
+    ).toBe(false)
   })
 })
 

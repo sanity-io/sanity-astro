@@ -77,6 +77,51 @@ function isIsland(node: Node): node is Element {
   return node instanceof Element && node.tagName === 'ASTRO-ISLAND'
 }
 
+/** Script types the browser executes. Data blocks like JSON-LD are content, not behaviour. */
+function isExecutableScript(script: HTMLScriptElement): boolean {
+  const type = script.getAttribute('type')
+  return (
+    !type || type === 'module' || type === 'text/javascript' || type === 'application/javascript'
+  )
+}
+
+function scriptSignature(script: HTMLScriptElement): string {
+  return script.getAttribute('src') ?? script.textContent ?? ''
+}
+
+/**
+ * A script parsed by `DOMParser` is permanently flagged as already started, so a morph can
+ * insert it but never run it. When the fresh HTML introduces one, only a reload gives it the
+ * behaviour the server intended.
+ */
+export function hasNewExecutableScript(target: Document, next: Document): boolean {
+  const live = new Set(
+    [...target.body.querySelectorAll('script')].filter(isExecutableScript).map(scriptSignature),
+  )
+  return [...next.body.querySelectorAll('script')]
+    .filter(isExecutableScript)
+    .some((script) => !live.has(scriptSignature(script)))
+}
+
+/**
+ * A control the visitor has typed in or toggled. Idiomorph syncs values on every non-focused
+ * control, which would discard a half-filled form each time content changes.
+ */
+function isDirtyFormControl(node: Node): boolean {
+  if (node instanceof HTMLInputElement) {
+    return node.type === 'checkbox' || node.type === 'radio'
+      ? node.checked !== node.defaultChecked
+      : node.value !== node.defaultValue
+  }
+  if (node instanceof HTMLTextAreaElement) {
+    return node.value !== node.defaultValue
+  }
+  if (node instanceof HTMLSelectElement) {
+    return [...node.options].some((option) => option.selected !== option.defaultSelected)
+  }
+  return false
+}
+
 function isPreservedHeadElement(element: Element): boolean {
   switch (element.tagName) {
     case 'STYLE':
@@ -124,7 +169,7 @@ export function morphDocument(target: Document, next: Document): void {
           syncIslandProps(oldNode, newNode)
           return false
         }
-        return !isClientOwned(oldNode)
+        return !isClientOwned(oldNode) && !isDirtyFormControl(oldNode)
       },
       beforeAttributeUpdated: (_name, node) =>
         node !== target.documentElement && node !== target.body,
