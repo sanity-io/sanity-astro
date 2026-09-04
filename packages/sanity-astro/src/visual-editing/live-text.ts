@@ -92,6 +92,7 @@ interface FieldState {
 }
 
 const fieldKey = (source: TextSource) => `${source.documentId}\u0000${source.path}`
+const cleanedText = (node: Text) => vercelStegaSplit(node.nodeValue ?? '').cleaned
 
 /**
  * Keeps stega text nodes in sync with the document snapshots that Presentation streams to the
@@ -152,8 +153,6 @@ export function createLiveText(options: LiveTextOptions): LiveText {
     const doc = snapshot.context.documents[documentId]?.getSnapshot().context.local
     return doc && typeof doc === 'object' ? doc : undefined
   }
-
-  const cleanedText = (node: Text) => vercelStegaSplit(node.nodeValue ?? '').cleaned
 
   /**
    * Records the field's current raw value. Verbatim is decided the first time the field is

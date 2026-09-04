@@ -5,7 +5,7 @@ import {createRuntime} from './runtime.js'
 
 /** Serializable options the `.astro` component hands to the browser through `data-config`. */
 export interface VisualEditingConfig {
-  zIndex?: number
+  zIndex?: number | string
   keepStegaOnCopy?: boolean
   refresh?: RefreshStrategy
 }
@@ -27,7 +27,7 @@ export function parseConfig(raw: string | null): VisualEditingConfig {
   }
   const {zIndex, keepStegaOnCopy, refresh} = parsed as Record<string, unknown>
   return {
-    zIndex: typeof zIndex === 'number' ? zIndex : undefined,
+    zIndex: typeof zIndex === 'number' || typeof zIndex === 'string' ? zIndex : undefined,
     keepStegaOnCopy: typeof keepStegaOnCopy === 'boolean' ? keepStegaOnCopy : undefined,
     refresh: REFRESH_STRATEGIES.has(refresh as RefreshStrategy)
       ? (refresh as RefreshStrategy)

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
-import {createMorph, fetchDocument, morphDocument, RefreshFetchError} from './morph'
+import {fetchDocument, morphDocument, RefreshFetchError} from './morph'
 
 function htmlDocument(html: string) {
   return new DOMParser().parseFromString(html, 'text/html')
@@ -70,19 +70,44 @@ describe('morphDocument', () => {
     expect(document.head.querySelector('style[data-vite-dev-id="/src/page.css"]')).toBe(style)
   })
 
-  it('leaves an astro-island child subtree untouched', () => {
-    document.body.innerHTML = '<astro-island><span id="island-child">client</span></astro-island>'
+  it('leaves an astro-island child subtree untouched but hands it the new props', () => {
+    document.body.innerHTML =
+      '<astro-island props=\'{"title":["old"]}\'><span id="island-child">client</span></astro-island>'
     const child = document.getElementById('island-child')!
 
     morphDocument(
       document,
       htmlDocument(
-        '<html><body><astro-island><span id="island-child">server</span></astro-island></body></html>',
+        '<html><body><astro-island props=\'{"title":["new"]}\'><span id="island-child">server</span></astro-island></body></html>',
       ),
     )
 
     expect(child.textContent).toBe('client')
     expect(document.contains(child)).toBe(true)
+    expect(document.querySelector('astro-island')?.getAttribute('props')).toBe('{"title":["new"]}')
+  })
+
+  it('reconciles head metadata while keeping stylesheets and scripts', () => {
+    document.head.innerHTML =
+      '<link rel="canonical" href="/old"><link rel="stylesheet" href="/a.css"><script type="application/ld+json">{"old":1}</script><script src="/analytics.js"></script>'
+    const stylesheet = document.head.querySelector('link[rel="stylesheet"]')
+    const analytics = document.head.querySelector('script[src]')
+
+    morphDocument(
+      document,
+      htmlDocument(
+        '<html><head><link rel="canonical" href="/new"><script type="application/ld+json">{"new":1}</script></head><body></body></html>',
+      ),
+    )
+
+    expect(document.head.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe('/new')
+    expect(document.head.querySelectorAll('link[rel="canonical"]')).toHaveLength(1)
+    expect(document.head.querySelector('script[type="application/ld+json"]')?.textContent).toBe(
+      '{"new":1}',
+    )
+    expect(document.head.querySelectorAll('script[type="application/ld+json"]')).toHaveLength(1)
+    expect(document.head.contains(stylesheet)).toBe(true)
+    expect(document.head.contains(analytics)).toBe(true)
   })
 
   it('keeps the class on html when the next document differs', () => {
@@ -107,6 +132,22 @@ describe('morphDocument', () => {
 
     expect(document.contains(widget)).toBe(true)
     expect(document.contains(banner)).toBe(false)
+  })
+
+  it('keeps the subtree of a server-rendered persisted element when it is matched', () => {
+    document.body.innerHTML =
+      '<div data-astro-transition-persist="player"><span id="state">playing 0:42</span></div>'
+    const state = document.getElementById('state')!
+
+    morphDocument(
+      document,
+      htmlDocument(
+        '<html><body><div data-astro-transition-persist="player"><span id="state">stopped</span></div></body></html>',
+      ),
+    )
+
+    expect(state.textContent).toBe('playing 0:42')
+    expect(document.contains(state)).toBe(true)
   })
 })
 
@@ -173,20 +214,7 @@ describe('fetchDocument', () => {
       headers: {accept: 'text/html'},
       cache: 'no-store',
       credentials: 'same-origin',
+      signal: undefined,
     })
-  })
-})
-
-describe('createMorph', () => {
-  it('fetches the current location and morphs document', async () => {
-    document.body.innerHTML = '<p id="marker">before</p>'
-    const fetchImpl = vi
-      .fn()
-      .mockResolvedValue(htmlResponse('<html><body><p id="marker">after</p></body></html>'))
-
-    await createMorph(fetchImpl)()
-
-    expect(fetchImpl).toHaveBeenCalledWith(window.location.href, expect.any(Object))
-    expect(document.getElementById('marker')?.textContent).toBe('after')
   })
 })

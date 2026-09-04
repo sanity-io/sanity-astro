@@ -1,4 +1,4 @@
-import {Idiomorph} from 'idiomorph'
+import {Idiomorph} from './idiomorph.js'
 
 /**
  * Elements that live in the page but never come from the server render, so a morph must
@@ -9,11 +9,21 @@ const CLIENT_OWNED_TAGS = new Set([
   'ASTRO-DEV-TOOLBAR',
   'VITE-ERROR-OVERLAY',
 ])
+
 /**
- * Head elements the server owns outright. Everything else in `<head>` may have been injected
- * by a client (Vite dev styles, styled-components, font loaders) and is left alone.
+ * Astro's `transition:persist` attribute already means "keep this element across page swaps",
+ * so it doubles as the opt-out for widgets a client script injected after load and for
+ * server-rendered elements whose client state must survive a refresh.
  */
-const SERVER_OWNED_HEAD_TAGS = new Set(['TITLE', 'META'])
+const PERSIST_ATTRIBUTE = 'data-astro-transition-persist'
+
+/**
+ * Head resources are kept even when the server stops sending them: Vite dev styles,
+ * styled-components output and font loaders all inject head nodes the server never rendered,
+ * and dropping a stylesheet mid-preview flashes unstyled content. Everything else in `<head>`
+ * (title, meta, canonical and alternate links, JSON-LD) is metadata the server owns.
+ */
+const PRESERVED_HEAD_LINK_RELS = new Set(['stylesheet', 'preload', 'modulepreload'])
 
 export class RefreshFetchError extends Error {
   constructor(
@@ -28,11 +38,13 @@ export class RefreshFetchError extends Error {
 export async function fetchDocument(
   url: string,
   fetchImpl: typeof fetch = fetch,
+  signal?: AbortSignal,
 ): Promise<Document> {
   const response = await fetchImpl(url, {
     headers: {accept: 'text/html'},
     cache: 'no-store',
     credentials: 'same-origin',
+    signal,
   })
   if (!response.ok) {
     throw new RefreshFetchError(`Refresh fetch returned ${response.status}`, response)
@@ -54,12 +66,6 @@ function stripHash(url: string): string {
   return url.split('#')[0]
 }
 
-/**
- * Astro's `transition:persist` attribute already means "keep this element across page swaps",
- * so it doubles as the opt-out for widgets a client script injected after load.
- */
-const PERSIST_ATTRIBUTE = 'data-astro-transition-persist'
-
 function isClientOwned(node: Node): boolean {
   return (
     node instanceof Element &&
@@ -67,34 +73,61 @@ function isClientOwned(node: Node): boolean {
   )
 }
 
-function isIsland(node: Node): boolean {
+function isIsland(node: Node): node is Element {
   return node instanceof Element && node.tagName === 'ASTRO-ISLAND'
+}
+
+function isPreservedHeadElement(element: Element): boolean {
+  switch (element.tagName) {
+    case 'STYLE':
+    case 'NOSCRIPT':
+      return true
+    case 'SCRIPT':
+      return element.getAttribute('type') !== 'application/ld+json'
+    case 'LINK':
+      return PRESERVED_HEAD_LINK_RELS.has(element.getAttribute('rel') ?? '')
+    default:
+      return false
+  }
+}
+
+/**
+ * Hydrated islands keep their client-rendered subtree, but `astro-island` re-hydrates when its
+ * `props` attribute changes, so fresh server props still reach the component.
+ */
+function syncIslandProps(island: Element, next: Node): void {
+  if (!(next instanceof Element)) {
+    return
+  }
+  const props = next.getAttribute('props')
+  if (props !== null && props !== island.getAttribute('props')) {
+    island.setAttribute('props', props)
+  }
 }
 
 /**
  * Patches `target` in place so it matches `next`, keeping node identity where the content
  * did not change. Text nodes keep their stega characters because they arrive in the fresh
- * HTML too. Hydrated islands and client-owned elements are skipped.
+ * HTML too. Islands, persisted elements and client-owned nodes keep their subtrees.
  */
 export function morphDocument(target: Document, next: Document): void {
   Idiomorph.morph(target.documentElement, next.documentElement, {
     ignoreActiveValue: true,
     head: {
       style: 'merge',
-      shouldPreserve: (element) => !SERVER_OWNED_HEAD_TAGS.has(element.tagName),
+      shouldPreserve: isPreservedHeadElement,
     },
     callbacks: {
       beforeNodeRemoved: (node) => !isClientOwned(node),
-      beforeNodeMorphed: (oldNode) => !isIsland(oldNode),
+      beforeNodeMorphed: (oldNode, newNode) => {
+        if (isIsland(oldNode)) {
+          syncIslandProps(oldNode, newNode)
+          return false
+        }
+        return !isClientOwned(oldNode)
+      },
       beforeAttributeUpdated: (_name, node) =>
         node !== target.documentElement && node !== target.body,
     },
   })
-}
-
-export function createMorph(fetchImpl?: typeof fetch): () => Promise<void> {
-  return async () => {
-    const next = await fetchDocument(window.location.href, fetchImpl)
-    morphDocument(document, next)
-  }
 }

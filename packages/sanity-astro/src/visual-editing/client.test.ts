@@ -45,9 +45,14 @@ describe('parseConfig', () => {
   })
 
   it('drops fields with the wrong type', () => {
-    expect(parseConfig(JSON.stringify({zIndex: '7', keepStegaOnCopy: 1, refresh: 'nope'}))).toEqual(
-      {zIndex: undefined, keepStegaOnCopy: undefined, refresh: undefined},
-    )
+    expect(
+      parseConfig(JSON.stringify({zIndex: true, keepStegaOnCopy: 1, refresh: 'nope'})),
+    ).toEqual({zIndex: undefined, keepStegaOnCopy: undefined, refresh: undefined})
+  })
+
+  it('accepts zIndex as a number or a CSS string, like the overlay library does', () => {
+    expect(parseConfig(JSON.stringify({zIndex: 7})).zIndex).toBe(7)
+    expect(parseConfig(JSON.stringify({zIndex: '1000'})).zIndex).toBe('1000')
   })
 
   it('keeps a valid object', () => {
