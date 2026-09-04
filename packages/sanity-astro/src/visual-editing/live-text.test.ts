@@ -227,6 +227,50 @@ describe('createLiveText', () => {
     live.dispose()
   })
 
+  it('keeps replacing, not inserting, after the field held an empty value', () => {
+    const node = mountEncoded('', 'drafts.movie-lab-1')
+    const live = createLiveText({onRemoteChange: vi.fn()})
+    loadDocument('drafts.movie-lab-1', {title: ''})
+
+    mutateDocument('drafts.movie-lab-1', {title: 'D'})
+    mutateDocument('drafts.movie-lab-1', {title: 'Du'})
+    mutateDocument('drafts.movie-lab-1', {title: 'Dune'})
+
+    expect(node.textContent?.replace(VERCEL_STEGA_REGEX, '')).toBe('Dune')
+
+    live.dispose()
+  })
+
+  it('replaces the value the segment shows, not an older value that is a suffix of it', () => {
+    const node = mountEncoded('Giant', 'drafts.movie-lab-1')
+    const live = createLiveText({onRemoteChange: vi.fn()})
+    loadDocument('drafts.movie-lab-1', {title: 'Giant'})
+
+    mutateDocument('drafts.movie-lab-1', {title: 'The Iron Giant'})
+    mutateDocument('drafts.movie-lab-1', {title: 'Dune'})
+
+    expect(node.textContent?.replace(VERCEL_STEGA_REGEX, '')).toBe('Dune')
+
+    live.dispose()
+  })
+
+  it('patches a value that shrank to a suffix of what the page shows', () => {
+    const node = mountEncoded('The Iron Giant', 'drafts.movie-lab-1')
+    const live = createLiveText({onRemoteChange: vi.fn()})
+    loadDocument('drafts.movie-lab-1', {title: 'The Iron Giant'})
+
+    mutateDocument('drafts.movie-lab-1', {title: 'Giant'})
+
+    expect(node.textContent?.replace(VERCEL_STEGA_REGEX, '')).toBe('Giant')
+    const fetched = new DOMParser().parseFromString(
+      `<body><h2>${encode('The Iron Giant', 'drafts.movie-lab-1')}</h2></body>`,
+      'text/html',
+    ).body
+    expect(live.isStale(fetched)).toBe(true)
+
+    live.dispose()
+  })
+
   it('patches each field in a text node that carries several stega payloads', () => {
     const node = document.createElement('p')
     node.append(

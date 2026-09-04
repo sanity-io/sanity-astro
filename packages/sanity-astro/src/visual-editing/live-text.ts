@@ -221,14 +221,25 @@ export function createLiveText(options: LiveTextOptions): LiveText {
     return field
   }
 
-  /** The stale value the run currently shows, when the field is verbatim and behind. */
+  /**
+   * The stale value the run currently shows, when the field is verbatim and behind. Held values
+   * can be suffixes of one another (`""` of anything, `Giant` of `The Iron Giant`), so the run
+   * shows the longest one its segment ends with, and is current only when that is `value`.
+   */
   const staleValue = (text: string, run: StegaRun, field: FieldState, value: string) => {
-    if (!field.verbatim || renderedValue(text, run, value.length) === value) {
+    if (!field.verbatim) {
       return undefined
     }
-    return field.values.find(
-      (held) => held !== value && renderedValue(text, run, held.length) === held,
-    )
+    let shown: string | undefined
+    for (const held of field.values) {
+      if (
+        (shown === undefined || held.length > shown.length) &&
+        renderedValue(text, run, held.length) === held
+      ) {
+        shown = held
+      }
+    }
+    return shown === undefined || shown === value ? undefined : shown
   }
 
   /** Rewrites every stale run in one node, right to left so earlier offsets stay valid. */
