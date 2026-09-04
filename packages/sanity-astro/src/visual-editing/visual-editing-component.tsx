@@ -28,13 +28,17 @@ export type VisualEditingOptions = Pick<
  */
 export function VisualEditingComponent(props: VisualEditingOptions) {
   const strategy = props.refreshStrategy ?? 'morph'
+  const hasCustomHistory = Boolean(props.history)
+  const hasCustomRefresh = Boolean(props.refresh)
   const [runtime, setRuntime] = React.useState<Runtime>()
 
   React.useEffect(() => {
-    const next = createRuntime(strategy)
+    // A custom adapter must not run beside the default it replaces: the history wrap would still
+    // patch `pushState`, and the in-place refresh would still morph the page on every mutation.
+    const next = createRuntime(strategy, {history: !hasCustomHistory, refresh: !hasCustomRefresh})
     setRuntime(next)
     return () => next.dispose()
-  }, [strategy])
+  }, [strategy, hasCustomHistory, hasCustomRefresh])
 
   if (!runtime) {
     return null

@@ -5,9 +5,24 @@ import {createRefresher, type HistoryRefresh, type RefreshStrategy} from './refr
 import {reloadPreservingScroll, restoreScroll} from './scroll'
 
 export interface Runtime {
-  history: HistoryAdapter
-  refresh: (payload: HistoryRefresh) => Promise<void> | false
+  /** Absent when created with `history: false`. */
+  history?: HistoryAdapter
+  /** Absent when created with `refresh: false`. */
+  refresh?: (payload: HistoryRefresh) => Promise<void> | false
   dispose: () => void
+}
+
+export interface RuntimeOptions {
+  /**
+   * Sync the browser URL with Presentation. Pass `false` when the caller brings its own history
+   * adapter, so `pushState`, `replaceState` and link clicks stay untouched.
+   */
+  history?: boolean
+  /**
+   * Refresh the page in place and patch stega text from the document stream. Pass `false` when
+   * the caller brings its own `refresh`, so nothing competes with it.
+   */
+  refresh?: boolean
 }
 
 /**
@@ -18,14 +33,8 @@ const STALE_RETRY_DELAYS_MS = [250, 250, 500]
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 
-/**
- * The browser side of Visual Editing for Astro pages: URL sync with Presentation, in-place
- * refresh with a reload fallback, and instant text patches from the document stream. Shared by
- * the `.astro` component and the deprecated React wrapper.
- */
-export function createRuntime(strategy: RefreshStrategy): Runtime {
+function createPageRefresh(strategy: RefreshStrategy) {
   restoreScroll()
-  const history = createBrowserHistoryAdapter()
   let schedule = () => {}
   const liveText = createLiveText({onRemoteChange: () => schedule()})
 
@@ -49,12 +58,32 @@ export function createRuntime(strategy: RefreshStrategy): Runtime {
   schedule = refresher.schedule
 
   return {
-    history,
     refresh: refresher.refresh,
     dispose: () => {
       liveText.dispose()
       refresher.dispose()
-      history.dispose()
+    },
+  }
+}
+
+/**
+ * The browser side of Visual Editing for Astro pages: URL sync with Presentation, in-place
+ * refresh with a reload fallback, and instant text patches from the document stream. Shared by
+ * the `.astro` component and the deprecated React wrapper, which boots only the parts its caller
+ * did not replace.
+ */
+export function createRuntime(
+  strategy: RefreshStrategy,
+  {history: withHistory = true, refresh: withRefresh = true}: RuntimeOptions = {},
+): Runtime {
+  const history = withHistory ? createBrowserHistoryAdapter() : undefined
+  const refresh = withRefresh ? createPageRefresh(strategy) : undefined
+  return {
+    history,
+    refresh: refresh?.refresh,
+    dispose: () => {
+      refresh?.dispose()
+      history?.dispose()
     },
   }
 }
