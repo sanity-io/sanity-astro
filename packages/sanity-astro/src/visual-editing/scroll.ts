@@ -45,7 +45,8 @@ export function reloadPreservingScroll(win: Window = window): void {
 
 /**
  * Restores the position saved by `reloadPreservingScroll` when the reload landed on the same
- * URL. Runs after layout so the target offset exists.
+ * URL. Runs after layout so the target offset exists, and jumps instantly so a page-level
+ * `scroll-behavior: smooth` does not animate the restore.
  */
 export function restoreScroll(win: Window = window): boolean {
   let saved: SavedScroll | undefined
@@ -58,7 +59,7 @@ export function restoreScroll(win: Window = window): boolean {
     return false
   }
   win.requestAnimationFrame(() => {
-    win.scrollTo(saved.x, saved.y)
+    win.scrollTo({left: saved.x, top: saved.y, behavior: 'instant'})
   })
   return true
 }

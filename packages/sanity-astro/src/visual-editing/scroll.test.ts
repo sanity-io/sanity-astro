@@ -75,7 +75,7 @@ describe('restoreScroll', () => {
 
     try {
       expect(restoreScroll()).toBe(true)
-      expect(scrollTo).toHaveBeenCalledWith(12, 80)
+      expect(scrollTo).toHaveBeenCalledWith({left: 12, top: 80, behavior: 'instant'})
       expect(sessionStorage.getItem(STORAGE_KEY)).toBeNull()
     } finally {
       raf.mockRestore()
