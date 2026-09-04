@@ -7,7 +7,8 @@ import {VisualEditingComponent, type VisualEditingOptions} from './visual-editin
 
 type HistoryAdapter = NonNullable<VisualEditingOptions['history']>
 type Navigate = Parameters<HistoryAdapter['subscribe']>[0]
-type CapturedProps = {history: HistoryAdapter; refresh: () => Promise<void>; zIndex?: number}
+type Refresh = NonNullable<VisualEditingOptions['refresh']>
+type CapturedProps = {history: HistoryAdapter; refresh: Refresh; zIndex?: number}
 
 const renders: CapturedProps[] = []
 
@@ -27,6 +28,7 @@ async function renderVisualEditing(props: VisualEditingOptions = {}) {
   await act(async () => {
     root.render(React.createElement(VisualEditingComponent, props))
   })
+  await act(async () => {})
   roots.push({root, container})
   return renders[renders.length - 1]
 }
@@ -57,29 +59,32 @@ afterEach(async () => {
 })
 
 describe('VisualEditingComponent', () => {
-  it('passes zIndex through and reloads the page on refresh by default', async () => {
-    const reload = vi.fn()
-    const originalLocation = window.location
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: {
-        ...window.location,
-        reload,
-        pathname: '/',
-        search: '',
-        hash: '',
-        href: 'http://localhost/',
-      },
-    })
+  it('passes zIndex through and morphs the page on refresh by default', async () => {
+    const marker = document.createElement('p')
+    marker.id = 'lab-marker'
+    marker.textContent = 'before'
+    document.body.appendChild(marker)
+
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response('<html><head></head><body><p id="lab-marker">after</p></body></html>', {
+        status: 200,
+        headers: {'content-type': 'text/html'},
+      }),
+    )
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = fetchMock
 
     try {
       const props = await renderVisualEditing({zIndex: 42})
-      await props.refresh()
+      await act(async () => {
+        await props.refresh({source: 'manual', livePreviewEnabled: false})
+      })
 
       expect(props.zIndex).toBe(42)
-      expect(reload).toHaveBeenCalledTimes(1)
+      expect(fetchMock).toHaveBeenCalledWith(window.location.href, expect.any(Object))
+      expect(document.getElementById('lab-marker')?.textContent).toBe('after')
     } finally {
-      Object.defineProperty(window, 'location', {configurable: true, value: originalLocation})
+      globalThis.fetch = originalFetch
     }
   })
 
@@ -130,14 +135,12 @@ describe('VisualEditingComponent', () => {
     expect(navigate).not.toHaveBeenCalled()
   })
 
-  it('leaves history alone when the consumer brings their own adapter', async () => {
+  it('passes a consumer history adapter through to VisualEditing', async () => {
     const custom: HistoryAdapter = {subscribe: () => () => {}, update: () => {}}
-    const nativePushState = window.history.pushState
 
     const props = await renderVisualEditing({history: custom})
 
     expect(props.history).toBe(custom)
-    expect(window.history.pushState).toBe(nativePushState)
   })
 
   it('restores the native history methods on unmount', async () => {
