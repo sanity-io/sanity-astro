@@ -16,9 +16,9 @@ The page is on `http://localhost:4326`. Other scripts in `apps/minimal`: `pnpm b
 
 The page lists movies from Sanity's public demo dataset (project `4j2qnyob`, dataset `production`) over the CDN. It needs no API token. Poster thumbnails come from the asset URL with `?w=120&h=180&fit=crop&auto=format` appended, so the app does not need `@sanity/image-url`.
 
-## Visual Editing without React
+## Visual Editing without a client framework
 
-Set `PUBLIC_SANITY_VISUAL_EDITING_ENABLED=true` and the page renders `VisualEditing` from `@sanity/astro/visual-editing`, fetches with stega, and connects to the Presentation tool of the Studio at `PUBLIC_SANITY_STUDIO_URL` (default `http://localhost:3333`). Nothing else changes: no `@astrojs/react`, no React component in `src/`.
+Set `PUBLIC_SANITY_VISUAL_EDITING_ENABLED=true` and the page renders `VisualEditing` from `@sanity/astro/visual-editing`, fetches with stega, and connects to the Presentation tool of the Studio at `PUBLIC_SANITY_STUDIO_URL` (default `http://localhost:3333`). Nothing else changes: no `@astrojs/react`, no React component in `src/`. The overlays still render with React inside `@sanity/visual-editing`; this app just never imports it.
 
 ```sh
 PUBLIC_SANITY_VISUAL_EDITING_ENABLED=true pnpm dev

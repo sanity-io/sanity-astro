@@ -51,6 +51,9 @@ function decodePayload(encoded: string): TextSource | undefined {
     return undefined
   }
   const perspective = params.get('perspective')
+  // Release perspectives resolve to a version id the overlay never streams: upstream observes
+  // only the draft and published ids of documents on the page. Those runs stay unpatched and
+  // wait for the morph instead.
   const documentId =
     perspective === 'published' ? id : perspective ? getVersionId(id, perspective) : getDraftId(id)
   return {documentId, path}
@@ -221,14 +224,26 @@ export function createLiveText(options: LiveTextOptions): LiveText {
     return field
   }
 
-  /** The stale value the run currently shows, when the field is verbatim and behind. */
+  /**
+   * The stale value the run currently shows, when the field is verbatim and behind. The longest
+   * candidate wins: a shorter value that is merely a suffix of the text on screen would splice
+   * into the middle of it (`rival` inside `Arrival`) or read as already current (`bar` inside
+   * `foobar`).
+   */
   const staleValue = (text: string, run: StegaRun, field: FieldState, value: string) => {
-    if (!field.verbatim || renderedValue(text, run, value.length) === value) {
+    if (!field.verbatim) {
       return undefined
     }
-    return field.values.find(
-      (held) => held !== value && renderedValue(text, run, held.length) === held,
-    )
+    let shown: string | undefined
+    for (const candidate of [...field.values, value]) {
+      if (
+        renderedValue(text, run, candidate.length) === candidate &&
+        (shown === undefined || candidate.length > shown.length)
+      ) {
+        shown = candidate
+      }
+    }
+    return shown === undefined || shown === value ? undefined : shown
   }
 
   /** Rewrites every stale run in one node, right to left so earlier offsets stay valid. */

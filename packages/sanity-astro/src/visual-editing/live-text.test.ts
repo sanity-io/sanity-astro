@@ -197,6 +197,32 @@ describe('createLiveText', () => {
     live.dispose()
   })
 
+  it('replaces the whole rendered value when an older value is also a suffix of it', () => {
+    const node = mountEncoded('rival', 'drafts.movie-lab-1')
+    const live = createLiveText({onRemoteChange: vi.fn()})
+    loadDocument('drafts.movie-lab-1', {title: 'rival'})
+
+    mutateDocument('drafts.movie-lab-1', {title: 'Arrival'})
+    expect(node.textContent?.replace(VERCEL_STEGA_REGEX, '')).toBe('Arrival')
+
+    mutateDocument('drafts.movie-lab-1', {title: 'Sicario'})
+    expect(node.textContent?.replace(VERCEL_STEGA_REGEX, '')).toBe('Sicario')
+
+    live.dispose()
+  })
+
+  it('patches when the new value is a suffix of the value on screen', () => {
+    const node = mountEncoded('foobar', 'drafts.movie-lab-1')
+    const live = createLiveText({onRemoteChange: vi.fn()})
+    loadDocument('drafts.movie-lab-1', {title: 'foobar'})
+
+    mutateDocument('drafts.movie-lab-1', {title: 'bar'})
+
+    expect(node.textContent?.replace(VERCEL_STEGA_REGEX, '')).toBe('bar')
+
+    live.dispose()
+  })
+
   it('never rewrites a transformed rendering, even when it equals an earlier raw value', () => {
     const node = mountEncoded('HELLO', 'drafts.movie-lab-1')
     const live = createLiveText({onRemoteChange: vi.fn()})

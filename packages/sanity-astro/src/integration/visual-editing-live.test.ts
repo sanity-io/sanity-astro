@@ -58,7 +58,7 @@ const logLength = (page: Page) => page.evaluate(() => window.standIn.log.length)
 
 const waitForMessage = (page: Page, type: string, since = 0) =>
   page.waitForFunction(
-    ([type, since]) => window.standIn.log.slice(since).some((entry) => entry.type === type),
+    ([wanted, from]) => window.standIn.log.slice(from).some((entry) => entry.type === wanted),
     [type, since] as const,
     {timeout: 30_000},
   )
@@ -70,7 +70,7 @@ const observedDocumentIds = async (page: Page) => {
       .filter((entry) => entry.type === 'visual-editing/fetch-snapshot')
       .map((entry) => (entry.data as {documentId: string}).documentId),
   )
-  return [...new Set(requested.filter((id) => !id.startsWith('drafts.')))].sort()
+  return [...new Set(requested.filter((id) => !id.startsWith('drafts.')))].toSorted()
 }
 
 const placeMarker = (frame: Frame) => frame.evaluate(() => (window.__marker = Math.random()))
@@ -149,7 +149,7 @@ describe.sequential('Visual Editing live preview in the React-free apps/minimal'
 
     await expect
       .poll(() => observedDocumentIds(page), {timeout: 30_000})
-      .toEqual([...movieIds].sort())
+      .toEqual(movieIds.toSorted())
   })
 
   it('refreshes in place without navigating or losing the scroll position', async () => {
@@ -177,24 +177,24 @@ describe.sequential('Visual Editing live preview in the React-free apps/minimal'
     await expect.poll(() => observedDocumentIds(page), {timeout: 30_000}).toContain(movie._id)
 
     const marker = await placeMarker(frame)
-    const value = `${movie.title} (live ${Date.now()})`
-    await page.evaluate(([id, value]) => window.standIn.mutate(id, 'title', value), [
+    const nextTitle = `${movie.title} (live ${Date.now()})`
+    await page.evaluate(([id, next]) => window.standIn.mutate(id, 'title', next), [
       movie._id,
-      value,
+      nextTitle,
     ] as const)
 
-    await expect.poll(() => stegaFree(title), {timeout: 3_000, interval: 50}).toBe(value)
+    await expect.poll(() => stegaFree(title), {timeout: 3_000, interval: 50}).toBe(nextTitle)
     // Literal text beside the expression puts the value mid-node, which the patcher has to
     // locate by its stega payload rather than by comparing the whole node.
     const prefixed = frame.locator('.newest')
     await expect
       .poll(() => stegaFree(prefixed), {timeout: 3_000, interval: 50})
-      .toBe(`Newest release: ${value}`)
+      .toBe(`Newest release: ${nextTitle}`)
     expect(await readMarker(frame), 'the text patch must not navigate').toBe(marker)
     expect(
       await sampleText(title, 5_000),
       'the morph that follows must not revert the patched title',
-    ).toEqual([value])
+    ).toEqual([nextTitle])
     expect(relevantErrors(consoleErrors)).toEqual([])
   })
 })

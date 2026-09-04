@@ -356,6 +356,8 @@ When the fetch fails, the response is not HTML, or the fresh HTML introduces a `
 
 Visual Editing needs fresh HTML per request, so run the site with `astro dev` or an SSR adapter while previewing.
 
+Two limits are worth knowing. Values rendered from a release perspective are not patched instantly, because the overlays stream the draft and published forms of a document but not its version form; those update through the morph. And the overlay chunk is emitted into your build output whether or not `enabled` is true, exactly as the previous React island was; a page with Visual Editing off never fetches it.
+
 #### Custom refresh and history handling (deprecated)
 
 If you need a custom `refresh` or `history` function, the React component from `@sanity/astro/visual-editing/component` still accepts them. It wraps the same runtime as the `.astro` component and needs the [React integration for Astro][astro-react]. It is deprecated and will be removed in the next major release; open an issue if the `.astro` component's `refresh` prop does not cover your case.
