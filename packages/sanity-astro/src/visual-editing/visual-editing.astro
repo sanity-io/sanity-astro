@@ -1,15 +1,22 @@
 ---
-import {VisualEditingComponent, type VisualEditingOptions} from './visual-editing-component'
+import type {VisualEditingConfig} from './client'
 
-export interface Props extends Pick<VisualEditingOptions, 'zIndex' | 'keepStegaOnCopy'> {
+export interface Props extends VisualEditingConfig {
   enabled?: boolean
 }
 
-const {enabled, zIndex, keepStegaOnCopy} = Astro.props
+const {enabled, zIndex, keepStegaOnCopy, refresh} = Astro.props
+const config: VisualEditingConfig = {zIndex, keepStegaOnCopy, refresh}
 ---
 
 {
   enabled ? (
-    <VisualEditingComponent client:only="react" zIndex={zIndex} keepStegaOnCopy={keepStegaOnCopy} />
+    <sanity-astro-visual-editing hidden data-config={JSON.stringify(config)}></sanity-astro-visual-editing>
   ) : null
 }
+<script>
+  const host = document.querySelector('sanity-astro-visual-editing')
+  if (host) {
+    import('./client').then(({start}) => start(host))
+  }
+</script>

@@ -305,9 +305,15 @@ importers:
       '@sanity/visual-editing':
         specifier: ^6.1.1
         version: 6.1.1(@sanity/client@8.2.0(vitest@4.1.11))(@types/react@19.2.7)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(styled-components@6.4.3(css-to-react-native@3.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@5.9.3)(vitest@4.1.11)
+      '@vercel/stega':
+        specifier: ^1.1.0
+        version: 1.1.0
       history:
         specifier: ^5.3.0
         version: 5.3.0
+      idiomorph:
+        specifier: ^0.7.4
+        version: 0.7.4
       react-is:
         specifier: ^18.2.0 || ^19.0.0
         version: 19.2.7
@@ -7625,6 +7631,9 @@ packages:
   iconv-lite@0.7.2:
     resolution: {integrity: sha512-im9DjEDQ55s9fL4EYzOAv0yMqmMBSZp6G0VvFyTMPKWxiSBHUj9NW/qqLmXUwXrrM7AvqSlTCfvqRb0cM8yYqw==}
     engines: {node: '>=0.10.0'}
+
+  idiomorph@0.7.4:
+    resolution: {integrity: sha512-uCdSpLo3uMfqOmrwXTpR1k/sq4sSmKC7l4o/LdJOEU+MMMq+wkevRqOQYn3lP7vfz9Mv+USBEqPvi0XhdL9ENw==}
 
   ieee754@1.2.1:
     resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
@@ -20684,6 +20693,8 @@ snapshots:
   iconv-lite@0.7.2:
     dependencies:
       safer-buffer: 2.1.2
+
+  idiomorph@0.7.4: {}
 
   ieee754@1.2.1: {}
 
