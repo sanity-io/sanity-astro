@@ -32,6 +32,10 @@
       "default": "./dist/sanity-astro.mjs"
     },
     "./module": "./module.d.ts",
+    "./loader": {
+      "types": "./dist/types/loader/index.d.ts",
+      "default": "./dist/loader.mjs"
+    },
     "./studio/studio-route.astro": "./dist/studio/studio-route.astro",
     "./studio/studio-route-hash.astro": "./dist/studio/studio-route-hash.astro",
     "./studio/studio-component.tsx": {
@@ -62,12 +66,13 @@
   },
   "dependencies": {
     "@sanity/visual-editing": "^6.1.1",
+    "groq-js": "^2.0.0",
     "history": "^5.3.0"
   },
   "devDependencies": {
     "@sanity/client": "^8.2.0",
     "@types/serialize-javascript": "^5.0.4",
-    "astro": "5.11.1",
+    "astro": "^7.3.1",
     "playwright": "^1.52.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",

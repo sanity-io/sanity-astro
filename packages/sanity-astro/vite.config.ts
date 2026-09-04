@@ -13,12 +13,17 @@ export default defineConfig(() => {
       // transient package entry resolution failures in consuming apps.
       emptyOutDir: false,
       lib: {
-        entry: [path.resolve(__dirname, 'src/index.ts')],
+        entry: {
+          index: path.resolve(__dirname, 'src/index.ts'),
+          loader: path.resolve(__dirname, 'src/loader/index.ts'),
+        },
         name,
-        fileName: (format) => (format === 'es' ? `${name}.mjs` : `${name}.js`),
+        formats: ['es'],
+        fileName: (_format, entryName) =>
+          entryName === 'index' ? `${name}.mjs` : `${entryName}.mjs`,
       },
       rollupOptions: {
-        external: [/^node:/, 'vite', 'astro', '@sanity/client'],
+        external: [/^node:/, 'vite', 'astro', '@sanity/client', 'groq-js'],
       },
     },
     plugins: [
