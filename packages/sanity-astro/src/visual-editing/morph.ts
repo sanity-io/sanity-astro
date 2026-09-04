@@ -62,7 +62,8 @@ export async function fetchDocument(
   return new DOMParser().parseFromString(await response.text(), 'text/html')
 }
 
-function stripHash(url: string): string {
+/** The fragment never reaches the server, so URLs that differ only by hash are the same page. */
+export function stripHash(url: string): string {
   return url.split('#')[0]
 }
 

@@ -22,7 +22,12 @@ vi.mock('./live-text', () => ({
   }),
 }))
 
-vi.mock('./morph', () => ({fetchDocument, hasNewExecutableScript, morphDocument}))
+vi.mock('./morph', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./morph')>()),
+  fetchDocument,
+  hasNewExecutableScript,
+  morphDocument,
+}))
 
 let remoteChange: ((id: string, doc: unknown) => void) | undefined
 const manual = {source: 'manual', livePreviewEnabled: false} as const
@@ -100,6 +105,26 @@ describe('createRuntime', () => {
     await refreshed
 
     expect(morphDocument).not.toHaveBeenCalled()
+
+    runtime.dispose()
+  })
+
+  it('still morphs when only the hash changed while the fetch was in flight', async () => {
+    let resolveFetch!: (doc: Document) => void
+    fetchDocument.mockImplementationOnce(
+      () =>
+        new Promise<Document>((resolve) => {
+          resolveFetch = resolve
+        }),
+    )
+    const runtime = createRuntime({strategy: 'morph'})
+
+    const refreshed = runtime.refresh(manual)
+    window.location.hash = 'cast'
+    resolveFetch(new DOMParser().parseFromString('<p>fresh</p>', 'text/html'))
+    await refreshed
+
+    expect(morphDocument).toHaveBeenCalledTimes(1)
 
     runtime.dispose()
   })

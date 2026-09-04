@@ -1,6 +1,6 @@
 import {createBrowserHistoryAdapter, type HistoryAdapter} from './history.js'
 import {createLiveText} from './live-text.js'
-import {fetchDocument, hasNewExecutableScript, morphDocument} from './morph.js'
+import {fetchDocument, hasNewExecutableScript, morphDocument, stripHash} from './morph.js'
 import {createRefresher, type HistoryRefresh, type RefreshStrategy} from './refresh.js'
 import {reloadPreservingScroll, restoreScroll} from './scroll.js'
 
@@ -76,8 +76,8 @@ export function createRuntime(options: RuntimeOptions): Runtime {
     for (let attempt = 0; ; attempt++) {
       const next = await fetchDocument(href, fetch, signal)
       // A client-side navigation or a teardown while the fetch was in flight makes this HTML
-      // belong to a page that is no longer showing.
-      if (signal.aborted || window.location.href !== href) {
+      // belong to a page that is no longer showing. A hash change alone keeps the document.
+      if (signal.aborted || stripHash(window.location.href) !== stripHash(href)) {
         return
       }
       if (attempt >= STALE_RETRY_DELAYS_MS.length || !liveText.isStale(next.body)) {

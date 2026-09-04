@@ -33,6 +33,14 @@ async function renderVisualEditing(props: VisualEditingOptions = {}) {
   return renders[renders.length - 1]
 }
 
+async function rerenderVisualEditing(props: VisualEditingOptions) {
+  const {root} = roots[roots.length - 1]
+  await act(async () => {
+    root.render(React.createElement(VisualEditingComponent, props))
+  })
+  return renders[renders.length - 1]
+}
+
 function clickAnchor(href: string) {
   const anchor = document.createElement('a')
   anchor.href = href
@@ -135,12 +143,32 @@ describe('VisualEditingComponent', () => {
     expect(navigate).not.toHaveBeenCalled()
   })
 
-  it('passes a consumer history adapter through to VisualEditing', async () => {
-    const custom: HistoryAdapter = {subscribe: () => () => {}, update: () => {}}
+  it('delegates to a consumer history adapter', async () => {
+    const custom = {subscribe: vi.fn(() => () => {}), update: vi.fn()} satisfies HistoryAdapter
+    const navigate = vi.fn<Navigate>()
 
     const props = await renderVisualEditing({history: custom})
+    props.history.subscribe(navigate)
+    props.history.update({type: 'push', url: '/movies/walle'})
 
-    expect(props.history).toBe(custom)
+    expect(custom.subscribe).toHaveBeenCalledWith(navigate)
+    expect(custom.update).toHaveBeenCalledWith({type: 'push', url: '/movies/walle'})
+  })
+
+  it('keeps the runtime when a parent re-render passes new inline callbacks', async () => {
+    const first = vi.fn<Refresh>(() => false)
+    const second = vi.fn<Refresh>(() => false)
+    const props = await renderVisualEditing({refresh: first})
+    const pushState = window.history.pushState
+
+    const next = await rerenderVisualEditing({refresh: second})
+
+    expect(window.history.pushState).toBe(pushState)
+    expect(next.history).toBe(props.history)
+    expect(next.refresh).toBe(props.refresh)
+    next.refresh({source: 'manual', livePreviewEnabled: false})
+    expect(second).toHaveBeenCalledTimes(1)
+    expect(first).not.toHaveBeenCalled()
   })
 
   it('restores the native history methods on unmount', async () => {
