@@ -16,6 +16,36 @@ export type NameRef = (name: string) => string | undefined
 
 const IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/
 
+/**
+ * Studio wrote these objects without `_type` for years and `@sanity/types` declares it optional
+ * (`ImageHotspot`, `ImageCrop`), but schema extraction marks it required. Validating real content
+ * against the extracted literal rejects most images, so the tag is relaxed to optional.
+ */
+const OPTIONAL_TYPE_TAGS = new Set(['sanity.imageHotspot', 'sanity.imageCrop'])
+
+export function normalizeSchema(schema: SchemaType): SchemaType {
+  return schema.map((entry) => {
+    if (
+      entry.type !== 'type' ||
+      !OPTIONAL_TYPE_TAGS.has(entry.name) ||
+      entry.value.type !== 'object'
+    ) {
+      return entry
+    }
+    const tag = entry.value.attributes._type
+    if (!tag || tag.optional) {
+      return entry
+    }
+    return {
+      ...entry,
+      value: {
+        ...entry.value,
+        attributes: {...entry.value.attributes, _type: {...tag, optional: true}},
+      },
+    }
+  })
+}
+
 export function indexSchema(schema: SchemaType): TypeIndex {
   const types = new Map<string, TypeNode>()
   const documents: string[] = []

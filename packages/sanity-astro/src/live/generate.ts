@@ -10,6 +10,7 @@ import {
   evaluateCollectionElementType,
   indexSchema,
   type NameRef,
+  normalizeSchema,
   type TypeIndex,
 } from './type-node'
 
@@ -181,7 +182,11 @@ function renderTypes(loaders: EvaluatedLoader[], named: NamedTypes, index: TypeI
   return `${sections([header, namedTypes, ...exports])}}\n`
 }
 
-export function generateLoaderModule(schema: SchemaType, plan: LivePlan): GeneratedLoaderModule {
+export function generateLoaderModule(
+  extractedSchema: SchemaType,
+  plan: LivePlan,
+): GeneratedLoaderModule {
+  const schema = normalizeSchema(extractedSchema)
   const index = indexSchema(schema)
   assertDocumentTypes(plan, index)
   const loaders = evaluateLoaders(schema, plan)

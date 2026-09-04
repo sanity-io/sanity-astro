@@ -200,6 +200,21 @@ describe('generateLoaderModule', () => {
         slug: 'alien',
       }),
     ).toMatchObject({_id: 'movie-1', title: 'Alien', slug: 'alien'})
+    expect(
+      generated.movieSchema.safeParse({
+        _id: 'movie_348',
+        _updatedAt: '2024-05-30T07:35:39Z',
+        title: 'Legacy poster without hotspot and crop _type',
+        releaseDate: null,
+        slug: null,
+        poster: {
+          _type: 'image',
+          asset: {_ref: 'image-5b43-780x1170-jpg', _type: 'reference'},
+          crop: {bottom: 0, left: 0, right: 0, top: 0.14},
+          hotspot: {height: 0.1, width: 0.15, x: 0.51, y: 0.54},
+        },
+      }).success,
+    ).toBe(true)
     expect(generated.movieSchema.safeParse({_id: 1}).success).toBe(false)
     expect(generated.movieSchema.safeParse({_id: 'x', _updatedAt: 'y', title: 3}).success).toBe(
       false,

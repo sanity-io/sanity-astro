@@ -10,6 +10,7 @@ import {
   evaluateCollectionElementType,
   indexSchema,
   type NameRef,
+  normalizeSchema,
 } from './type-node'
 
 const fixture: SchemaType = JSON.parse(
@@ -174,6 +175,31 @@ describe('emitTsType and emitZodSchema', () => {
       expect(emitZodSchema(node, zodRef)).toBe(zod)
     })
   }
+})
+
+describe('normalizeSchema', () => {
+  it('makes the _type tag of image hotspot and crop optional and leaves everything else alone', () => {
+    const normalized = normalizeSchema(fixture)
+    const find = (schema: SchemaType, name: string) => schema.find((entry) => entry.name === name)
+    for (const name of ['sanity.imageHotspot', 'sanity.imageCrop']) {
+      const before = find(fixture, name)
+      const after = find(normalized, name)
+      expect(
+        before?.type === 'type' &&
+          before.value.type === 'object' &&
+          before.value.attributes._type.optional,
+      ).toBeFalsy()
+      expect(
+        after?.type === 'type' &&
+          after.value.type === 'object' &&
+          after.value.attributes._type.optional,
+      ).toBe(true)
+    }
+    expect(find(normalized, 'slug')).toBe(find(fixture, 'slug'))
+    expect(find(normalized, 'movie')).toBe(find(fixture, 'movie'))
+    expect(normalized).toHaveLength(fixture.length)
+    expect(find(fixture, 'sanity.imageCrop')).not.toBe(find(normalized, 'sanity.imageCrop'))
+  })
 })
 
 describe('indexSchema', () => {
