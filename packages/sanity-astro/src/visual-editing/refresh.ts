@@ -10,9 +10,9 @@ export type RefreshStrategy = 'morph' | 'reload'
 
 export interface RefreshOptions {
   strategy: RefreshStrategy
-  /** Applies fresh server HTML to the live DOM. Rejects when it cannot. */
-  morph: () => Promise<void>
-  /** Full page fallback. The page unloads, so callers never observe it settling. */
+  /** Applies fresh server HTML to the live DOM. Rejects when it cannot. Aborted on dispose. */
+  morph: (signal: AbortSignal) => Promise<void>
+  /** Full page fallback. The page unloads, so callers rarely observe anything after it. */
   reload: () => void
   /**
    * Trailing delay between the last mutation event and the fetch. Content Lake makes a
@@ -21,8 +21,9 @@ export interface RefreshOptions {
    */
   mutationDelayMs?: number
   /**
-   * Delay before one more fetch after a mutation-triggered morph, catching the rare case
-   * where the first fetch still raced the query index.
+   * Delay before one more fetch after a morph that the document stream asked for, catching the
+   * rare case where the first fetch still raced the query index. Presentation's own mutation
+   * refresh already fires twice, so it does not get a settle pass on top.
    */
   settleDelayMs?: number
 }
@@ -30,7 +31,7 @@ export interface RefreshOptions {
 export interface Refresher {
   /** The `refresh` option for `enableVisualEditing`. */
   refresh: (payload: HistoryRefresh) => Promise<void> | false
-  /** Asks for a reconciliation soon. Bursts collapse into one fetch, followed by a settle pass. */
+  /** The document stream saw a change. Bursts collapse into one fetch plus a settle pass. */
   schedule: () => void
   /** Reconciles now. Resolves when the DOM matches the server again. */
   flush: () => Promise<void>
@@ -42,8 +43,9 @@ const DEFAULT_SETTLE_DELAY_MS = 1_000
 
 /**
  * Coalesces refresh requests into a single in-flight morph. A request that lands while a
- * morph is running marks the DOM dirty, and the pump runs again until nothing is dirty.
- * Every caller receives the same promise, settled once the DOM is clean.
+ * morph is running marks the DOM dirty, and the pump runs again until nothing is dirty and no
+ * delayed pass is pending. Every caller receives the same promise, settled once the DOM is
+ * clean. The settle pass runs in the background and does not hold that promise.
  */
 export function createRefresher(options: RefreshOptions): Refresher {
   const {
@@ -59,6 +61,7 @@ export function createRefresher(options: RefreshOptions): Refresher {
   let drained: {promise: Promise<void>; resolve: () => void} | undefined
   let timer: ReturnType<typeof setTimeout> | undefined
   let settleTimer: ReturnType<typeof setTimeout> | undefined
+  let controller: AbortController | undefined
   let disposed = false
 
   const untilDrained = () => {
@@ -72,6 +75,12 @@ export function createRefresher(options: RefreshOptions): Refresher {
     return drained.promise
   }
 
+  const settleDrained = () => {
+    const settled = drained
+    drained = undefined
+    settled?.resolve()
+  }
+
   const pump = async () => {
     pumping = true
     while (dirty) {
@@ -79,12 +88,16 @@ export function createRefresher(options: RefreshOptions): Refresher {
         break
       }
       dirty = false
+      controller = new AbortController()
       try {
-        await morph()
+        await morph(controller.signal)
       } catch {
-        pumping = false
-        reload()
-        return
+        if (!controller.signal.aborted) {
+          reload()
+        }
+        break
+      } finally {
+        controller = undefined
       }
     }
     pumping = false
@@ -93,9 +106,9 @@ export function createRefresher(options: RefreshOptions): Refresher {
       clearTimeout(settleTimer)
       settleTimer = setTimeout(() => void flush(), settleDelayMs)
     }
-    const settled = drained
-    drained = undefined
-    settled?.resolve()
+    if (timer === undefined) {
+      settleDrained()
+    }
   }
 
   const flush = () => {
@@ -113,11 +126,11 @@ export function createRefresher(options: RefreshOptions): Refresher {
     return promise
   }
 
-  const schedule = () => {
+  const queue = (withSettle: boolean) => {
     if (disposed) {
       return
     }
-    settle = true
+    settle ||= withSettle
     clearTimeout(timer)
     timer = setTimeout(() => {
       timer = undefined
@@ -133,10 +146,10 @@ export function createRefresher(options: RefreshOptions): Refresher {
       if (payload.source === 'manual' || strategy === 'reload') {
         return flush()
       }
-      schedule()
+      queue(false)
       return untilDrained()
     },
-    schedule,
+    schedule: () => queue(true),
     flush,
     dispose: () => {
       disposed = true
@@ -144,8 +157,8 @@ export function createRefresher(options: RefreshOptions): Refresher {
       clearTimeout(settleTimer)
       timer = undefined
       settleTimer = undefined
-      drained?.resolve()
-      drained = undefined
+      controller?.abort()
+      settleDrained()
     },
   }
 }

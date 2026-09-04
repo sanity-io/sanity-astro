@@ -92,7 +92,7 @@ describe('createRefresher', () => {
     refresher.dispose()
   })
 
-  it('runs one settle morph after a mutation-triggered morph, and none after a manual one', async () => {
+  it('runs one settle morph after a stream-scheduled morph, and none after manual or upstream ones', async () => {
     vi.useFakeTimers()
     const morph = vi.fn().mockResolvedValue(undefined)
     const reload = vi.fn()
@@ -119,7 +119,69 @@ describe('createRefresher', () => {
     await vi.advanceTimersByTimeAsync(5000)
     expect(morph).toHaveBeenCalledTimes(3)
 
+    // Presentation already re-fires its mutation refresh after a second, so no settle pass here.
+    const pending = refresher.refresh(mutation)
+    await vi.advanceTimersByTimeAsync(200)
+    await pending
+    expect(morph).toHaveBeenCalledTimes(4)
+    await vi.advanceTimersByTimeAsync(5000)
+    expect(morph).toHaveBeenCalledTimes(4)
+
     refresher.dispose()
+  })
+
+  it('keeps the shared promise pending until a pass scheduled mid-morph has run', async () => {
+    vi.useFakeTimers()
+    const first = deferred()
+    const morph = vi
+      .fn()
+      .mockImplementationOnce(() => first.promise)
+      .mockResolvedValue(undefined)
+    const refresher = createRefresher({
+      strategy: 'morph',
+      morph,
+      reload: vi.fn(),
+      mutationDelayMs: 200,
+    })
+
+    const flushed = refresher.flush()
+    const delayed = refresher.refresh(mutation)
+    expect(delayed).toBe(flushed)
+    let settled = false
+    void flushed.then(() => {
+      settled = true
+    })
+
+    first.resolve()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(settled).toBe(false)
+    expect(morph).toHaveBeenCalledTimes(1)
+
+    await vi.advanceTimersByTimeAsync(200)
+    await flushed
+    expect(settled).toBe(true)
+    expect(morph).toHaveBeenCalledTimes(2)
+
+    refresher.dispose()
+  })
+
+  it('aborts an in-flight morph on dispose without reloading', async () => {
+    let signal: AbortSignal | undefined
+    const morph = vi.fn((s: AbortSignal) => {
+      signal = s
+      return new Promise<void>((_, reject) => {
+        s.addEventListener('abort', () => reject(new Error('aborted')))
+      })
+    })
+    const reload = vi.fn()
+    const refresher = createRefresher({strategy: 'morph', morph, reload})
+
+    const pending = refresher.flush()
+    refresher.dispose()
+    await pending
+
+    expect(signal?.aborted).toBe(true)
+    expect(reload).not.toHaveBeenCalled()
   })
 
   it('restarts the mutation delay on every schedule() call', async () => {

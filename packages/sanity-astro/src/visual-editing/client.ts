@@ -40,7 +40,7 @@ export function parseConfig(raw: string | null): VisualEditingConfig {
  */
 export function start(host: Element): () => void {
   const config = parseConfig(host.getAttribute('data-config'))
-  const runtime = createRuntime(config.refresh ?? 'morph')
+  const runtime = createRuntime({strategy: config.refresh ?? 'morph'})
   const disable = enableVisualEditing({
     history: runtime.history,
     refresh: runtime.refresh,

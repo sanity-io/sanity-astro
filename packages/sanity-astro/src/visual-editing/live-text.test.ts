@@ -143,13 +143,13 @@ describe('createLiveText', () => {
     expect(decodeTextSource(node.textContent ?? '')).toEqual(
       expect.objectContaining({documentId: 'drafts.movie-lab-1', path: 'title'}),
     )
-    expect(onRemoteChange).toHaveBeenCalledWith('drafts.movie-lab-1')
+    expect(onRemoteChange).toHaveBeenCalledWith('drafts.movie-lab-1', {title: 'Sicario'})
 
     onRemoteChange.mockClear()
     setDocuments({'drafts.movie-lab-1': {title: 'Prisoners'}})
     fakeActor.emit('rebased.remote', 'drafts.movie-lab-1')
     expect(node.textContent?.startsWith('Prisoners')).toBe(true)
-    expect(onRemoteChange).toHaveBeenCalledWith('drafts.movie-lab-1')
+    expect(onRemoteChange).toHaveBeenCalledWith('drafts.movie-lab-1', {title: 'Prisoners'})
 
     live.dispose()
   })

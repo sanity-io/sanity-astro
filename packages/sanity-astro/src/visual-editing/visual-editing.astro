@@ -15,8 +15,30 @@ const config: VisualEditingConfig = {zIndex, keepStegaOnCopy, refresh}
   ) : null
 }
 <script>
-  const host = document.querySelector('sanity-astro-visual-editing')
-  if (host) {
-    import('./client').then(({start}) => start(host))
+  let current: {host: Element | null; stop?: () => void} = {host: null}
+
+  // Astro's <ClientRouter /> swaps the body without re-running this module, so the runtime is
+  // rebound on every page load event and torn down before each swap.
+  async function boot() {
+    const host = document.querySelector('sanity-astro-visual-editing')
+    if (host === current.host) {
+      return
+    }
+    current.stop?.()
+    current = {host}
+    if (!host) {
+      return
+    }
+    const {start} = await import('./client')
+    if (current.host === host) {
+      current.stop = start(host)
+    }
   }
+
+  boot()
+  document.addEventListener('astro:page-load', boot)
+  document.addEventListener('astro:before-swap', () => {
+    current.stop?.()
+    current = {host: null}
+  })
 </script>

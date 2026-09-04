@@ -60,8 +60,11 @@ interface DatasetActorLike {
 }
 
 export interface LiveTextOptions {
-  /** Called when a remote document changed so the page can reconcile what text alone cannot. */
-  onRemoteChange: (documentId: string) => void
+  /**
+   * Called when a remote document changed so the page can reconcile what text alone cannot.
+   * `document` is the latest snapshot, or `undefined` when the actor no longer holds one.
+   */
+  onRemoteChange: (documentId: string, document: unknown) => void
   root?: ParentNode
 }
 
@@ -267,12 +270,12 @@ export function createLiveText(options: LiveTextOptions): LiveText {
       live.on('sync', ({id}) => patch(id)),
       live.on('mutation', ({id}) => {
         patch(id)
-        options.onRemoteChange(id)
+        options.onRemoteChange(id, readDocument(id))
       }),
       // A refetched snapshot (first load, reconnect) only matters when the DOM disagrees with it.
       live.on('rebased.remote', ({id}) => {
         if (patch(id) > 0) {
-          options.onRemoteChange(id)
+          options.onRemoteChange(id, readDocument(id))
         }
       }),
       live.on('rebased.local', ({id}) => patch(id)),
