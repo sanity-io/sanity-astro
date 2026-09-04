@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import {createEditUrl} from '@sanity/client/csm'
-import {vercelStegaCombine} from '@vercel/stega'
+import {VERCEL_STEGA_REGEX, vercelStegaCombine} from '@vercel/stega'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {createLiveText, decodeTextSource} from './live-text'
@@ -101,8 +101,10 @@ describe('decodeTextSource', () => {
     )
   })
 
-  it('returns undefined for missing stega, the wrong origin, or a broken href', () => {
+  it('returns undefined for missing stega, the wrong origin, a broken href, or junk', () => {
     expect(decodeTextSource('Arrival')).toBeUndefined()
+    // Four or more zero-width characters that are not a payload; the decoder throws on these.
+    expect(decodeTextSource('Arrival\u200b\u200b\u200b\u200b\u200c')).toBeUndefined()
     expect(
       decodeTextSource(
         vercelStegaCombine('Arrival', {origin: 'other.io', href: '/admin?id=x&path=title'}),
@@ -181,6 +183,20 @@ describe('createLiveText', () => {
     live.dispose()
   })
 
+  it('patches a value the template surrounded with whitespace', () => {
+    const heading = document.createElement('h2')
+    heading.append(document.createTextNode(`\n  ${encode('Arrival', 'drafts.movie-lab-1')}\n`))
+    document.body.appendChild(heading)
+    const live = createLiveText({onRemoteChange: vi.fn()})
+    loadDocument('drafts.movie-lab-1', {title: 'Arrival'})
+
+    mutateDocument('drafts.movie-lab-1', {title: 'Sicario'})
+
+    expect(heading.textContent?.replace(VERCEL_STEGA_REGEX, '')).toBe('\n  Sicario\n')
+
+    live.dispose()
+  })
+
   it('never rewrites a transformed rendering, even when it equals an earlier raw value', () => {
     const node = mountEncoded('HELLO', 'drafts.movie-lab-1')
     const live = createLiveText({onRemoteChange: vi.fn()})
@@ -211,11 +227,11 @@ describe('createLiveText', () => {
     live.dispose()
   })
 
-  it('leaves a text node that carries more than one stega source to the morph', () => {
+  it('patches each field in a text node that carries several stega payloads', () => {
     const node = document.createElement('p')
     node.append(
       document.createTextNode(
-        `${encode('Arrival', 'drafts.movie-lab-1')} ${encode('2016', 'drafts.movie-lab-1', 'year')}`,
+        `${encode('Arrival', 'drafts.movie-lab-1')} (${encode('2016', 'drafts.movie-lab-1', 'year')})`,
       ),
     )
     document.body.appendChild(node)
@@ -224,8 +240,25 @@ describe('createLiveText', () => {
 
     mutateDocument('drafts.movie-lab-1', {title: 'Sicario', year: '2015'})
 
-    expect(node.textContent).toContain('Arrival')
-    expect(node.textContent).toContain('2016')
+    expect(node.textContent?.replace(VERCEL_STEGA_REGEX, '')).toBe('Sicario (2015)')
+
+    live.dispose()
+  })
+
+  it('patches a verbatim rendering even when the same field is also rendered transformed', () => {
+    const raw = mountEncoded('Arrival', 'drafts.movie-lab-1')
+    const shouted = document.createElement('p')
+    shouted.append(
+      document.createTextNode(`ARRIVAL${encode('Arrival', 'drafts.movie-lab-1').slice(7)}`),
+    )
+    document.body.insertBefore(shouted, raw)
+    const live = createLiveText({onRemoteChange: vi.fn()})
+    loadDocument('drafts.movie-lab-1', {title: 'Arrival'})
+
+    mutateDocument('drafts.movie-lab-1', {title: 'Sicario'})
+
+    expect(raw.textContent?.startsWith('Sicario')).toBe(true)
+    expect(shouted.textContent?.startsWith('ARRIVAL')).toBe(true)
 
     live.dispose()
   })
@@ -274,6 +307,23 @@ describe('createLiveText', () => {
     live.dispose()
   })
 
+  it('keeps the stega payload attached after patching a padded segment', () => {
+    const heading = document.createElement('h2')
+    heading.append(document.createTextNode(`\n  ${encode('Arrival', 'drafts.movie-lab-1')}\n`))
+    document.body.appendChild(heading)
+    const live = createLiveText({onRemoteChange: vi.fn()})
+    loadDocument('drafts.movie-lab-1', {title: 'Arrival'})
+
+    mutateDocument('drafts.movie-lab-1', {title: 'Sicario'})
+
+    expect(decodeTextSource(heading.textContent ?? '')).toEqual({
+      documentId: 'drafts.movie-lab-1',
+      path: 'title',
+    })
+
+    live.dispose()
+  })
+
   it('isStale flags fetched HTML that still shows a superseded value', () => {
     mountEncoded('Arrival', 'drafts.movie-lab-1')
     const live = createLiveText({onRemoteChange: vi.fn()})
@@ -282,7 +332,7 @@ describe('createLiveText', () => {
 
     const parse = (title: string) =>
       new DOMParser().parseFromString(
-        `<body><p>${encode(title, 'drafts.movie-lab-1')}</p></body>`,
+        `<body><h2>\n  ${encode(title, 'drafts.movie-lab-1')}\n</h2></body>`,
         'text/html',
       ).body
 

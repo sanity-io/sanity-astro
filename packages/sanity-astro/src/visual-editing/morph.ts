@@ -18,18 +18,19 @@ const CLIENT_OWNED_TAGS = new Set([
 const PERSIST_ATTRIBUTE = 'data-astro-transition-persist'
 
 /**
- * Head resources are kept even when the server stops sending them: Vite dev styles,
- * styled-components output and font loaders all inject head nodes the server never rendered,
- * and dropping a stylesheet mid-preview flashes unstyled content. Everything else in `<head>`
- * (title, meta, canonical and alternate links, JSON-LD) is metadata the server owns.
+ * Attributes that mark a head node as injected by a client at runtime rather than rendered by
+ * the server: Vite's dev styles and styled-components' sheet. Everything else in `<head>` is
+ * reconciled, since preserving a changed node keeps the old copy and appends the new one.
  */
-const PRESERVED_HEAD_LINK_RELS = new Set(['stylesheet', 'preload', 'modulepreload'])
+const CLIENT_INJECTED_HEAD_ATTRIBUTES = [
+  'data-vite-dev-id',
+  'data-styled',
+  'data-styled-version',
+  PERSIST_ATTRIBUTE,
+]
 
 export class RefreshFetchError extends Error {
-  constructor(
-    message: string,
-    readonly response: Response,
-  ) {
+  constructor(message: string) {
     super(message)
     this.name = 'RefreshFetchError'
   }
@@ -47,17 +48,14 @@ export async function fetchDocument(
     signal,
   })
   if (!response.ok) {
-    throw new RefreshFetchError(`Refresh fetch returned ${response.status}`, response)
+    throw new RefreshFetchError(`Refresh fetch returned ${response.status}`)
   }
   const contentType = response.headers.get('content-type') ?? ''
   if (!contentType.includes('text/html')) {
-    throw new RefreshFetchError(
-      `Refresh fetch returned ${contentType || 'no content type'}`,
-      response,
-    )
+    throw new RefreshFetchError(`Refresh fetch returned ${contentType || 'no content type'}`)
   }
   if (response.redirected && stripHash(response.url) !== stripHash(url)) {
-    throw new RefreshFetchError(`Refresh fetch redirected to ${response.url}`, response)
+    throw new RefreshFetchError(`Refresh fetch redirected to ${response.url}`)
   }
   return new DOMParser().parseFromString(await response.text(), 'text/html')
 }
@@ -73,8 +71,13 @@ function isClientOwned(node: Node): boolean {
   )
 }
 
-function isIsland(node: Node): node is Element {
-  return node instanceof Element && node.tagName === 'ASTRO-ISLAND'
+/**
+ * A hydrated island owns its subtree, so the morph must not touch it. Astro drops the `ssr`
+ * attribute once hydration finishes, so an island that still carries it is server markup a
+ * morph can safely update.
+ */
+function isHydratedIsland(node: Node): node is Element {
+  return node instanceof Element && node.tagName === 'ASTRO-ISLAND' && !node.hasAttribute('ssr')
 }
 
 /** Script types the browser executes. Data blocks like JSON-LD are content, not behaviour. */
@@ -96,9 +99,9 @@ function scriptSignature(script: HTMLScriptElement): string {
  */
 export function hasNewExecutableScript(target: Document, next: Document): boolean {
   const live = new Set(
-    [...target.body.querySelectorAll('script')].filter(isExecutableScript).map(scriptSignature),
+    [...target.querySelectorAll('script')].filter(isExecutableScript).map(scriptSignature),
   )
-  return [...next.body.querySelectorAll('script')]
+  return [...next.querySelectorAll('script')]
     .filter(isExecutableScript)
     .some((script) => !live.has(scriptSignature(script)))
 }
@@ -123,17 +126,7 @@ function isDirtyFormControl(node: Node): boolean {
 }
 
 function isPreservedHeadElement(element: Element): boolean {
-  switch (element.tagName) {
-    case 'STYLE':
-    case 'NOSCRIPT':
-      return true
-    case 'SCRIPT':
-      return element.getAttribute('type') !== 'application/ld+json'
-    case 'LINK':
-      return PRESERVED_HEAD_LINK_RELS.has(element.getAttribute('rel') ?? '')
-    default:
-      return false
-  }
+  return CLIENT_INJECTED_HEAD_ATTRIBUTES.some((attribute) => element.hasAttribute(attribute))
 }
 
 /**
@@ -165,14 +158,17 @@ export function morphDocument(target: Document, next: Document): void {
     callbacks: {
       beforeNodeRemoved: (node) => !isClientOwned(node),
       beforeNodeMorphed: (oldNode, newNode) => {
-        if (isIsland(oldNode)) {
+        if (isHydratedIsland(oldNode)) {
           syncIslandProps(oldNode, newNode)
           return false
         }
         return !isClientOwned(oldNode) && !isDirtyFormControl(oldNode)
       },
-      beforeAttributeUpdated: (_name, node) =>
-        node !== target.documentElement && node !== target.body,
+      // `class` and `style` on the root elements are the ones client scripts mutate (theme
+      // toggles, scroll locks), so they stay; everything else the server sends lands.
+      beforeAttributeUpdated: (name, node) =>
+        (node !== target.documentElement && node !== target.body) ||
+        (name !== 'class' && name !== 'style'),
     },
   })
 }

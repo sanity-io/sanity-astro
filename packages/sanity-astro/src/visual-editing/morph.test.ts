@@ -70,7 +70,27 @@ describe('morphDocument', () => {
     expect(document.head.querySelector('style[data-vite-dev-id="/src/page.css"]')).toBe(style)
   })
 
-  it('leaves an astro-island child subtree untouched but hands it the new props', () => {
+  it('does not accumulate head elements across repeated morphs', () => {
+    document.head.innerHTML =
+      '<title>A</title><style>.a{}</style><link rel="stylesheet" href="/a.css"><script type="application/ld+json">{"n":"A"}</script>'
+
+    for (const letter of ['B', 'C']) {
+      morphDocument(
+        document,
+        htmlDocument(
+          `<html><head><title>${letter}</title><style>.${letter}{}</style><link rel="stylesheet" href="/${letter}.css"><script type="application/ld+json">{"n":"${letter}"}</script></head><body></body></html>`,
+        ),
+      )
+    }
+
+    expect(
+      [...document.head.children].map(
+        (node) => `${node.tagName}:${node.getAttribute('href') ?? node.textContent}`,
+      ),
+    ).toEqual(['TITLE:C', 'STYLE:.C{}', 'LINK:/C.css', 'SCRIPT:{"n":"C"}'])
+  })
+
+  it('leaves a hydrated island subtree untouched but hands it the new props', () => {
     document.body.innerHTML =
       '<astro-island props=\'{"title":["old"]}\'><span id="island-child">client</span></astro-island>'
     const child = document.getElementById('island-child')!
@@ -87,11 +107,29 @@ describe('morphDocument', () => {
     expect(document.querySelector('astro-island')?.getAttribute('props')).toBe('{"title":["new"]}')
   })
 
-  it('reconciles head metadata while keeping stylesheets and scripts', () => {
+  it('morphs an island that has not hydrated yet, since its markup is the server render', () => {
+    document.body.innerHTML =
+      '<astro-island ssr props=\'{"title":["old"]}\'><span id="island-child">server old</span></astro-island>'
+
+    morphDocument(
+      document,
+      htmlDocument(
+        '<html><body><astro-island ssr props=\'{"title":["new"]}\'><span id="island-child">server new</span></astro-island></body></html>',
+      ),
+    )
+
+    expect(document.getElementById('island-child')?.textContent).toBe('server new')
+  })
+
+  it('reconciles server head metadata and keeps only client-injected head nodes', () => {
     document.head.innerHTML =
-      '<link rel="canonical" href="/old"><link rel="stylesheet" href="/a.css"><script type="application/ld+json">{"old":1}</script><script src="/analytics.js"></script>'
-    const stylesheet = document.head.querySelector('link[rel="stylesheet"]')
-    const analytics = document.head.querySelector('script[src]')
+      '<link rel="canonical" href="/old"><script type="application/ld+json">{"old":1}</script><link rel="stylesheet" href="/dropped.css">'
+    const dropped = document.head.querySelector('link[rel="stylesheet"]')
+    const viteStyle = document.createElement('style')
+    viteStyle.setAttribute('data-vite-dev-id', '/src/page.css')
+    const styledSheet = document.createElement('style')
+    styledSheet.setAttribute('data-styled', 'active')
+    document.head.append(viteStyle, styledSheet)
 
     morphDocument(
       document,
@@ -106,16 +144,22 @@ describe('morphDocument', () => {
       '{"new":1}',
     )
     expect(document.head.querySelectorAll('script[type="application/ld+json"]')).toHaveLength(1)
-    expect(document.head.contains(stylesheet)).toBe(true)
-    expect(document.head.contains(analytics)).toBe(true)
+    expect(document.head.contains(viteStyle)).toBe(true)
+    expect(document.head.contains(styledSheet)).toBe(true)
+    expect(document.head.contains(dropped)).toBe(false)
   })
 
-  it('keeps the class on html when the next document differs', () => {
+  it('keeps a client-set class on html but lets other root attributes land', () => {
     document.documentElement.className = 'dark'
 
-    morphDocument(document, htmlDocument('<html class="light"><body><p>x</p></body></html>'))
+    morphDocument(
+      document,
+      htmlDocument('<html class="light" lang="nb" data-theme="sepia"><body><p>x</p></body></html>'),
+    )
 
     expect(document.documentElement.className).toBe('dark')
+    expect(document.documentElement.getAttribute('lang')).toBe('nb')
+    expect(document.documentElement.getAttribute('data-theme')).toBe('sepia')
   })
 
   it('keeps a client-injected element marked with transition:persist', () => {

@@ -112,6 +112,9 @@ export function createRefresher(options: RefreshOptions): Refresher {
   }
 
   const flush = () => {
+    if (disposed) {
+      return Promise.resolve()
+    }
     clearTimeout(timer)
     timer = undefined
     if (strategy === 'reload') {

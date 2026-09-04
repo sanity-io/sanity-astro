@@ -29,14 +29,18 @@ const config: VisualEditingConfig = {zIndex, keepStegaOnCopy, refresh}
     if (!host) {
       return
     }
-    const {start} = await import('./client')
-    if (current.host === host) {
-      current.stop = start(host)
+    try {
+      const {start} = await import('./client')
+      if (current.host === host) {
+        current.stop = start(host)
+      }
+    } catch (error) {
+      console.error('[@sanity/astro] Failed to start Visual Editing', error)
     }
   }
 
-  boot()
-  document.addEventListener('astro:page-load', boot)
+  void boot()
+  document.addEventListener('astro:page-load', () => void boot())
   document.addEventListener('astro:before-swap', () => {
     current.stop?.()
     current = {host: null}
