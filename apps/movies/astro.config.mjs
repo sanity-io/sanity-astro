@@ -14,9 +14,17 @@ export default defineConfig({
       studioRouterHistory: 'hash',
       logClientRequests: 'dev',
       stega: {
-        studioUrl: {
-          baseUrl: '/admin',
-          workspace: 'my-workspace',
+        studioUrl: '/admin',
+      },
+      live: {
+        schema: './sanity.config.ts',
+        loaders: {
+          movie: {
+            type: 'movie',
+            projection: 'title, releaseDate, poster, "slug": slug.current',
+            orderBy: ['title', 'asc'],
+            entryBy: 'id',
+          },
         },
       },
     }),
