@@ -1,5 +1,10 @@
 ---
+import {VisualEditing} from '@sanity/astro/visual-editing'
 import {sanityClient} from 'sanity:client'
+
+const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED === 'true'
+const token = import.meta.env.SANITY_API_READ_TOKEN
+const perspective = visualEditingEnabled && token ? 'drafts' : 'published'
 
 type Movie = {
   _id: string
@@ -17,6 +22,10 @@ const movies = await sanityClient.fetch<Movie[]>(
     releaseDate,
     "poster": poster.asset->url
   }`,
+  {},
+  visualEditingEnabled
+    ? {perspective, stega: true, useCdn: false, ...(token ? {token} : {})}
+    : {},
 )
 
 const year = (date: string) => new Date(date).getUTCFullYear()
@@ -66,10 +75,12 @@ const year = (date: string) => new Date(date).getUTCFullYear()
       </ol>
 
       <footer>
-        Project <code>4j2qnyob</code>, dataset <code>production</code>, read from the CDN without a
-        token.
+        Project <code>{sanityClient.config().projectId}</code>, dataset{' '}
+        <code>{sanityClient.config().dataset}</code>, <code>{perspective}</code> perspective
+        {visualEditingEnabled ? ' with Visual Editing' : ' from the CDN without a token'}.
       </footer>
     </main>
+    <VisualEditing enabled={visualEditingEnabled} />
   </body>
 </html>
 
