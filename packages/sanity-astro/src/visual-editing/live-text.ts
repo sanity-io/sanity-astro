@@ -78,28 +78,42 @@ export interface LiveText {
   dispose: () => void
 }
 
-/** How many past snapshots per document a text node may still be showing. */
-const HISTORY_LENGTH = 8
+/** How many raw values per rendered field are remembered, so stale server HTML can be recognised. */
+const FIELD_HISTORY_LENGTH = 64
+
+/**
+ * What is known about one rendered field, keyed by document variant and path. `verbatim` is
+ * whether the page showed the raw value when the field was first seen. `values` are the raw
+ * strings the field has held, newest last.
+ */
+interface FieldState {
+  verbatim: boolean
+  values: string[]
+}
+
+const fieldKey = (source: TextSource) => `${source.documentId}\u0000${source.path}`
 
 /**
  * Keeps stega text nodes in sync with the document snapshots that Presentation streams to the
  * overlay's dataset mutator. A keystroke in the Studio reaches the DOM without a server round
  * trip; the morph that follows reconciles anything the text patch cannot express.
  *
- * A node is only rewritten when its text is a value the document held before. Text the page
- * transformed (truncated, upper-cased, formatted) never matches a raw value and is left to the
- * server render, and a morph that brought back older HTML is repaired from the history.
+ * A node is rewritten only when the page has been seen rendering that field verbatim and the
+ * node currently shows a value the field held before. Transformed text (upper-cased, trimmed,
+ * concatenated) never passes the verbatim check, so it is left to the server render, and a
+ * morph that brought back older HTML is repaired from the field history.
  */
 export function createLiveText(options: LiveTextOptions): LiveText {
-  const root = options.root ?? document.body
+  const body = () => options.root ?? document.body
   // Rebuilt from scratch whenever the DOM changes: a morph keeps text node identity while
   // swapping the stega payload inside it, so a decoded source is only valid for one index.
   let index: Map<string, Map<Text, TextSource>> | undefined
-  const history = new Map<string, unknown[]>()
+  const fields = new Map<string, FieldState>()
   let patching = false
+  let disposed = false
   let subscriptions: Array<{unsubscribe(): void}> = []
 
-  const buildIndex = (from: ParentNode = root) => {
+  const buildIndex = (from: ParentNode = body()) => {
     const next = new Map<string, Map<Text, TextSource>>()
     const walker = (from.ownerDocument ?? document).createTreeWalker(from, NodeFilter.SHOW_TEXT)
     for (let node = walker.nextNode(); node; node = walker.nextNode()) {
@@ -118,53 +132,69 @@ export function createLiveText(options: LiveTextOptions): LiveText {
     return next
   }
 
+  // Observing the root element rather than the body survives a body swap by Astro's router.
   const observer = new MutationObserver(() => {
     if (!patching) {
       index = undefined
     }
   })
-  observer.observe(root, {childList: true, characterData: true, subtree: true})
+  observer.observe(options.root ?? document.documentElement, {
+    childList: true,
+    characterData: true,
+    subtree: true,
+  })
 
-  const record = (documentId: string) => {
+  const readDocument = (documentId: string): unknown => {
     if (isEmptyActor(actor)) {
-      return
+      return undefined
     }
     const snapshot = (actor as unknown as DatasetActorLike).getSnapshot()
     const doc = snapshot.context.documents[documentId]?.getSnapshot().context.local
-    if (!doc || typeof doc !== 'object') {
-      return
+    return doc && typeof doc === 'object' ? doc : undefined
+  }
+
+  const cleanedText = (node: Text) => vercelStegaSplit(node.nodeValue ?? '').cleaned
+
+  /**
+   * Records the field's current raw value. Verbatim is decided the first time the field is
+   * seen with a snapshot: a later match could be the raw value passing through the page's
+   * transform, and rewriting transformed text is worse than falling back to the morph.
+   */
+  const observe = (node: Text, source: TextSource, value: string) => {
+    const key = fieldKey(source)
+    const field = fields.get(key) ?? {verbatim: cleanedText(node) === value, values: []}
+    if (field.values[field.values.length - 1] !== value) {
+      field.values.push(value)
+      if (field.values.length > FIELD_HISTORY_LENGTH) {
+        field.values.splice(0, field.values.length - FIELD_HISTORY_LENGTH)
+      }
     }
-    const seen = history.get(documentId) ?? []
-    if (seen[seen.length - 1] !== doc) {
-      seen.push(doc)
-      history.set(documentId, seen.slice(-HISTORY_LENGTH))
-    }
+    fields.set(key, field)
+    return field
   }
 
   /**
-   * The latest value for a node when its text is one the document held earlier, `undefined`
-   * when the text is already current or was never a raw value (the page transformed it).
+   * The latest value for a node when the field is rendered verbatim and the node still shows a
+   * value the field held earlier; `undefined` when the text is current or was transformed.
    */
-  const outdatedValue = (node: Text, source: TextSource): string | undefined => {
-    const seen = history.get(source.documentId)
-    if (!seen?.length) {
+  const outdatedValue = (node: Text, source: TextSource, field: FieldState, value: string) => {
+    if (!field.verbatim) {
       return undefined
     }
-    const value = studioPath.get(seen[seen.length - 1], source.path)
-    if (typeof value !== 'string') {
+    const cleaned = cleanedText(node)
+    if (cleaned === value || !field.values.includes(cleaned)) {
       return undefined
     }
-    const {cleaned} = vercelStegaSplit(node.nodeValue ?? '')
-    if (cleaned === value) {
-      return undefined
-    }
-    const wasHeld = seen.slice(0, -1).some((doc) => studioPath.get(doc, source.path) === cleaned)
-    return wasHeld ? value : undefined
+    return value
   }
 
   const patch = (documentId: string) => {
+    if (disposed) {
+      return 0
+    }
     const nodes = (index ??= buildIndex()).get(documentId)
-    if (!nodes) {
+    const doc = readDocument(documentId)
+    if (!nodes || !doc) {
       return 0
     }
     let changed = 0
@@ -175,8 +205,12 @@ export function createLiveText(options: LiveTextOptions): LiveText {
           nodes.delete(node)
           continue
         }
-        const value = outdatedValue(node, source)
-        if (value === undefined) {
+        const value = studioPath.get(doc, source.path)
+        if (typeof value !== 'string') {
+          continue
+        }
+        const field = observe(node, source, value)
+        if (outdatedValue(node, source, field, value) === undefined) {
           continue
         }
         node.nodeValue = value + source.encoded
@@ -189,6 +223,9 @@ export function createLiveText(options: LiveTextOptions): LiveText {
   }
 
   const patchAll = () => {
+    if (disposed) {
+      return 0
+    }
     index = buildIndex()
     let changed = 0
     for (const documentId of index.keys()) {
@@ -198,9 +235,18 @@ export function createLiveText(options: LiveTextOptions): LiveText {
   }
 
   const isStale = (fetched: ParentNode) => {
-    for (const nodes of buildIndex(fetched).values()) {
+    for (const [documentId, nodes] of buildIndex(fetched)) {
+      const doc = readDocument(documentId)
+      if (!doc) {
+        continue
+      }
       for (const [node, source] of nodes) {
-        if (outdatedValue(node, source) !== undefined) {
+        const field = fields.get(fieldKey(source))
+        const value = studioPath.get(doc, source.path)
+        if (!field || typeof value !== 'string') {
+          continue
+        }
+        if (outdatedValue(node, source, field, value) !== undefined) {
           return true
         }
       }
@@ -218,23 +264,19 @@ export function createLiveText(options: LiveTextOptions): LiveText {
     }
     const live = actor as unknown as DatasetActorLike
     subscriptions = [
-      live.on('sync', ({id}) => record(id)),
+      // The first snapshot calibrates which fields the page renders verbatim.
+      live.on('sync', ({id}) => patch(id)),
       live.on('mutation', ({id}) => {
-        record(id)
         patch(id)
         options.onRemoteChange(id)
       }),
       // A refetched snapshot (first load, reconnect) only matters when the DOM disagrees with it.
       live.on('rebased.remote', ({id}) => {
-        record(id)
         if (patch(id) > 0) {
           options.onRemoteChange(id)
         }
       }),
-      live.on('rebased.local', ({id}) => {
-        record(id)
-        patch(id)
-      }),
+      live.on('rebased.local', ({id}) => patch(id)),
     ]
   }
 
@@ -246,6 +288,7 @@ export function createLiveText(options: LiveTextOptions): LiveText {
     patchAll,
     isStale,
     dispose: () => {
+      disposed = true
       listeners.delete(bind)
       for (const subscription of subscriptions) {
         subscription.unsubscribe()

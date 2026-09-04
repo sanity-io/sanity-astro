@@ -181,6 +181,50 @@ describe('createLiveText', () => {
     live.dispose()
   })
 
+  it('never rewrites a transformed rendering, even when it equals an earlier raw value', () => {
+    const node = mountEncoded('HELLO', 'drafts.movie-lab-1')
+    const live = createLiveText({onRemoteChange: vi.fn()})
+    loadDocument('drafts.movie-lab-1', {title: 'Hello'})
+
+    mutateDocument('drafts.movie-lab-1', {title: 'HELLO'})
+    mutateDocument('drafts.movie-lab-1', {title: 'Hello world'})
+
+    expect(node.textContent?.startsWith('HELLO')).toBe(true)
+
+    live.dispose()
+  })
+
+  it('repairs a morph rollback after a long typing burst', () => {
+    const node = mountEncoded('Arrival', 'drafts.movie-lab-1')
+    const live = createLiveText({onRemoteChange: vi.fn()})
+    loadDocument('drafts.movie-lab-1', {title: 'Arrival'})
+    for (let i = 1; i <= 40; i++) {
+      mutateDocument('drafts.movie-lab-1', {title: `Arrival ${'x'.repeat(i)}`})
+    }
+    expect(node.textContent?.startsWith(`Arrival ${'x'.repeat(40)}`)).toBe(true)
+
+    node.textContent = encode('Arrival', 'drafts.movie-lab-1')
+
+    expect(live.patchAll()).toBe(1)
+    expect(node.textContent?.startsWith(`Arrival ${'x'.repeat(40)}`)).toBe(true)
+
+    live.dispose()
+  })
+
+  it('only patches fields the page has been seen rendering verbatim', () => {
+    const verbatim = mountEncoded('Arrival', 'drafts.movie-lab-1')
+    const shouted = mountEncoded('ARRIVAL', 'drafts.movie-lab-1', 'tagline')
+    const live = createLiveText({onRemoteChange: vi.fn()})
+    loadDocument('drafts.movie-lab-1', {title: 'Arrival', tagline: 'Arrival'})
+
+    mutateDocument('drafts.movie-lab-1', {title: 'Sicario', tagline: 'Sicario'})
+
+    expect(verbatim.textContent?.startsWith('Sicario')).toBe(true)
+    expect(shouted.textContent?.startsWith('ARRIVAL')).toBe(true)
+
+    live.dispose()
+  })
+
   it('patches on rebased.local without calling onRemoteChange', () => {
     const node = mountEncoded('Arrival', 'drafts.movie-lab-1')
     const onRemoteChange = vi.fn()
