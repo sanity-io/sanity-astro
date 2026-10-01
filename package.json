@@ -22,7 +22,7 @@
     "eslint-config-custom": "*",
     "oxfmt": "^0.61.0",
     "rimraf": "^5.0.7",
-    "turbo": "^1.13.4"
+    "turbo": "^2.0.0"
   },
   "packageManager": "pnpm@9.15.9",
   "pnpm": {
