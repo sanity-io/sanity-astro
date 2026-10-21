@@ -339,14 +339,36 @@ export function createLiveText(options: LiveTextOptions): LiveText {
     return changed
   }
 
+  /**
+   * Read-only against field state: a fetch must never be the first sighting that decides
+   * `verbatim`. Unknown fields that do not match the actor are treated as potentially behind
+   * so retries can land a current render before `patchAll` calibrates from the live page.
+   */
   const isStale = (fetched: ParentNode) => {
-    pass++
     const fetchedIndex = buildIndex(fetched)
     const docs = snapshotsFor(fetchedIndex.keys())
     for (const nodes of fetchedIndex.values()) {
       for (const node of nodes) {
-        if (patchNode(node, docs, false) > 0) {
-          return true
+        const text = node.nodeValue ?? ''
+        for (const run of findStegaRuns(text)) {
+          const doc = docs.get(run.source.documentId)
+          if (!doc) {
+            continue
+          }
+          const value = studioPath.get(doc, run.source.path)
+          if (typeof value !== 'string') {
+            continue
+          }
+          const field = fields.get(fieldKey(run.source))
+          if (!field) {
+            if (renderedValue(text, run, value.length) !== value) {
+              return true
+            }
+            continue
+          }
+          if (staleValue(text, run, field, value) !== undefined) {
+            return true
+          }
         }
       }
     }

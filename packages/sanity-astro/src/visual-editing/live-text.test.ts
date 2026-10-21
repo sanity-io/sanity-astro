@@ -369,6 +369,25 @@ describe('createLiveText', () => {
     live.dispose()
   })
 
+  it('does not lock a field first seen in a stale fetch as non-verbatim', () => {
+    const live = createLiveText({onRemoteChange: vi.fn()})
+    setDocuments({'drafts.movie-lab-1': {title: 'Sicario'}})
+
+    const stale = new DOMParser().parseFromString(
+      `<body><h2>${encode('Arrival', 'drafts.movie-lab-1')}</h2></body>`,
+      'text/html',
+    ).body
+    expect(live.isStale(stale)).toBe(true)
+
+    // A later fresh morph calibrates from the live page; isStale must not have frozen verbatim.
+    const node = mountEncoded('Sicario', 'drafts.movie-lab-1')
+    fakeActor.emit('sync', 'drafts.movie-lab-1')
+    mutateDocument('drafts.movie-lab-1', {title: 'Prisoners'})
+    expect(node.textContent?.startsWith('Prisoners')).toBe(true)
+
+    live.dispose()
+  })
+
   it('returns 0 when the field is unchanged or the node is gone', () => {
     const node = mountEncoded('Arrival', 'drafts.movie-lab-1')
     const live = createLiveText({onRemoteChange: vi.fn()})
