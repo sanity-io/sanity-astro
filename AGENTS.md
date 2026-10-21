@@ -12,8 +12,9 @@ This repo is the official **Sanity + Astro** integration ([`@sanity/astro`](./pa
 | `example-ssr`    | `pnpm dev:example-ssr`    | 4323 | SSR variant (Vercel adapter).                                                                                       |
 | `example-latest` | `pnpm dev:example-latest` | 4324 | Same demo on newer Astro/Sanity.                                                                                    |
 | `movies`         | `pnpm dev:movies`         | 4321 | Movies + Visual Editing demo.                                                                                       |
+| `minimal`        | `pnpm dev:minimal`        | 4326 | Smallest setup: one page, `sanity:client` only, no React, no Studio, **no token required**.                         |
 
-Each app also mounts an **embedded Sanity Studio at `/admin`** (e.g. `http://localhost:4322/admin`).
+Every app except `minimal` also mounts an **embedded Sanity Studio at `/admin`** (e.g. `http://localhost:4322/admin`).
 
 ### Non-obvious gotchas
 
