@@ -1,7 +1,7 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*local"],
-  "pipeline": {
+  "tasks": {
     "clean": {
       "cache": false
     },
@@ -13,16 +13,26 @@
         "SANITY_API_READ_TOKEN"
       ],
       "dependsOn": ["^build"],
-      "outputs": [
-        "dist/**",
-        ".next/**",
-        "!.next/cache/**",
-        "build/**",
-        "public/**",
-        ".vercel/output/**"
-      ]
+      "outputs": ["dist/**", ".astro/**", ".vercel/output/**"]
     },
-    "lint": {},
+    "lint": {
+      "dependsOn": ["^build"]
+    },
+    "typecheck": {
+      "dependsOn": ["^build"]
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
+    },
+    "test:integration": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "check:package": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
     "dev": {
       "dependsOn": ["^build"],
       "cache": false,

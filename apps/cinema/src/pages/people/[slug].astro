@@ -1,0 +1,131 @@
+---
+import {type CollectionEntry, getCollection} from 'astro:content'
+
+import SanityImage from '../../components/SanityImage.astro'
+import Layout from '../../layouts/Layout.astro'
+import {releaseYear} from '../../lib/format'
+
+export async function getStaticPaths() {
+  const people = await getCollection('people')
+  return people.map((person) => ({params: {slug: person.id}, props: {person}}))
+}
+
+interface Props {
+  person: CollectionEntry<'people'>
+}
+
+type Credit = {
+  movie: CollectionEntry<'movies'>
+  characterName: string
+}
+
+const {person} = Astro.props
+const {name, image} = person.data
+
+const credits: Credit[] = (await getCollection('movies'))
+  .flatMap((movie) =>
+    movie.data.castMembers
+      .filter((member) => member.person._id === person.data._id)
+      .map((member) => ({movie, characterName: member.characterName})),
+  )
+  .sort((a, b) => b.movie.data.releaseDate.localeCompare(a.movie.data.releaseDate))
+---
+
+<Layout title={name} description={`${name}: films in the programme.`}>
+  <nav aria-label="Breadcrumb" class="text-sm text-ink-400">
+    <a href="/" class="transition-colors hover:text-ink-50">Films</a>
+    <span class="mx-2 text-ink-600">/</span>
+    <span class="text-ink-300">People</span>
+    <span class="mx-2 text-ink-600">/</span>
+    <span class="text-ink-300">{name}</span>
+  </nav>
+
+  <article class="mt-8 grid gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,3fr)] lg:gap-16">
+    <div class="poster-frame aspect-[3/4] max-w-64 md:max-w-none">
+      {
+        image ? (
+          <SanityImage
+            image={image}
+            alt={`Photo of ${name}`}
+            aspectRatio={3 / 4}
+            widths={[240, 480]}
+            sizes="(min-width: 768px) 25vw, 16rem"
+            loading="eager"
+            fetchpriority="high"
+            class="h-full w-full object-cover"
+          />
+        ) : (
+          <div class="flex h-full w-full items-center justify-center text-ink-400">No photo</div>
+        )
+      }
+    </div>
+
+    <div>
+      <p class="eyebrow">{credits.length > 0 ? 'Cast' : 'Person'}</p>
+      <h1
+        class="mt-3 font-display text-4xl font-semibold leading-[1.05] tracking-tight text-ink-50 sm:text-5xl"
+      >
+        {name}
+      </h1>
+      <p class="mt-4 text-ink-300">
+        {
+          credits.length === 0
+            ? 'Not credited in any film in this programme.'
+            : `${credits.length} ${credits.length === 1 ? 'film' : 'films'} in this programme.`
+        }
+      </p>
+
+      <section aria-labelledby="filmography" class="mt-12">
+        <h2
+          id="filmography"
+          class="border-b border-white/5 pb-4 font-display text-lg font-medium text-ink-50"
+        >
+          Filmography
+        </h2>
+        {
+          credits.length > 0 ? (
+            <ul class="divide-y divide-white/5">
+              {credits.map(({movie, characterName}) => (
+                <li>
+                  <a
+                    href={`/movies/${movie.id}`}
+                    class="group flex items-center gap-5 py-4 transition-colors hover:bg-white/[0.03] -mx-3 px-3 rounded-md"
+                  >
+                    <div class="poster-frame w-14 shrink-0 aspect-[2/3] shadow-none">
+                      <SanityImage
+                        image={movie.data.poster}
+                        alt=""
+                        aspectRatio={2 / 3}
+                        widths={[112, 224]}
+                        sizes="56px"
+                        class="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <p class="font-display font-medium text-ink-50 transition-colors group-hover:text-accent">
+                        {movie.data.title}
+                      </p>
+                      <p class="mt-0.5 truncate text-sm text-ink-400">as {characterName}</p>
+                    </div>
+                    <span class="text-sm text-ink-400 tabular-nums">
+                      {releaseYear(movie.data.releaseDate)}
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div class="mt-8 rounded-lg border border-dashed border-white/10 p-10 text-center">
+              <p class="text-ink-300">
+                The dataset lists {name} but none of the programmed films credit them.
+              </p>
+              <a href="/" class="mt-3 inline-block text-sm text-accent hover:underline">
+                Back to the programme
+              </a>
+            </div>
+          )
+        }
+      </section>
+    </div>
+  </article>
+</Layout>

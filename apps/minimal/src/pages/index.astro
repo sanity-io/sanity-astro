@@ -1,0 +1,169 @@
+---
+import {sanityClient} from 'sanity:client'
+
+type Movie = {
+  _id: string
+  title: string
+  slug: string
+  releaseDate: string
+  poster: string | null
+}
+
+const movies = await sanityClient.fetch<Movie[]>(
+  `*[_type == "movie"] | order(releaseDate desc){
+    _id,
+    title,
+    "slug": slug.current,
+    releaseDate,
+    "poster": poster.asset->url
+  }`,
+)
+
+const year = (date: string) => new Date(date).getUTCFullYear()
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Movies</title>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Movies</h1>
+        <p>
+          {movies.length} films from Sanity's demo dataset, newest first.
+        </p>
+        <p>
+          Fetched with <code>sanityClient</code> from <code>sanity:client</code> at build time.
+        </p>
+      </header>
+
+      <ol>
+        {
+          movies.map((movie) => (
+            <li>
+              {movie.poster ? (
+                <img
+                  src={`${movie.poster}?w=120&h=180&fit=crop&auto=format`}
+                  width="60"
+                  height="90"
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
+              ) : (
+                <span class="placeholder" aria-hidden="true" />
+              )}
+              <span class="title">{movie.title}</span>
+              <span class="year">{year(movie.releaseDate)}</span>
+            </li>
+          ))
+        }
+      </ol>
+
+      <footer>
+        Project <code>4j2qnyob</code>, dataset <code>production</code>, read from the CDN without a
+        token.
+      </footer>
+    </main>
+  </body>
+</html>
+
+<style>
+  :root {
+    color-scheme: light dark;
+    --ink: #1a1a1a;
+    --muted: #6b6b6b;
+    --line: #e4e4e4;
+    --paper: #fbfbfa;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #ededed;
+      --muted: #9a9a9a;
+      --line: #2c2c2c;
+      --paper: #131313;
+    }
+  }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family:
+      ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  main {
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: 4rem 1.5rem 6rem;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 2rem;
+    letter-spacing: -0.02em;
+  }
+
+  header p {
+    margin: 0.75rem 0 0;
+    color: var(--muted);
+  }
+
+  header p + p {
+    margin-top: 0.25rem;
+  }
+
+  code {
+    font-size: 0.95em;
+  }
+
+  ol {
+    list-style: none;
+    margin: 3rem 0 0;
+    padding: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  li {
+    display: grid;
+    grid-template-columns: 60px 1fr auto;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 0.875rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  img,
+  .placeholder {
+    display: block;
+    width: 60px;
+    height: 90px;
+    border-radius: 4px;
+    background: var(--line);
+    object-fit: cover;
+  }
+
+  .title {
+    font-weight: 500;
+  }
+
+  .year {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  footer {
+    margin-top: 3rem;
+    color: var(--muted);
+    font-size: 0.875rem;
+  }
+</style>
