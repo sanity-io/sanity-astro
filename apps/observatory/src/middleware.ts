@@ -30,11 +30,14 @@ export const onRequest = defineMiddleware(async (context, next) => {
       // are applied through `Astro.cache.set` after this middleware runs, so
       // pages must not (and do not) forward cache hints while previewing.
       response.headers.set('cache-control', 'private, no-store')
-    } else {
+    } else if (PUBLIC_SANITY_VARIANTS_ENABLED) {
       // CDN cache keys never derive from response content, only from the
       // URL and Vary'd request headers. Keying on the cookie is what gives
       // each audience its own entry (and cookieless traffic a shared one);
       // caching policy itself is set through Astro.cache by the pages.
+      // Only when personalization is on: Vercel's CDN refuses to store any
+      // response that varies on Cookie, so leave Vary off for the default
+      // cookieless site so year-long Astro.cache TTLs can take effect.
       response.headers.set('vary', 'Cookie')
     }
   }
