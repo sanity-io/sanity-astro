@@ -1,0 +1,45 @@
+---
+import type {SanityImageSource} from '@sanity/image-url'
+
+import SanityImage from './SanityImage.astro'
+
+interface Props {
+  href: string
+  name: string
+  caption: string
+  image: SanityImageSource | null | undefined
+}
+
+const {href, name, caption, image} = Astro.props
+const initials = name
+  .split(' ')
+  .map((part) => part.charAt(0))
+  .slice(0, 2)
+  .join('')
+---
+
+<a href={href} class="card-link group">
+  <div class="poster-frame aspect-[3/4]">
+    {
+      image ? (
+        <SanityImage
+          image={image}
+          alt={`Photo of ${name}`}
+          aspectRatio={3 / 4}
+          widths={[180, 360]}
+          sizes="(min-width: 1024px) 160px, (min-width: 640px) 22vw, 40vw"
+          class="poster-frame-img"
+        />
+      ) : (
+        <div
+          class="flex h-full w-full items-center justify-center bg-ink-800 font-display text-3xl text-ink-400"
+          aria-hidden="true"
+        >
+          {initials}
+        </div>
+      )
+    }
+  </div>
+  <p class="mt-3 text-sm font-medium text-ink-50 transition-colors group-hover:text-accent">{name}</p>
+  <p class="mt-0.5 text-sm text-ink-400">{caption}</p>
+</a>

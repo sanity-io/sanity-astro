@@ -4,14 +4,16 @@ This integration enables the [Sanity Client][sanity-client] in your [Astro][astr
 
 - [Installation](#installation)
   - [Manual installation of dependencies](#manual-installation-of-dependencies)
-  - [Adding types for `sanity:client`](#adding-types-for-sanityclient)
+  - [Types for `sanity:client` and `sanity:studio`](#types-for-sanityclient-and-sanitystudio)
 - [Usage](#usage)
   - [Setting up the Sanity client](#setting-up-the-sanity-client)
+  - [Loading Sanity documents into content collections](#loading-sanity-documents-into-content-collections)
   - [Embedding Sanity Studio on a route](#embedding-sanity-studio-on-a-route)
 - [Rendering rich text and block content with Portable Text](#rendering-rich-text-and-block-content-with-portable-text)
 - [Presenting images](#presenting-images)
-  - [Resources](#resources)
 - [Enabling Visual Editing](#enabling-visual-editing)
+- [Examples](#examples)
+  - [Resources](#resources)
 
 ## Installation
 
@@ -29,13 +31,23 @@ Note: `@astrojs/react` is only needed if you plan to embed a Sanity Studio in yo
 npm install @astrojs/react @sanity/astro @sanity/client sanity @types/react-dom @types/react-is @types/react react-dom react-is react styled-components
 ```
 
-### Adding types for `sanity:client`
+### Types for `sanity:client` and `sanity:studio`
 
-This integration leverages [Vite.js' virtual modules][vite-virtual-modules] with Astro's naming convention (e.g. `astro:assets`). Since it's not possible to automatically include module declarations from npm packages, you'll have to add the following line to the `env.d.ts` file that usually resides in the `src` folder of an Astro project:
+This integration leverages [Vite.js' virtual modules][vite-virtual-modules] with Astro's naming convention (e.g. `astro:assets`). Add this line to the `env.d.ts` file in the `src` folder of your project:
 
 ```dts
 /// <reference types="astro/client" />
 /// <reference types="@sanity/astro/module" />
+```
+
+On Astro 4.14 and later you can let the integration register the declarations instead, by setting `injectTypes: true` in the integration options. They then land in `.astro/integrations/_sanity_astro/types.d.ts` after `astro dev`, `astro build` or `astro sync` through Astro's [`injectTypes`][inject-types], and the `env.d.ts` line can go. The option is off by default; keeping the manual reference alongside it is harmless.
+
+```javascript
+sanity({
+  projectId: '<YOUR-PROJECT-ID>',
+  dataset: '<YOUR-DATASET-NAME>',
+  injectTypes: true,
+})
 ```
 
 You might have to restart the TS Server running in your code editor to get it to resolve types after updating this file. The easiest way to do this is to restart the application.
@@ -88,7 +100,7 @@ const posts = await sanityClient.fetch(`*[_type == "post" && defined(slug)] | or
 </ul>
 ```
 
-[Check out this guide][guide] for a more elaborate introduction to how to integrate content from Sanity into Astro. You can also look in the `examples` folder in this repository for complete implementation examples.
+[Check out this guide][guide] for a more elaborate introduction to how to integrate content from Sanity into Astro. You can also look in the `apps` folder in this repository for complete implementation examples.
 
 To log server-side requests made with `sanity:client`, set `logClientRequests` in your integration config:
 
@@ -98,11 +110,58 @@ To log server-side requests made with `sanity:client`, set `logClientRequests` i
 
 If omitted, request logging is disabled.
 
+### Loading Sanity documents into content collections
+
+On Astro 5 and later, `sanityLoader` feeds a GROQ query into the [Content Layer][content-layer], so `getCollection()` and `getEntry()` work the same way for Sanity documents as for local Markdown. The loader is **experimental**: it is opt-in through its own `@sanity/astro/loader` entrypoint and its options may change in a minor release. Pass the client from `sanity:client` so the loader reuses your integration config:
+
+```typescript
+// src/content.config.ts
+import {sanityLoader} from '@sanity/astro/loader'
+import {defineCollection} from 'astro:content'
+import {z} from 'astro/zod'
+import {sanityClient} from 'sanity:client'
+
+const movies = defineCollection({
+  loader: sanityLoader<{_id: string; slug: string}>({
+    client: sanityClient,
+    query: `*[_type == "movie" && defined(slug.current)]{_id, title, "slug": slug.current, releaseDate}`,
+    // Entry ids default to `_id`. Use the slug when pages are addressed by it.
+    id: (movie) => movie.slug,
+  }),
+  schema: z.object({
+    _id: z.string(),
+    title: z.string(),
+    slug: z.string(),
+    releaseDate: z.string().optional(),
+  }),
+})
+
+export const collections = {movies}
+```
+
+```astro
+---
+// src/pages/movies/[slug].astro
+import {getCollection} from 'astro:content'
+
+export async function getStaticPaths() {
+  const movies = await getCollection('movies')
+  return movies.map((movie) => ({params: {slug: movie.id}, props: {movie}}))
+}
+
+const {movie} = Astro.props
+---
+
+<h1>{movie.data.title}</h1>
+```
+
+Every load fetches the whole query result, writes each document with a content digest so unchanged entries are skipped, and removes entries that left the result, so edits and deletions in Sanity show up on the next build or dev-server restart. The `apps/cinema` example in this repository uses the loader for its movie and people pages.
+
 ### Embedding Sanity Studio on a route
 
 Sanity Studio is a customizable content workspace where you can edit your content. It‘s a Single Page Application that you can keep in its own repository, together with your Astro project as a monorepo, or embedded in your website.
 
-To initialize a Studio in a dedicated folder, you can run `npm create sanity@latest` and follow the instructions.
+To initialize a Studio in a dedicated folder, you can run `npm create sanity@latest` and follow the instructions.
 
 This integration lets you embed a Sanity Studio on a route in your Astro project. To enable it:
 
@@ -413,6 +472,19 @@ const {data: movies} = await loadQuery<Array<{title: string}>>({
 })
 ```
 
+## Examples
+
+The `apps` folder holds runnable examples. Each one is a standalone Astro project that reads published content from a hosted Sanity dataset, so they run without an API token unless noted.
+
+| App                                                                                              | Shows                                                                                                         | Run from the repo root    |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| [`apps/minimal`](https://github.com/sanity-io/sanity-astro/tree/main/apps/minimal)               | The smallest setup: one page fetching with `sanity:client`, no React, no Studio                               | `pnpm dev:minimal`        |
+| [`apps/cinema`](https://github.com/sanity-io/sanity-astro/tree/main/apps/cinema)                 | Astro 7, content collections through `sanityLoader`, Tailwind CSS 4, embedded Studio on static output         | `pnpm dev:cinema`         |
+| [`apps/example`](https://github.com/sanity-io/sanity-astro/tree/main/apps/example)               | Blog with Portable Text, images and an embedded Studio, on Astro 5                                            | `pnpm dev:example`        |
+| [`apps/example-latest`](https://github.com/sanity-io/sanity-astro/tree/main/apps/example-latest) | The same blog on the newest Astro and Sanity releases                                                         | `pnpm dev:example-latest` |
+| [`apps/example-ssr`](https://github.com/sanity-io/sanity-astro/tree/main/apps/example-ssr)       | The blog rendered on the server with the Vercel adapter                                                       | `pnpm dev:example-ssr`    |
+| [`apps/movies`](https://github.com/sanity-io/sanity-astro/tree/main/apps/movies)                 | Server rendering, Visual Editing and the Presentation tool. Needs `SANITY_API_READ_TOKEN`; see the app README | `pnpm dev:movies`         |
+
 ### Resources
 
 - [The official Astro + Sanity guide][guide]
@@ -435,6 +507,8 @@ const {data: movies} = await loadQuery<Array<{title: string}>>({
 [sanity-client]: https://www.sanity.io/docs/js-client
 [image-urls]: https://www.sanity.io/docs/image-urls
 [vite-virtual-modules]: https://vitejs.dev/guide/api-plugin.html#virtual-modules-convention
+[inject-types]: https://docs.astro.build/en/reference/integrations-reference/#injecttypes-option
+[content-layer]: https://docs.astro.build/en/guides/content-collections/
 [visual-editing]: https://www.sanity.io/docs/introduction-to-visual-editing
 [presentation-tool]: https://www.sanity.io/docs/configuring-the-presentation-tool
 [overlays]: https://www.sanity.io/docs/visual-editing-overlays

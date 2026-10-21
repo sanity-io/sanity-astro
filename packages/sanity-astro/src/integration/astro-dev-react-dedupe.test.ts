@@ -1,4 +1,4 @@
-import {existsSync} from 'node:fs'
+import {existsSync, readFileSync} from 'node:fs'
 import path from 'node:path'
 import {fileURLToPath} from 'node:url'
 
@@ -44,10 +44,19 @@ const fixtures: Fixture[] = [
     hasReactIsland: false,
     loadStudio: false,
   },
+  {
+    appDirectory: 'apps/cinema',
+    studioPath: '/admin',
+    hasReactIsland: false,
+    loadStudio: false,
+  },
 ]
 
 function assertSanityAstroIsBuilt() {
-  const distEntry = path.join(packageRoot, 'dist/sanity-astro.mjs')
+  const packageJson = JSON.parse(readFileSync(path.join(packageRoot, 'package.json'), 'utf8')) as {
+    exports: {'.': {default: string}}
+  }
+  const distEntry = path.join(packageRoot, packageJson.exports['.'].default)
   if (!existsSync(distEntry)) {
     throw new Error(
       'Missing @sanity/astro build output. Run `pnpm --filter @sanity/astro build` before integration tests.',
@@ -120,7 +129,7 @@ describe.sequential('astro dev duplicate React regression (#406)', () => {
   })
 
   it.each(fixtures)(
-    '$appDirectory hydrates react islands and embedded studio without duplicate module errors',
+    '$appDirectory serves its pages without duplicate module errors',
     async (fixture) => {
       const devServer = await startAstroDevServer({appDirectory: fixture.appDirectory})
       const browser = await chromium.launch({headless: true})
