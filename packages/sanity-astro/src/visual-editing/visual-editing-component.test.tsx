@@ -4,9 +4,10 @@ import React, {act} from 'react'
 import {createRoot, type Root} from 'react-dom/client'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {VisualEditingComponent} from './visual-editing-component'
+import {VisualEditingComponent, type VisualEditingOptions} from './visual-editing-component'
 
 const post = vi.fn()
+const innerProps: Array<Record<string, unknown>> = []
 
 // Stand-in for @sanity/visual-editing's VisualEditing + History with the timing that matters:
 // the comlink node lands in state from an effect, and History only subscribes to the history
@@ -27,6 +28,7 @@ vi.mock('@sanity/visual-editing/react', () => {
     return null
   }
   function VisualEditing(props: {history: History}) {
+    innerProps.push(props)
     const [comlink, setComlink] = useState<Comlink | undefined>()
     useEffect(() => {
       const instance = {post}
@@ -46,6 +48,7 @@ let root: Root
 
 beforeEach(() => {
   post.mockReset()
+  innerProps.length = 0
   window.history.replaceState({}, '', initialUrl)
   document.title = 'Movie ABC'
   container = document.createElement('div')
@@ -114,5 +117,50 @@ describe('VisualEditingComponent default history adapter', () => {
       title: 'Movie ABC',
       url: '/movies/def',
     })
+  })
+})
+
+describe('VisualEditingComponent prop forwarding', () => {
+  async function mountAndCapture(props: VisualEditingOptions = {}) {
+    await mount(<VisualEditingComponent {...props} />)
+    expect(innerProps.length).toBeGreaterThanOrEqual(1)
+    return innerProps[innerProps.length - 1]
+  }
+
+  it('forces portal and applies the default refresh and history', async () => {
+    const inner = await mountAndCapture()
+
+    expect(inner.portal).toBe(true)
+    expect(inner.refresh).toEqual(expect.any(Function))
+    expect(inner.history).toEqual(
+      expect.objectContaining({subscribe: expect.any(Function), update: expect.any(Function)}),
+    )
+  })
+
+  it('forwards every upstream option by reference', async () => {
+    const props = {
+      zIndex: 1234,
+      keepStegaOnCopy: true,
+      components: vi.fn(),
+      plugins: [],
+      onPerspectiveChange: vi.fn(),
+      onVariantChange: vi.fn(),
+      onSuspiciousStega: vi.fn(),
+    } satisfies VisualEditingOptions
+    const inner = await mountAndCapture(props)
+
+    for (const [key, value] of Object.entries(props)) {
+      expect(inner[key], key).toBe(value)
+    }
+  })
+
+  it('lets a consumer refresh and history win over the defaults', async () => {
+    const refresh = vi.fn(() => false as const)
+    const history = {subscribe: vi.fn(() => () => {}), update: vi.fn()}
+    const inner = await mountAndCapture({refresh, history})
+
+    expect(inner.refresh).toBe(refresh)
+    expect(inner.history).toBe(history)
+    expect(inner.portal).toBe(true)
   })
 })

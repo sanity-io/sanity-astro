@@ -339,7 +339,19 @@ const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLE
 </body>
 ```
 
-The `payload` tells you why the refresh fired: `payload.source` is `'manual'` when the editor clicks refresh in Presentation, or `'mutation'` when a document changes. The same subpath also accepts `history` if you need to take over URL syncing, and `onSuspiciousStega` for opt-in reporting when stega appears in unsafe placements (`class`, `href`, `<head>`, scripts, and similar).
+The `payload` tells you why the refresh fired: `payload.source` is `'manual'` when the editor clicks refresh in Presentation, or `'mutation'` when a document changes.
+
+`VisualEditingComponent` accepts the full `VisualEditingOptions` type from `@sanity/visual-editing/react` and forwards it unchanged. The one prop of `<VisualEditing />` it does not take is `portal`, which is always on. Beyond `refresh`, the ones worth knowing about are:
+
+- `history`: take over URL syncing. When omitted, the built-in adapter keeps Presentation's URL bar in sync with the preview.
+- `onSuspiciousStega`: opt-in reporting when stega appears in unsafe placements (`class`, `href`, `<head>`, scripts, and similar).
+- `onPerspectiveChange` / `onVariantChange`: keep server-side fetching on the same perspective and variant as the Studio driving the preview.
+- `components` (alpha): a resolver for custom overlay UI, such as an insert menu on an array field.
+- `plugins` (alpha): an array of overlay plugin definitions.
+
+`refresh` falls back to `window.location.reload()` and `history` to the built-in adapter when you don't pass them; everything else is passed straight through. The alpha options follow `@sanity/visual-editing`'s stability policy rather than this package's: they can change in a minor release of that dependency without a corresponding `@sanity/astro` release, so pin it if you rely on them.
+
+The parameter types for these callbacks (`HistoryAdapter`, `HistoryAdapterNavigate`, `HistoryRefresh`, `HistoryUpdate`, `OverlayComponentResolver`, `OverlayPluginDefinition`, `SuspiciousStegaReport`, and `VisualEditingOptions` itself) are re-exported from `@sanity/astro/visual-editing/component`.
 
 ### 2. Add the Presentation tool to the Studio
 
