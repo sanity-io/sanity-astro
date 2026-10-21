@@ -26,42 +26,40 @@ const defaultRefresh: NonNullable<InternalVisualEditingOptions['refresh']> = () 
 export function VisualEditingComponent(props: VisualEditingOptions) {
   const navigateRef = React.useRef<HistoryNavigate | undefined>()
   const lastUrlRef = React.useRef('')
-  const lastPublishedAtRef = React.useRef(0)
   const optimisticUrlRef = React.useRef<string | undefined>()
   const optimisticUntilRef = React.useRef(0)
   const clearNavigateTimeoutRef = React.useRef<number | undefined>()
   const hasCustomHistory = Boolean(props.history)
 
+  const publishUrl = React.useCallback((url: string, force = false) => {
+    const navigate = navigateRef.current
+    if (!navigate) {
+      return
+    }
+    const optimisticUrl = optimisticUrlRef.current
+    const optimisticWindowOpen = Date.now() < optimisticUntilRef.current
+    if (!force && optimisticUrl && optimisticWindowOpen && url !== optimisticUrl) {
+      return
+    }
+    if (optimisticUrl && url === optimisticUrl) {
+      optimisticUrlRef.current = undefined
+      optimisticUntilRef.current = 0
+    }
+    if (!force && !shouldPublishUrl(url, lastUrlRef.current)) {
+      return
+    }
+    lastUrlRef.current = url
+    navigate({
+      type: 'push',
+      title: document.title,
+      url,
+    })
+  }, [])
+
   React.useEffect(() => {
     // Skip the default URL sync when the consumer supplies their own history adapter.
     if (hasCustomHistory) {
       return
-    }
-    const publishUrl = (url: string, force = false) => {
-      const navigate = navigateRef.current
-      if (!navigate) {
-        return
-      }
-      const now = Date.now()
-      const optimisticUrl = optimisticUrlRef.current
-      const optimisticWindowOpen = now < optimisticUntilRef.current
-      if (!force && optimisticUrl && optimisticWindowOpen && url !== optimisticUrl) {
-        return
-      }
-      if (optimisticUrl && url === optimisticUrl) {
-        optimisticUrlRef.current = undefined
-        optimisticUntilRef.current = 0
-      }
-      if (!force && !shouldPublishUrl(url, lastUrlRef.current)) {
-        return
-      }
-      lastUrlRef.current = url
-      lastPublishedAtRef.current = now
-      navigate({
-        type: 'push',
-        title: document.title,
-        url,
-      })
     }
     const syncCurrentUrl = () => {
       publishUrl(getPresentationUrl(window.location))
@@ -103,7 +101,6 @@ export function VisualEditingComponent(props: VisualEditingOptions) {
       publishUrl(url, true)
     }
 
-    syncCurrentUrl()
     window.addEventListener('popstate', syncCurrentUrl)
     window.addEventListener('hashchange', syncCurrentUrl)
     document.addEventListener('click', publishClickedLink, true)
@@ -125,16 +122,16 @@ export function VisualEditingComponent(props: VisualEditingOptions) {
       window.history.pushState = nativePushState
       window.history.replaceState = nativeReplaceState
     }
-  }, [hasCustomHistory])
+  }, [hasCustomHistory, publishUrl])
 
   const defaultHistory = React.useMemo<HistoryAdapter>(
     () => ({
       subscribe: (_navigate) => {
         window.clearTimeout(clearNavigateTimeoutRef.current)
         navigateRef.current = _navigate
-        const currentUrl = getPresentationUrl(window.location)
-        lastUrlRef.current = currentUrl
-        lastPublishedAtRef.current = Date.now()
+        // Presentation can't drive the frame until it has reported a URL, and an MPA has
+        // no router event to report it from, so publish the current one on every subscribe.
+        publishUrl(getPresentationUrl(window.location), true)
         return () => {
           // Keep navigation publishing alive briefly for immediate link clicks
           // after edit mode is toggled off, then release it to respect off mode.
@@ -153,7 +150,7 @@ export function VisualEditingComponent(props: VisualEditingOptions) {
         })
       },
     }),
-    [],
+    [publishUrl],
   )
 
   return (
