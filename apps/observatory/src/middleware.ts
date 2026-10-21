@@ -32,6 +32,15 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return response
   }
 
+  // Preview API routes are not CDN-cached; they need the real session so the
+  // perspective/variant pickers can update cookies instead of always 403ing.
+  if (url.pathname.startsWith('/api/preview/')) {
+    context.locals.preview = resolvePreview(context.cookies)
+    context.locals.audience = undefined
+    context.locals.basePath = ''
+    return next()
+  }
+
   context.locals.preview = DISABLED_PREVIEW
 
   if (edition.kind === 'audience') {

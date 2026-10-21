@@ -29,7 +29,7 @@ export const GET: APIRoute = async ({request, cookies, redirect}) => {
     return new Response('Invalid secret', {status: 401})
   }
 
-  enablePreview(cookies, {
+  enablePreview(cookies, request, {
     perspective: studioPreviewPerspective ?? undefined,
     variant: studioPreviewVariant ?? undefined,
   })

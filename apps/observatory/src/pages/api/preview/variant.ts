@@ -17,7 +17,11 @@ export const POST: APIRoute = async ({request, cookies, locals}) => {
   const requested =
     typeof body === 'object' && body !== null && 'variant' in body ? body.variant : null
 
-  setPreviewVariant(cookies, sanitizeVariant(typeof requested === 'string' ? requested : null))
+  setPreviewVariant(
+    cookies,
+    sanitizeVariant(typeof requested === 'string' ? requested : null),
+    request,
+  )
 
   return new Response(null, {status: 204})
 }

@@ -24,7 +24,7 @@ export const POST: APIRoute = async ({request, cookies, locals}) => {
       ? requested
       : null
 
-  setPreviewPerspective(cookies, sanitizePerspective(normalized))
+  setPreviewPerspective(cookies, sanitizePerspective(normalized), request)
 
   return new Response(null, {status: 204})
 }
