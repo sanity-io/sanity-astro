@@ -31,6 +31,19 @@ async function runSetup({
 }
 
 describe('sanity integration vite config', () => {
+  it('registers exactly the plugins the integration owns', async () => {
+    const {updateConfig} = await runSetup()
+
+    const plugins: Array<{name?: string}> = updateConfig.mock.calls[0][0].vite.plugins
+
+    expect(plugins.map((plugin) => plugin.name)).toEqual([
+      'sanity:module-dedupe',
+      'sanity:client',
+      'sanity:studio',
+      'vite-plugin-sanity-studio-chunk-warning',
+    ])
+  })
+
   it('registers module dedupe plugin (#406)', async () => {
     const {updateConfig} = await runSetup()
 
