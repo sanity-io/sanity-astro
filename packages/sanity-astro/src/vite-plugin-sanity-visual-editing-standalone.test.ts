@@ -2,7 +2,11 @@ import {describe, expect, it, vi} from 'vitest'
 
 import {
   ENABLE_VISUAL_EDITING_SPECIFIER,
+  isStandalonePackageModule,
   isVisualEditingClient,
+  OPTIMISTIC_PACKAGE,
+  shareOptimisticActorWithLiveText,
+  STANDALONE_PACKAGE,
   standaloneModuleSource,
   VIRTUAL_STANDALONE_ID,
   vitePluginSanityVisualEditingStandalone,
@@ -24,7 +28,10 @@ function setup(resolved: Record<string, string | null> = {}) {
       importer,
     )
   const load = (id: string) => (plugin.load as (id: string) => unknown)(id)
-  return {resolveId, load, resolve}
+  const transform = (code: string, id: string) =>
+    (plugin.transform as (code: string, id: string) => unknown)(code, id)
+  const config = () => (plugin.config as () => unknown)()
+  return {resolveId, load, resolve, transform, config}
 }
 
 describe('vitePluginSanityVisualEditingStandalone', () => {
@@ -85,5 +92,59 @@ describe('vitePluginSanityVisualEditingStandalone', () => {
     await expect(
       resolveId('@sanity/visual-editing-standalone', VIRTUAL_STANDALONE_ID),
     ).rejects.toThrow('npm install @sanity/visual-editing-standalone')
+  })
+
+  it('excludes the standalone package from optimizeDeps so transform can run', () => {
+    const {config} = setup()
+    expect(config()).toEqual({
+      optimizeDeps: {exclude: [STANDALONE_PACKAGE]},
+    })
+  })
+
+  it('recognises published standalone package paths', () => {
+    expect(
+      isStandalonePackageModule(
+        '/project/node_modules/@sanity/visual-editing-standalone/dist/renderVisualEditing.js',
+      ),
+    ).toBe(true)
+    expect(
+      isStandalonePackageModule(
+        'C:\\project\\node_modules\\@sanity\\visual-editing-standalone\\dist\\chunk.js',
+      ),
+    ).toBe(true)
+    expect(isStandalonePackageModule('/project/src/visual-editing/client.ts')).toBe(false)
+  })
+})
+
+describe('shareOptimisticActorWithLiveText', () => {
+  it('mirrors the minified setActor hand-off onto the shared optimistic actor', () => {
+    const input =
+      'fetch(`visual-editing/features`,void 0,{signal:r.signal,suppressWarnings:!0}).then(e=>{e.features.optimistic&&zi(n)}).catch(DH)'
+    const next = shareOptimisticActorWithLiveText(input)
+    expect(next).toContain(
+      `import {setActor as __sanityAstroShareOptimisticActor} from '${OPTIMISTIC_PACKAGE}'`,
+    )
+    expect(next).toContain('e.features.optimistic&&(zi(n),__sanityAstroShareOptimisticActor(n))')
+  })
+
+  it('leaves unrelated modules alone', () => {
+    expect(shareOptimisticActorWithLiveText('export const x = 1')).toBeNull()
+    expect(shareOptimisticActorWithLiveText('features.optimistic')).toBeNull()
+  })
+
+  it('is idempotent when the shared call is already present', () => {
+    const once = shareOptimisticActorWithLiveText('e.features.optimistic&&zi(n)')
+    expect(once).not.toBeNull()
+    expect(shareOptimisticActorWithLiveText(once!)).toBeNull()
+  })
+
+  it('transforms standalone package modules through the Vite plugin', () => {
+    const {transform} = setup()
+    const id = '/project/node_modules/@sanity/visual-editing-standalone/dist/renderVisualEditing.js'
+    expect(transform('e.features.optimistic&&zi(n)', id)).toEqual({
+      code: shareOptimisticActorWithLiveText('e.features.optimistic&&zi(n)'),
+      map: null,
+    })
+    expect(transform('e.features.optimistic&&zi(n)', '/project/src/other.js')).toBeNull()
   })
 })
