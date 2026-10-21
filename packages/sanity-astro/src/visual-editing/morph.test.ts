@@ -149,6 +149,24 @@ describe('morphDocument', () => {
     expect(document.head.contains(dropped)).toBe(false)
   })
 
+  it('drops an untagged runtime style and keeps one marked for transition persist', () => {
+    const runtime = document.createElement('style')
+    runtime.textContent = '.overlay{display:flex}'
+    const persisted = document.createElement('style')
+    persisted.setAttribute('data-astro-transition-persist', 'sanity-visual-editing-standalone')
+    persisted.textContent = '.overlay{position:fixed}'
+    document.head.append(runtime, persisted)
+
+    morphDocument(
+      document,
+      htmlDocument('<html><head><title>next</title></head><body></body></html>'),
+    )
+
+    expect(document.head.contains(runtime)).toBe(false)
+    expect(document.head.contains(persisted)).toBe(true)
+    expect(persisted.textContent).toBe('.overlay{position:fixed}')
+  })
+
   it('keeps a client-set class on html but lets other root attributes land', () => {
     document.documentElement.className = 'dark'
 
