@@ -7,17 +7,28 @@ import type {PluginOption, UserConfig} from 'vite'
  * Dev-only Vite dedupe for embedded Studio + @astrojs/react islands (#406).
  *
  * Vite can load the same logical package through pre-bundled and direct paths even
- * when npm reports a single copy. Pair resolve.dedupe with optimizeDeps.include.
- * The studio chunk-size warning plugin (apply: 'build') is not involved in dev.
+ * when npm reports a single copy. The studio chunk-size warning plugin (apply: 'build')
+ * is not involved in dev.
+ *
+ * Membership rule for SANITY_MODULE_DEDUPE: only packages that must be a single instance
+ * per page belong here — React, its renderer, styled-components, and the Studio itself
+ * (`sanity`). A regular dependency that other packages legitimately pin at a different
+ * major does not belong, because `resolve.dedupe` forces everyone onto the root copy and
+ * breaks that package's own subpath imports if they differ per major.
+ *
+ * `@sanity/ui` is the case that motivated this rule (#462): the project's `sanity` peer
+ * range (`^3.99 || ^4 || ^5 || ^6`) spans `@sanity/ui` v2/v3/v4, while `@sanity/visual-editing`
+ * pins its own major (v5 → `^3`, v6 → `^4`) with different subpath exports per major
+ * (`./_visual-editing` only in v3; `./menu`, `./popover`, `./tooltip`, `./styles.css` only
+ * in v4). Deduping it forces `@sanity/visual-editing`'s nested import onto whichever major
+ * the project's `sanity` resolves, breaking the island in both directions regardless of
+ * which side is newer.
+ *
+ * `resolve.dedupe` and `optimizeDeps.include` below are independent lists, not a pair:
+ * `sanity` is deduped but not pre-bundled, and `react-is`/`react-compiler-runtime` are
+ * pre-bundled but not deduped.
  */
-export const SANITY_MODULE_DEDUPE = [
-  'react',
-  'react-dom',
-  'react-dom/client',
-  'styled-components',
-  'sanity',
-  '@sanity/ui',
-] as const
+export const SANITY_MODULE_DEDUPE = ['react', 'react-dom', 'styled-components', 'sanity'] as const
 
 /**
  * Pre-bundle during dev alongside resolve.dedupe. Includes Sanity-adjacent CJS/deep
