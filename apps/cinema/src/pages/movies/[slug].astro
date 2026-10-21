@@ -1,0 +1,107 @@
+---
+import {type CollectionEntry, getCollection} from 'astro:content'
+import {PortableText} from 'astro-portabletext'
+
+import PersonCard from '../../components/PersonCard.astro'
+import SanityImage from '../../components/SanityImage.astro'
+import Layout from '../../layouts/Layout.astro'
+import {releaseDateLong, releaseYear} from '../../lib/format'
+
+export async function getStaticPaths() {
+  const movies = await getCollection('movies')
+  return movies.map((movie) => ({params: {slug: movie.id}, props: {movie}}))
+}
+
+interface Props {
+  movie: CollectionEntry<'movies'>
+}
+
+const {movie} = Astro.props
+const {title, releaseDate, poster, overview, castMembers} = movie.data
+const year = releaseYear(releaseDate)
+---
+
+<Layout title={title} description={`${title} (${year}): release date, overview and cast.`}>
+  <nav aria-label="Breadcrumb" class="text-sm text-ink-400">
+    <a href="/" class="transition-colors hover:text-ink-50">Films</a>
+    <span class="mx-2 text-ink-600">/</span>
+    <span class="text-ink-300">{title}</span>
+  </nav>
+
+  <article class="mt-8 grid gap-10 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:gap-16">
+    <div class="poster-frame aspect-[2/3] md:sticky md:top-8" transition:name={`poster-${movie.id}`}>
+      <SanityImage
+        image={poster}
+        alt={`Poster for ${title}`}
+        aspectRatio={2 / 3}
+        sizes="(min-width: 768px) 40vw, 100vw"
+        loading="eager"
+        fetchpriority="high"
+        class="h-full w-full object-cover"
+      />
+    </div>
+
+    <div>
+      <p class="eyebrow">Feature · {year}</p>
+      <h1
+        class="mt-3 font-display text-4xl font-semibold leading-[1.05] tracking-tight text-ink-50 sm:text-5xl"
+      >
+        {title}
+      </h1>
+      <dl class="mt-6 flex flex-wrap gap-x-10 gap-y-3 text-sm">
+        <div>
+          <dt class="text-ink-400">Released</dt>
+          <dd class="mt-1 text-ink-50">{releaseDateLong(releaseDate)}</dd>
+        </div>
+        <div>
+          <dt class="text-ink-400">Cast</dt>
+          <dd class="mt-1 text-ink-50">{castMembers.length} credited</dd>
+        </div>
+      </dl>
+
+      <section aria-labelledby="overview" class="mt-10">
+        <h2 id="overview" class="sr-only">Overview</h2>
+        {
+          overview.length > 0 ? (
+            <div class="prose-cinema max-w-prose text-lg leading-relaxed text-ink-200">
+              <PortableText value={overview} />
+            </div>
+          ) : (
+            <p class="text-ink-400">No overview has been written for this film yet.</p>
+          )
+        }
+      </section>
+
+      <section aria-labelledby="cast" class="mt-14">
+        <div class="flex items-baseline justify-between border-b border-white/5 pb-4">
+          <h2 id="cast" class="font-display text-lg font-medium text-ink-50">Cast</h2>
+          <p class="text-sm text-ink-400">In credits order</p>
+        </div>
+        {
+          castMembers.length > 0 ? (
+            <ul class="mt-8 grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
+              {castMembers.map(({characterName, person}) => (
+                <li>
+                  <PersonCard
+                    href={`/people/${person.slug}`}
+                    name={person.name}
+                    caption={characterName}
+                    image={person.image}
+                  />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p class="mt-8 text-ink-400">No cast has been credited for this film yet.</p>
+          )
+        }
+      </section>
+    </div>
+  </article>
+</Layout>
+
+<style is:global>
+  .prose-cinema p + p {
+    margin-top: 1.25em;
+  }
+</style>

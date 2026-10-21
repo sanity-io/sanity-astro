@@ -6,40 +6,70 @@ import {vitePluginSanityClient} from './vite-plugin-sanity-client'
 import {vitePluginSanityModuleDedupe} from './vite-plugin-sanity-module-dedupe'
 import {vitePluginSanityStudio} from './vite-plugin-sanity-studio'
 import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-chunk-warning'
-import {vitePluginSanityStudioHashRouter} from './vite-plugin-sanity-studio-hash-router'
 
-type IntegrationOptions = ClientConfig & {
+export type StudioRouterHistory = 'browser' | 'hash'
+export type LogClientRequests = 'dev' | 'build' | 'always'
+
+export type IntegrationOptions = ClientConfig & {
+  /**
+   * Mounts Sanity Studio at this path, for example `/admin`. Requires a
+   * `sanity.config.ts|js` in the project root. Leave unset to skip the Studio route.
+   */
   studioBasePath?: string
-  studioRouterHistory?: 'browser' | 'hash'
-  logClientRequests?: 'dev' | 'build' | 'always'
+  /**
+   * `browser` history needs a server adapter, `hash` history works on static output.
+   * Defaults to `hash` for `output: 'static'` and `browser` otherwise.
+   */
+  studioRouterHistory?: StudioRouterHistory
+  /**
+   * Logs every `sanityClient.fetch` and `sanityClient.request` on the server with
+   * its duration, query and calling file.
+   */
+  logClientRequests?: LogClientRequests
+  /**
+   * Registers the `sanity:client` and `sanity:studio` type declarations through
+   * Astro's `injectTypes` (Astro 4.14 and later), so `env.d.ts` needs no
+   * `/// <reference types="@sanity/astro/module" />`. Off by default; the manual
+   * reference keeps working either way.
+   */
+  injectTypes?: boolean
 }
 
 const defaultClientConfig: ClientConfig = {
   apiVersion: 'v2023-08-24',
 }
 
+const studioRoutes = {
+  hash: {
+    entrypoint: '@sanity/astro/studio/studio-route-hash.astro',
+    prerender: true,
+  },
+  browser: {
+    entrypoint: '@sanity/astro/studio/studio-route.astro',
+    prerender: false,
+  },
+} as const satisfies Record<StudioRouterHistory, {entrypoint: string; prerender: boolean}>
+
 function resolveStudioRouterHistory(
-  inputStudioRouterHistory: 'browser' | 'hash' | undefined,
+  requested: StudioRouterHistory | undefined,
   output: unknown,
-): 'browser' | 'hash' {
-  if (inputStudioRouterHistory === 'hash' || inputStudioRouterHistory === 'browser') {
-    return inputStudioRouterHistory
+): StudioRouterHistory {
+  if (requested === 'hash' || requested === 'browser') {
+    return requested
   }
 
   return output === 'static' ? 'hash' : 'browser'
 }
 
-export default function sanityIntegration(
-  integrationConfig: IntegrationOptions = {},
-): AstroIntegration {
-  const studioBasePath = integrationConfig.studioBasePath
+export default function sanityIntegration(options: IntegrationOptions = {}): AstroIntegration {
+  const {
+    studioBasePath,
+    studioRouterHistory: requestedStudioRouterHistory,
+    logClientRequests,
+    injectTypes: shouldInjectTypes = false,
+    ...clientConfig
+  } = options
   const normalizedStudioBasePath = normalizeStudioBasePath(studioBasePath)
-  const inputStudioRouterHistory = integrationConfig.studioRouterHistory
-  const logClientRequests = integrationConfig.logClientRequests
-  const clientConfig = integrationConfig
-  delete clientConfig.studioBasePath
-  delete clientConfig.studioRouterHistory
-  delete clientConfig.logClientRequests
 
   if (!!studioBasePath && studioBasePath.match(/https?:\/\//)) {
     throw new Error(
@@ -52,54 +82,39 @@ export default function sanityIntegration(
     hooks: {
       'astro:config:setup': ({config, injectScript, injectRoute, updateConfig}) => {
         const studioRouterHistory = resolveStudioRouterHistory(
-          inputStudioRouterHistory,
+          requestedStudioRouterHistory,
           config?.output,
         )
-        const vitePlugins = [
-          ...(process.env.SANITY_ASTRO_DISABLE_MODULE_DEDUPE
-            ? []
-            : [vitePluginSanityModuleDedupe()]),
-          vitePluginSanityClient(
-            {
-              ...defaultClientConfig,
-              ...clientConfig,
-            },
-            {logClientRequests},
-          ),
-          vitePluginSanityStudio({
-            studioBasePath: normalizedStudioBasePath,
-            studioRouterHistory,
-          }),
-          vitePluginSanityStudioHashRouter(),
-          vitePluginSanityStudioChunkWarning(),
-        ]
 
         updateConfig({
           vite: {
-            plugins: vitePlugins,
+            plugins: [
+              ...(process.env.SANITY_ASTRO_DISABLE_MODULE_DEDUPE
+                ? []
+                : [vitePluginSanityModuleDedupe()]),
+              vitePluginSanityClient(
+                {...defaultClientConfig, ...clientConfig},
+                {logClientRequests},
+              ),
+              vitePluginSanityStudio({
+                studioBasePath: normalizedStudioBasePath,
+                studioRouterHistory,
+              }),
+              vitePluginSanityStudioChunkWarning(),
+            ],
           },
         })
-        // only load this route if `studioBasePath` is set
+
         const pattern = studioRoutePattern(normalizedStudioBasePath, studioRouterHistory)
         if (pattern) {
-          // If the studio router history is set to hash, we can load a studio route that doesn't need a server adapter
-          if (studioRouterHistory === 'hash') {
-            injectRoute({
-              // @ts-expect-error
-              entryPoint: '@sanity/astro/studio/studio-route-hash.astro', // Astro <= 3
-              entrypoint: '@sanity/astro/studio/studio-route-hash.astro', // Astro > 3
-              pattern,
-              prerender: true,
-            })
-          } else {
-            injectRoute({
-              // @ts-expect-error
-              entryPoint: '@sanity/astro/studio/studio-route.astro', // Astro <= 3
-              entrypoint: '@sanity/astro/studio/studio-route.astro', // Astro > 3
-              pattern,
-              prerender: false,
-            })
-          }
+          const route = studioRoutes[studioRouterHistory]
+          injectRoute({
+            // @ts-expect-error -- `entryPoint` is the Astro <= 3 spelling
+            entryPoint: route.entrypoint,
+            entrypoint: route.entrypoint,
+            pattern,
+            prerender: route.prerender,
+          })
         }
 
         injectScript(
@@ -109,6 +124,15 @@ export default function sanityIntegration(
           globalThis.sanityClient = sanityClient;
           `,
         )
+      },
+      // `injectTypes` arrived in Astro 4.14; older versions keep using the manual
+      // `/// <reference types="@sanity/astro/module" />` even when opted in.
+      'astro:config:done': ({injectTypes}) => {
+        if (!shouldInjectTypes) return
+        injectTypes?.({
+          filename: 'types.d.ts',
+          content: '/// <reference types="@sanity/astro/module" />\n',
+        })
       },
     },
   }
