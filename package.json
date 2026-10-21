@@ -1,5 +1,6 @@
 {
-  "name": "astro",
+  "name": "sanity-astro-monorepo",
+  "version": "0.0.0",
   "private": true,
   "scripts": {
     "build": "turbo run build",
@@ -8,6 +9,7 @@
     "build:example-ssr": "turbo run build --filter=example-ssr...",
     "build:movies": "turbo run build --filter=movies...",
     "build:observatory": "turbo run build --filter=observatory... --filter=observatory-studio...",
+    "changeset": "changeset",
     "check": "turbo run check",
     "clean": "turbo run clean && rimraf .turbo && rimraf node_modules",
     "dev": "pnpm --filter @sanity/astro build && turbo run dev",
@@ -18,10 +20,13 @@
     "dev:observatory": "turbo run dev --filter=observatory --filter=observatory-studio",
     "format": "oxfmt",
     "lint": "turbo run lint",
+    "release": "changeset publish",
     "seed:observatory": "pnpm --filter observatory-studio seed",
     "typegen:observatory": "pnpm --filter observatory-studio typegen && pnpm format"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^1.0.0",
+    "@changesets/cli": "^3.0.1",
     "@turbo/gen": "^1.13.4",
     "eslint": "^8.57.1",
     "eslint-config-custom": "*",
