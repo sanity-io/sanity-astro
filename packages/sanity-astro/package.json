@@ -58,14 +58,21 @@
     "dev": "vite build --watch",
     "prepublishOnly": "pnpm build",
     "test": "vitest run",
-    "test:integration": "vitest run --config vitest.integration.config.ts"
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "typecheck": "tsc -p tsconfig.shipped.json"
   },
   "dependencies": {
     "@sanity/visual-editing": "^6.1.1",
-    "history": "^5.3.0"
+    "@vercel/stega": "^1.1.0",
+    "history": "^5.3.0",
+    "idiomorph": "^0.7.4"
   },
   "devDependencies": {
     "@sanity/client": "^8.2.0",
+    "@sanity/comlink": "^4.0.3",
+    "@sanity/presentation-comlink": "^2.2.3",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
     "@types/serialize-javascript": "^5.0.4",
     "astro": "5.11.1",
     "jsdom": "^29.1.1",
