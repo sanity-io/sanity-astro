@@ -24,6 +24,9 @@ export default defineConfig(() => {
     plugins: [
       dts({
         outDir: 'dist/types',
+        // Tests import helpers from `test/`, which would widen the declaration root to the
+        // package directory and move `index.d.ts` out of the `types` entry point.
+        exclude: ['**/*.test.*'],
       }) as unknown as Plugin,
     ],
   }
