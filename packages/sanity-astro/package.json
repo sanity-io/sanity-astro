@@ -57,11 +57,15 @@
   },
   "dependencies": {
     "@sanity/visual-editing": "^6.1.1",
-    "history": "^5.3.0"
+    "@vercel/stega": "^1.1.0",
+    "history": "^5.3.0",
+    "idiomorph": "^0.7.4"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
     "@sanity/client": "^8.2.0",
+    "@sanity/comlink": "^4.0.3",
+    "@sanity/presentation-comlink": "^2.2.3",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/serialize-javascript": "^5.0.4",

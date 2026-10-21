@@ -5,163 +5,52 @@ import {
 } from '@sanity/visual-editing/react'
 import React from 'react'
 
-import {applyPresentationHistoryUpdate, getPresentationUrl, shouldPublishUrl} from './history.js'
+import type {RefreshStrategy} from './refresh.js'
+import {createRuntime, type Runtime} from './runtime.js'
 
 export type {SuspiciousStegaReport}
 
 export type VisualEditingOptions = Pick<
   InternalVisualEditingOptions,
   'zIndex' | 'refresh' | 'history' | 'keepStegaOnCopy' | 'onSuspiciousStega'
->
-type HistoryAdapter = NonNullable<InternalVisualEditingOptions['history']>
-type HistoryNavigate = Parameters<HistoryAdapter['subscribe']>[0]
-
-const defaultRefresh: NonNullable<InternalVisualEditingOptions['refresh']> = () => {
-  return new Promise((resolve) => {
-    window.location.reload()
-    resolve()
-  })
+> & {
+  /** Used when no `refresh` function is given. Defaults to `morph`. */
+  refreshStrategy?: RefreshStrategy
 }
 
+/**
+ * React island wrapper around the same browser runtime the `.astro` component uses. Reach for
+ * it only when you need a custom `refresh` or `history` function; plain `.astro` pages should
+ * render `VisualEditing` from `@sanity/astro/visual-editing` and skip React entirely.
+ *
+ * @deprecated Prefer `VisualEditing` from `@sanity/astro/visual-editing`. This export stays
+ * until the next major release.
+ */
 export function VisualEditingComponent(props: VisualEditingOptions) {
-  const navigateRef = React.useRef<HistoryNavigate | undefined>(undefined)
-  const lastUrlRef = React.useRef('')
-  const lastPublishedAtRef = React.useRef(0)
-  const optimisticUrlRef = React.useRef<string | undefined>(undefined)
-  const optimisticUntilRef = React.useRef(0)
-  const clearNavigateTimeoutRef = React.useRef<number | undefined>(undefined)
-  const hasCustomHistory = Boolean(props.history)
+  const strategy = props.refreshStrategy ?? 'morph'
+  const [runtime, setRuntime] = React.useState<Runtime>()
+
+  const {history: customHistory, refresh: customRefresh} = props
 
   React.useEffect(() => {
-    // Skip the default URL sync when the consumer supplies their own history adapter.
-    if (hasCustomHistory) {
-      return
-    }
-    const publishUrl = (url: string, force = false) => {
-      const navigate = navigateRef.current
-      if (!navigate) {
-        return
-      }
-      const now = Date.now()
-      const optimisticUrl = optimisticUrlRef.current
-      const optimisticWindowOpen = now < optimisticUntilRef.current
-      if (!force && optimisticUrl && optimisticWindowOpen && url !== optimisticUrl) {
-        return
-      }
-      if (optimisticUrl && url === optimisticUrl) {
-        optimisticUrlRef.current = undefined
-        optimisticUntilRef.current = 0
-      }
-      if (!force && !shouldPublishUrl(url, lastUrlRef.current)) {
-        return
-      }
-      lastUrlRef.current = url
-      lastPublishedAtRef.current = now
-      navigate({
-        type: 'push',
-        title: document.title,
-        url,
-      })
-    }
-    const syncCurrentUrl = () => {
-      publishUrl(getPresentationUrl(window.location))
-    }
-    const publishClickedLink = (event: MouseEvent) => {
-      if (event.defaultPrevented || event.button !== 0) {
-        return
-      }
-      if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) {
-        return
-      }
+    const next = createRuntime({strategy, history: customHistory, refresh: customRefresh})
+    // The runtime installs window listeners, so it cannot be built during render; one extra
+    // render at mount is the price of keeping StrictMode's double-invoked initializers clean.
+    // oxlint-disable-next-line react/set-state-in-effect
+    setRuntime(next)
+    return () => next.dispose()
+  }, [strategy, customHistory, customRefresh])
 
-      const eventTarget = event.target
-      if (!(eventTarget instanceof Element)) {
-        return
-      }
-
-      const anchor = eventTarget.closest('a[href]')
-      if (!(anchor instanceof HTMLAnchorElement)) {
-        return
-      }
-      if (anchor.target && anchor.target !== '_self') {
-        return
-      }
-
-      let targetUrl: URL
-      try {
-        targetUrl = new URL(anchor.href, window.location.href)
-      } catch {
-        return
-      }
-      if (targetUrl.origin !== window.location.origin) {
-        return
-      }
-
-      const url = `${targetUrl.pathname}${targetUrl.search}${targetUrl.hash}`
-      optimisticUrlRef.current = url
-      optimisticUntilRef.current = Date.now() + 1_500
-      publishUrl(url, true)
-    }
-
-    syncCurrentUrl()
-    window.addEventListener('popstate', syncCurrentUrl)
-    window.addEventListener('hashchange', syncCurrentUrl)
-    document.addEventListener('click', publishClickedLink, true)
-    const nativePushState = window.history.pushState
-    const nativeReplaceState = window.history.replaceState
-    window.history.pushState = function (...args) {
-      nativePushState.apply(window.history, args)
-      syncCurrentUrl()
-    }
-    window.history.replaceState = function (...args) {
-      nativeReplaceState.apply(window.history, args)
-      syncCurrentUrl()
-    }
-
-    return () => {
-      window.removeEventListener('popstate', syncCurrentUrl)
-      window.removeEventListener('hashchange', syncCurrentUrl)
-      document.removeEventListener('click', publishClickedLink, true)
-      window.history.pushState = nativePushState
-      window.history.replaceState = nativeReplaceState
-    }
-  }, [hasCustomHistory])
-
-  const defaultHistory = React.useMemo<HistoryAdapter>(
-    () => ({
-      subscribe: (_navigate) => {
-        window.clearTimeout(clearNavigateTimeoutRef.current)
-        navigateRef.current = _navigate
-        const currentUrl = getPresentationUrl(window.location)
-        lastUrlRef.current = currentUrl
-        lastPublishedAtRef.current = Date.now()
-        return () => {
-          // Keep navigation publishing alive briefly for immediate link clicks
-          // after edit mode is toggled off, then release it to respect off mode.
-          clearNavigateTimeoutRef.current = window.setTimeout(() => {
-            if (navigateRef.current === _navigate) {
-              navigateRef.current = undefined
-            }
-          }, 200)
-        }
-      },
-      update: (update) => {
-        applyPresentationHistoryUpdate(update, window.location.href, {
-          assign: (url) => window.location.assign(url),
-          replace: (url) => window.location.replace(url),
-          back: () => window.history.back(),
-        })
-      },
-    }),
-    [],
-  )
+  if (!runtime) {
+    return null
+  }
 
   return (
     <InternalVisualEditing
       portal
-      history={props.history ?? defaultHistory}
+      history={runtime.history}
       zIndex={props.zIndex}
-      refresh={props.refresh ?? defaultRefresh}
+      refresh={runtime.refresh}
       keepStegaOnCopy={props.keepStegaOnCopy}
       onSuspiciousStega={props.onSuspiciousStega}
     />
