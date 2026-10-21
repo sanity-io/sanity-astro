@@ -1,15 +1,21 @@
 ---
 import {VisualEditingComponent, type VisualEditingOptions} from './visual-editing-component'
 
-export interface Props extends Pick<VisualEditingOptions, 'zIndex' | 'keepStegaOnCopy'> {
+export interface Props
+  extends Pick<VisualEditingOptions, 'zIndex' | 'keepStegaOnCopy' | 'assureTypingInterval'> {
   enabled?: boolean
 }
 
-const {enabled, zIndex, keepStegaOnCopy} = Astro.props
+const {enabled, zIndex, keepStegaOnCopy, assureTypingInterval} = Astro.props
 ---
 
 {
   enabled ? (
-    <VisualEditingComponent client:only="react" zIndex={zIndex} keepStegaOnCopy={keepStegaOnCopy} />
+    <VisualEditingComponent
+      client:only="react"
+      zIndex={zIndex}
+      keepStegaOnCopy={keepStegaOnCopy}
+      assureTypingInterval={assureTypingInterval}
+    />
   ) : null
 }

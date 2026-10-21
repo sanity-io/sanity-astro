@@ -278,6 +278,7 @@ const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLE
 - `enabled`: so you can control whether or not visual editing is enabled depending on your environment.
 - `zIndex` (optional): allows you to change the `z-index` of overlay elements.
 - `keepStegaOnCopy` (optional): by default, Visual Editing strips stega from the clipboard on copy. Pass `keepStegaOnCopy` to opt out and leave stega in copied text.
+- `assureTypingInterval` (optional, experimental, opt-in): milliseconds to wait after a change-triggered page reload before reloading once more, e.g. `assureTypingInterval={1200}`. Unset (the default) leaves this off. See [Customizing how the preview refreshes](#customizing-how-the-preview-refreshes) for why you might want it.
 
 In the example above, `enabled` is controlled using an [environment variable](https://docs.astro.build/en/guides/environment-variables/):
 
@@ -288,7 +289,15 @@ PUBLIC_SANITY_VISUAL_EDITING_ENABLED="true"
 
 #### Customizing how the preview refreshes
 
-By default `VisualEditing` reloads the whole page with `window.location.reload()` whenever the Studio reports a change. If you'd rather refresh another way, for example re-fetching data and swapping the DOM in place, pass your own `refresh` function.
+By default `VisualEditing` reloads the whole page with `window.location.reload()` whenever the Studio reports a change.
+
+A full reload also discards the follow-up refresh that Visual Editing normally runs about a second after a change, so text typed in the Studio while the page was reloading can be missing from the preview until the next edit. Opt in to the experimental `assureTypingInterval` to compensate: the default refresh then remembers that a change caused the reload and reloads once more after that many milliseconds once the page is back. This only happens after change-triggered reloads, never after ordinary navigations or the manual refresh button, and it has no effect when you pass your own `refresh`.
+
+```astro
+<VisualEditing enabled={visualEditingEnabled} assureTypingInterval={1200} />
+```
+
+If you'd rather refresh another way, for example re-fetching data and swapping the DOM in place, pass your own `refresh` function.
 
 `refresh` is a function, and Astro can't serialize functions through to a client component, so it isn't accepted on the `.astro` `VisualEditing` component. Instead, import the React component from `@sanity/astro/visual-editing/component` and render it as a `client:only` island:
 

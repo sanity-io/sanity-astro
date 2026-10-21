@@ -5,6 +5,7 @@ import {
 } from '@sanity/visual-editing/react'
 import React from 'react'
 
+import {markFollowUpReload, scheduleFollowUpReload} from './follow-up-reload'
 import {applyPresentationHistoryUpdate, getPresentationUrl, shouldPublishUrl} from './history'
 
 export type {SuspiciousStegaReport}
@@ -12,15 +13,31 @@ export type {SuspiciousStegaReport}
 export type VisualEditingOptions = Pick<
   InternalVisualEditingOptions,
   'zIndex' | 'refresh' | 'history' | 'keepStegaOnCopy' | 'onSuspiciousStega'
->
+> & {
+  /**
+   * Experimental, opt-in. Milliseconds to wait after a change-triggered page reload before
+   * reloading once more, so edits typed while the first reload was in flight
+   * still show up in the preview (Visual Editing's built-in follow-up refresh
+   * is lost when the page fully reloads). Unset, the default, leaves this off.
+   * Only applies to the default `refresh`; ignored when you pass your own.
+   */
+  assureTypingInterval?: number
+}
 type HistoryAdapter = NonNullable<InternalVisualEditingOptions['history']>
 type HistoryNavigate = Parameters<HistoryAdapter['subscribe']>[0]
 
-const defaultRefresh: NonNullable<InternalVisualEditingOptions['refresh']> = () => {
-  return new Promise((resolve) => {
-    window.location.reload()
-    resolve()
-  })
+function createDefaultRefresh(
+  followUpReload: boolean,
+): NonNullable<InternalVisualEditingOptions['refresh']> {
+  return (payload) => {
+    return new Promise((resolve) => {
+      if (followUpReload) {
+        markFollowUpReload(payload, window)
+      }
+      window.location.reload()
+      resolve()
+    })
+  }
 }
 
 export function VisualEditingComponent(props: VisualEditingOptions) {
@@ -31,6 +48,16 @@ export function VisualEditingComponent(props: VisualEditingOptions) {
   const optimisticUntilRef = React.useRef(0)
   const clearNavigateTimeoutRef = React.useRef<number | undefined>()
   const hasCustomHistory = Boolean(props.history)
+  const {assureTypingInterval} = props
+  const followUpReload = typeof assureTypingInterval === 'number' && assureTypingInterval > 0
+  const defaultRefresh = React.useMemo(() => createDefaultRefresh(followUpReload), [followUpReload])
+
+  React.useEffect(() => {
+    if (!followUpReload) {
+      return
+    }
+    return scheduleFollowUpReload(window, () => window.location.reload(), assureTypingInterval)
+  }, [followUpReload, assureTypingInterval])
 
   React.useEffect(() => {
     // Skip the default URL sync when the consumer supplies their own history adapter.
