@@ -49,8 +49,8 @@ const MOVIES_QUERY = /* groq */ `*[_type == "movie" && defined(slug.current) && 
   "overview": coalesce(overview, []),
   "castMembers": coalesce(castMembers[defined(person->slug.current)] {
     _key,
-    characterName,
-    person->{_id, name, "slug": slug.current, image}
+    "characterName": coalesce(characterName, ""),
+    person->{_id, name, "slug": slug.current, "image": select(defined(image.asset) => image)}
   }, [])
 }`
 
@@ -58,7 +58,7 @@ const PEOPLE_QUERY = /* groq */ `*[_type == "person" && defined(slug.current)] |
   _id,
   name,
   "slug": slug.current,
-  image
+  "image": select(defined(image.asset) => image)
 }`
 
 const movies = defineCollection({
