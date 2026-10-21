@@ -15,6 +15,8 @@ export type FollowUpReloadHost = {
   sessionStorage: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
   setTimeout: (callback: () => void, delayMs: number) => number
   clearTimeout: (id: number) => void
+  /** Used to distinguish a true `location.reload()` from same-tab navigations. */
+  performance?: Pick<Performance, 'getEntriesByType'>
 }
 
 /** Call right before the page reloads in response to `payload`. */
@@ -34,8 +36,11 @@ export function markFollowUpReload(
 
 /**
  * Call once on page arrival. Consumes the marker left by `markFollowUpReload`
- * and schedules exactly one `reload` after `delayMs`. Returns a cancel function
- * when a reload was scheduled, otherwise `undefined`.
+ * and schedules exactly one `reload` after `delayMs` — but only when this load
+ * was itself a `reload`. A leftover marker after an ordinary navigation
+ * (`location.assign`, document switch, etc.) is dropped so it cannot reload the
+ * newly arrived page. Returns a cancel function when a reload was scheduled,
+ * otherwise `undefined`.
  */
 export function scheduleFollowUpReload(
   host: FollowUpReloadHost,
@@ -52,6 +57,14 @@ export function scheduleFollowUpReload(
     pending = false
   }
   if (!pending) {
+    return undefined
+  }
+  // sessionStorage survives same-tab navigations; only arm the follow-up when
+  // the current load was actually caused by `location.reload()`.
+  const navigation = host.performance?.getEntriesByType('navigation')[0] as
+    | PerformanceNavigationTiming
+    | undefined
+  if (navigation?.type !== 'reload') {
     return undefined
   }
   const id = host.setTimeout(reload, delayMs)

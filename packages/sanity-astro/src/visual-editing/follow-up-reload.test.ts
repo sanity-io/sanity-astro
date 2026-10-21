@@ -18,7 +18,7 @@ const mutationRefresh: HistoryRefresh = {
 }
 
 /** In-memory stand-in for the browser: storage that survives reloads plus manual timers. */
-function createHost() {
+function createHost(navigationType: PerformanceNavigationTiming['type'] = 'reload') {
   const store = new Map<string, string>()
   const timers = new Map<number, {callback: () => void; delayMs: number}>()
   let nextId = 1
@@ -34,6 +34,10 @@ function createHost() {
       return id
     },
     clearTimeout: (id) => void timers.delete(id),
+    performance: {
+      getEntriesByType: (type) =>
+        type === 'navigation' ? ([{type: navigationType}] as PerformanceNavigationTiming[]) : [],
+    },
   }
   const fireTimers = () => {
     const due = [...timers.values()]
@@ -81,6 +85,19 @@ describe('visual editing follow-up reload', () => {
     markFollowUpReload(manualRefresh, host)
     expect(scheduleFollowUpReload(host, reload, DELAY)).toBeUndefined()
 
+    expect(timers.size).toBe(0)
+    expect(reload).not.toHaveBeenCalled()
+  })
+
+  it('drops a leftover marker after a same-tab navigation (not a reload)', () => {
+    // Marker set, then Presentation assigns a new URL before the island mounts:
+    // sessionStorage still has the flag, but this load is type "navigate".
+    const {host, store, timers} = createHost('navigate')
+    const reload = vi.fn()
+    markFollowUpReload(mutationRefresh, host)
+
+    expect(scheduleFollowUpReload(host, reload, DELAY)).toBeUndefined()
+    expect(store.has(FOLLOW_UP_RELOAD_KEY)).toBe(false)
     expect(timers.size).toBe(0)
     expect(reload).not.toHaveBeenCalled()
   })
