@@ -4,7 +4,11 @@ import React, {act} from 'react'
 import {createRoot, type Root} from 'react-dom/client'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {VisualEditingComponent, type VisualEditingOptions} from './visual-editing-component'
+import {
+  VisualEditingComponent,
+  type VisualEditingComponentProps,
+  type VisualEditingOptions,
+} from './visual-editing-component'
 
 const post = vi.fn()
 const innerProps: Array<Record<string, unknown>> = []
@@ -121,7 +125,7 @@ describe('VisualEditingComponent default history adapter', () => {
 })
 
 describe('VisualEditingComponent prop forwarding', () => {
-  async function mountAndCapture(props: VisualEditingOptions = {}) {
+  async function mountAndCapture(props: VisualEditingComponentProps = {}) {
     await mount(<VisualEditingComponent {...props} />)
     expect(innerProps.length).toBeGreaterThanOrEqual(1)
     return innerProps[innerProps.length - 1]
@@ -152,6 +156,15 @@ describe('VisualEditingComponent prop forwarding', () => {
     for (const [key, value] of Object.entries(props)) {
       expect(inner[key], key).toBe(value)
     }
+  })
+
+  it('keeps experimental_refreshStrategy to itself instead of forwarding it', async () => {
+    const inner = await mountAndCapture({
+      experimental_refreshStrategy: {type: 'reload', followUpDelayMs: 1200},
+    })
+
+    expect('experimental_refreshStrategy' in inner).toBe(false)
+    expect(inner.refresh).toEqual(expect.any(Function))
   })
 
   it('lets a consumer refresh and history win over the defaults', async () => {
