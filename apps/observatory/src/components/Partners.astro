@@ -1,0 +1,25 @@
+---
+interface Props {
+  heading: string
+  partners: string[]
+}
+
+const {heading, partners} = Astro.props
+---
+
+<section class="border-y border-line bg-surface py-10" aria-label="Partners">
+  <div class="mx-auto max-w-6xl px-[clamp(1.25rem,4vw,2.5rem)]">
+    <p
+      class="text-center text-[0.8125rem] font-semibold tracking-[0.08em] text-ink-faint uppercase"
+    >
+      {heading}
+    </p>
+    <ul class="m-0 mt-6 flex list-none flex-wrap justify-center gap-x-12 gap-y-4 p-0">
+      {
+        partners.map((name) => (
+          <li class="text-xl font-bold tracking-[-0.01em] text-ink-faint">{name}</li>
+        ))
+      }
+    </ul>
+  </div>
+</section>

@@ -30,6 +30,7 @@ jobs:
           node-version: lts/*
       - run: pnpm install --ignore-scripts
       - run: pnpm lint
+      - run: pnpm check
       - run: pnpm build
 
   test:

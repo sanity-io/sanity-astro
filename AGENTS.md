@@ -6,14 +6,15 @@ This repo is the official **Sanity + Astro** integration ([`@sanity/astro`](./pa
 
 ### Services
 
-| App (`--filter`) | Dev command               | Port | Notes                                                                                                               |
-| ---------------- | ------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------- |
-| `example`        | `pnpm dev:example`        | 4322 | Static blog demo. Reads **published** content from Sanity Cloud, **no token required**. Best token-free smoke test. |
-| `example-ssr`    | `pnpm dev:example-ssr`    | 4323 | SSR variant (Vercel adapter).                                                                                       |
-| `example-latest` | `pnpm dev:example-latest` | 4324 | Same demo on newer Astro/Sanity.                                                                                    |
-| `movies`         | `pnpm dev:movies`         | 4321 | Movies + Visual Editing demo.                                                                                       |
+| App (`--filter`)                       | Dev command               | Port                       | Notes                                                                                                                                                                                    |
+| -------------------------------------- | ------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `example`                              | `pnpm dev:example`        | 4322                       | Static blog demo. Reads **published** content from Sanity Cloud, **no token required**. Best token-free smoke test.                                                                      |
+| `example-ssr`                          | `pnpm dev:example-ssr`    | 4323                       | SSR variant (Vercel adapter).                                                                                                                                                            |
+| `example-latest`                       | `pnpm dev:example-latest` | 4324                       | Same demo on newer Astro/Sanity.                                                                                                                                                         |
+| `movies`                               | `pnpm dev:movies`         | 4321                       | Movies + Visual Editing demo.                                                                                                                                                            |
+| `observatory` (+ `observatory-studio`) | `pnpm dev:observatory`    | 4325 (site), 3333 (studio) | **Reference implementation** of advanced Sanity features on Astro 7, deliberately without `@sanity/astro` (see `apps/observatory/README.md`). Public dataset, tokenless published reads. |
 
-Each app also mounts an **embedded Sanity Studio at `/admin`** (e.g. `http://localhost:4322/admin`).
+Each `example*`/`movies` app also mounts an **embedded Sanity Studio at `/admin`** (e.g. `http://localhost:4322/admin`); the `observatory` app instead pairs with the standalone `observatory-studio` app on port 3333.
 
 ### Non-obvious gotchas
 
@@ -25,6 +26,8 @@ Each app also mounts an **embedded Sanity Studio at `/admin`** (e.g. `http://loc
 - **Unit tests:** `pnpm --filter @sanity/astro test` (vitest). **Integration tests** (`pnpm --filter @sanity/astro test:integration`) use Playwright and require Chromium: `pnpm --filter @sanity/astro exec playwright install chromium --with-deps`, and a freshly built `dist/`.
 - **Node/pnpm:** `@sanity/astro` requires Node `>=20.19.0 || >=22.12.0`; `packageManager` is pinned to `pnpm@9.15.9`.
 - For embedded Studio login to work against a Sanity project, the dev origin (e.g. `http://localhost:4322`) must be allow-listed in that project's CORS settings.
+- **`observatory` on this VM: override the injected read token.** The `observatory` app reads `SANITY_API_READ_TOKEN` through `astro:env`, where the **process env wins over `.env`** — the opposite trap of the `movies` note. This VM injects `SANITY_API_READ_TOKEN` scoped to project `3do82whm`, while `observatory` targets its own project `gvy5piix`, so a bare `pnpm dev:observatory` yields HTTP 401 `Session does not match project host` on every page. Start it with the app's `.env` exported over the process env: `set -a; source apps/observatory/.env; set +a; pnpm dev:observatory`. The token is only needed for draft preview anyway — with no token at all, published pages render fine.
+- **`observatory` content and seeding.** Content lives in the public dataset `production` of project `gvy5piix`; `pnpm seed:observatory` re-seeds it idempotently (needs `SANITY_AUTH_TOKEN` with write access in `apps/observatory-studio/.env`) and `pnpm typegen:observatory` regenerates the committed query types. The audience-personalization code paths are gated behind `PUBLIC_SANITY_VARIANTS_ENABLED` because the content variants beta is not yet enabled for `gvy5piix`; the seed script detects this and skips variant publishing with instructions.
 
 ### Providing the `movies` token
 
