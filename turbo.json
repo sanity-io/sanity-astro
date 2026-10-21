@@ -10,7 +10,9 @@
         "PUBLIC_SANITY_PROJECT_ID",
         "PUBLIC_SANITY_DATASET",
         "PUBLIC_SANITY_VISUAL_EDITING_ENABLED",
-        "SANITY_API_READ_TOKEN"
+        "SANITY_API_READ_TOKEN",
+        "VERCEL_BRANCH_URL",
+        "VERCEL_PROJECT_PRODUCTION_URL"
       ],
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".astro/**", ".vercel/output/**"]
