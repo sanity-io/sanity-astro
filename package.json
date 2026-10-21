@@ -23,9 +23,13 @@
     "dev:movies": "pnpm --filter @sanity/astro build && turbo run dev --filter=movies",
     "dev:observatory": "turbo run dev --filter=observatory --filter=observatory-studio",
     "format": "oxfmt",
+    "format:check": "oxfmt --check",
     "lint": "turbo run lint",
     "release": "changeset publish",
     "seed:observatory": "pnpm --filter observatory-studio seed",
+    "test": "turbo run test",
+    "test:integration": "turbo run test:integration",
+    "typecheck": "turbo run typecheck",
     "typegen:observatory": "pnpm --filter observatory-studio typegen && pnpm format"
   },
   "devDependencies": {
