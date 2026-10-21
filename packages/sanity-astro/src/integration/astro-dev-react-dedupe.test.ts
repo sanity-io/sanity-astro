@@ -44,6 +44,12 @@ const fixtures: Fixture[] = [
     hasReactIsland: false,
     loadStudio: false,
   },
+  {
+    appDirectory: 'apps/cinema',
+    studioPath: '/admin',
+    hasReactIsland: false,
+    loadStudio: false,
+  },
 ]
 
 function assertSanityAstroIsBuilt() {
@@ -120,7 +126,7 @@ describe.sequential('astro dev duplicate React regression (#406)', () => {
   })
 
   it.each(fixtures)(
-    '$appDirectory hydrates react islands and embedded studio without duplicate module errors',
+    '$appDirectory serves its pages without duplicate module errors',
     async (fixture) => {
       const devServer = await startAstroDevServer({appDirectory: fixture.appDirectory})
       const browser = await chromium.launch({headless: true})

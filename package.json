@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
+    "build:cinema": "turbo run build --filter=cinema...",
     "build:example": "turbo run build --filter=example...",
     "build:example-latest": "turbo run build --filter=example-latest...",
     "build:example-ssr": "turbo run build --filter=example-ssr...",
@@ -14,6 +15,7 @@
     "check": "turbo run check",
     "clean": "turbo run clean && rimraf .turbo && rimraf node_modules",
     "dev": "pnpm --filter @sanity/astro build && turbo run dev",
+    "dev:cinema": "pnpm --filter @sanity/astro build && turbo run dev --filter=cinema",
     "dev:example": "pnpm --filter @sanity/astro build && turbo run dev --filter=example",
     "dev:example-latest": "pnpm --filter @sanity/astro build && turbo run dev --filter=example-latest",
     "dev:example-ssr": "pnpm --filter @sanity/astro build && turbo run dev --filter=example-ssr",
