@@ -1,24 +1,29 @@
 import {describe, expect, it, vi} from 'vitest'
 
-import sanityIntegration from './index'
+import sanityIntegration, {type IntegrationOptions} from './index'
 import {
   SANITY_MODULE_DEDUPE,
   vitePluginSanityModuleDedupe,
 } from './vite-plugin-sanity-module-dedupe'
 import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-chunk-warning'
 
+type SetupOptions = Pick<
+  IntegrationOptions,
+  'studioBasePath' | 'studioRouterHistory' | 'logClientRequests'
+> & {output?: 'static' | 'server'}
+
 async function runSetup({
   output = 'static',
   studioRouterHistory,
-}: {
-  output?: 'static' | 'server'
-  studioRouterHistory?: 'browser' | 'hash'
-} = {}) {
+  studioBasePath = '/admin',
+  logClientRequests,
+}: SetupOptions = {}) {
   const integration = sanityIntegration({
     projectId: 'project-id',
     dataset: 'dataset-name',
-    studioBasePath: '/admin',
+    studioBasePath,
     studioRouterHistory,
+    logClientRequests,
   })
   const setup = integration.hooks['astro:config:setup']
   const injectRoute = vi.fn()
@@ -27,10 +32,150 @@ async function runSetup({
 
   await setup({config: {output}, injectRoute, updateConfig, injectScript} as never)
 
-  return {injectRoute, updateConfig, injectScript}
+  const vitePlugins: Array<{name?: string; load?: (id: string) => unknown}> =
+    updateConfig.mock.calls[0][0].vite.plugins
+
+  return {injectRoute, updateConfig, injectScript, vitePlugins}
 }
 
+describe('sanity integration options', () => {
+  it('does not mutate the options object passed by the caller', () => {
+    const options = {
+      projectId: 'project-id',
+      dataset: 'dataset-name',
+      studioBasePath: '/admin',
+      studioRouterHistory: 'hash' as const,
+      logClientRequests: 'dev' as const,
+    }
+    const snapshot = structuredClone(options)
+
+    sanityIntegration(options)
+
+    expect(options).toEqual(snapshot)
+  })
+
+  it('rejects an absolute URL for studioBasePath', () => {
+    expect(() => sanityIntegration({studioBasePath: 'https://example.com/admin'})).toThrow(
+      /relative URL/,
+    )
+  })
+
+  it('forwards only client config into the sanity:client virtual module', async () => {
+    const {vitePlugins} = await runSetup({logClientRequests: 'build'})
+    const clientPlugin = vitePlugins.find((plugin) => plugin.name === 'sanity:client')
+    const source = String(clientPlugin?.load?.('\0sanity:client'))
+
+    expect(source).toContain('"projectId":"project-id"')
+    expect(source).toContain('"dataset":"dataset-name"')
+    expect(source).toContain('"apiVersion":"v2023-08-24"')
+    expect(source).toContain('const logClientRequests = "build"')
+    expect(source).not.toContain('studioBasePath')
+    expect(source).not.toContain('studioRouterHistory')
+    expect(source).not.toContain('logClientRequests:')
+  })
+
+  it('exposes sanityClient on globalThis for server rendering', async () => {
+    const {injectScript} = await runSetup()
+
+    expect(injectScript).toHaveBeenCalledTimes(1)
+    const [stage, script] = injectScript.mock.calls[0]
+    expect(stage).toBe('page-ssr')
+    expect(script).toContain('from "sanity:client"')
+    expect(script).toContain('globalThis.sanityClient = sanityClient')
+  })
+
+  it('skips the studio route when studioBasePath is not set', async () => {
+    const integration = sanityIntegration({projectId: 'project-id', dataset: 'dataset-name'})
+    const injectRoute = vi.fn()
+
+    await integration.hooks['astro:config:setup']!({
+      config: {output: 'static'},
+      injectRoute,
+      updateConfig: vi.fn(),
+      injectScript: vi.fn(),
+    } as never)
+
+    expect(injectRoute).not.toHaveBeenCalled()
+  })
+
+  it('normalizes studioBasePath before building the route pattern', async () => {
+    const {injectRoute} = await runSetup({studioBasePath: 'cms/', output: 'server'})
+
+    expect(injectRoute).toHaveBeenCalledWith(expect.objectContaining({pattern: '/cms/[...params]'}))
+  })
+})
+
+describe('sanity integration types', () => {
+  it('does not touch .astro/ types unless injectTypes is enabled', async () => {
+    const integration = sanityIntegration({projectId: 'project-id', dataset: 'dataset-name'})
+    const injectTypes = vi.fn()
+
+    await integration.hooks['astro:config:done']!({injectTypes} as never)
+
+    expect(injectTypes).not.toHaveBeenCalled()
+  })
+
+  it('injects a reference to the shipped module declarations when opted in', async () => {
+    const integration = sanityIntegration({
+      projectId: 'project-id',
+      dataset: 'dataset-name',
+      injectTypes: true,
+    })
+    const injectTypes = vi.fn()
+
+    await integration.hooks['astro:config:done']!({injectTypes} as never)
+
+    expect(injectTypes).toHaveBeenCalledWith({
+      filename: 'types.d.ts',
+      content: expect.stringContaining('/// <reference types="@sanity/astro/module" />'),
+    })
+  })
+
+  it('keeps injectTypes out of the client config', async () => {
+    const integration = sanityIntegration({
+      projectId: 'project-id',
+      dataset: 'dataset-name',
+      injectTypes: true,
+    })
+    const updateConfig = vi.fn()
+
+    await integration.hooks['astro:config:setup']!({
+      config: {output: 'static'},
+      injectRoute: vi.fn(),
+      updateConfig,
+      injectScript: vi.fn(),
+    } as never)
+    const clientPlugin = updateConfig.mock.calls[0][0].vite.plugins.find(
+      (plugin: {name?: string}) => plugin.name === 'sanity:client',
+    )
+    const code = await clientPlugin.load('\0sanity:client')
+
+    expect(code).not.toContain('injectTypes')
+  })
+
+  it('tolerates Astro versions without injectTypes when opted in', async () => {
+    const integration = sanityIntegration({
+      projectId: 'project-id',
+      dataset: 'dataset-name',
+      injectTypes: true,
+    })
+
+    expect(() => integration.hooks['astro:config:done']!({} as never)).not.toThrow()
+  })
+})
+
 describe('sanity integration vite config', () => {
+  it('registers exactly the plugins the integration owns', async () => {
+    const {vitePlugins} = await runSetup()
+
+    expect(vitePlugins.map((plugin) => plugin.name)).toEqual([
+      'sanity:module-dedupe',
+      'sanity:client',
+      'sanity:studio',
+      'vite-plugin-sanity-studio-chunk-warning',
+    ])
+  })
+
   it('registers module dedupe plugin (#406)', async () => {
     const {updateConfig} = await runSetup()
 
