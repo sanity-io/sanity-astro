@@ -5,14 +5,21 @@ const roots: Array<{root: Root; container: HTMLElement}> = []
 
 ;(globalThis as {IS_REACT_ACT_ENVIRONMENT?: boolean}).IS_REACT_ACT_ENVIRONMENT = true
 
-export async function renderInAct(element: ReactElement): Promise<void> {
+/** Renders into a fresh root and returns a function that re-renders that same root. */
+export async function renderInAct(
+  element: ReactElement,
+): Promise<(next: ReactElement) => Promise<void>> {
   const container = document.createElement('div')
   document.body.appendChild(container)
   const root = createRoot(container)
-  await act(async () => {
-    root.render(element)
-  })
+  const render = async (next: ReactElement) => {
+    await act(async () => {
+      root.render(next)
+    })
+  }
+  await render(element)
   roots.push({root, container})
+  return render
 }
 
 export async function unmountAll(): Promise<void> {
