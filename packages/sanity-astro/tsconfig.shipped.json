@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "astro/tsconfigs/strictest",
+  "include": ["src/env.d.ts", "src/visual-editing/**/*.ts", "src/visual-editing/**/*.tsx"],
+  "exclude": ["src/**/*.test.*"],
+  "compilerOptions": {
+    "noEmit": true
+  }
+}

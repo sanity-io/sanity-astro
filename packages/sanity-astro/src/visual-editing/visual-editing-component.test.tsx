@@ -2,120 +2,178 @@
 import React from 'react'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {clickAnchor, renderInAct, unmountAll} from '../../test/react'
-import {VisualEditingComponent, type VisualEditingOptions} from './visual-editing-component'
+import {mockLocationReload} from '../../test/location'
+import {renderInAct, unmountAll} from '../../test/react'
+import {
+  type HistoryAdapter,
+  type HistoryAdapterNavigate,
+  type HistoryRefresh,
+  VisualEditingComponent,
+  type VisualEditingOptions,
+} from './visual-editing-component'
 
-type HistoryAdapter = NonNullable<VisualEditingOptions['history']>
-type Navigate = Parameters<HistoryAdapter['subscribe']>[0]
-type CapturedProps = {history: HistoryAdapter; refresh: () => Promise<void>; zIndex?: number}
+type Refresh = (payload: HistoryRefresh) => Promise<void> | false
+type Captured = Record<string, unknown> & {history: HistoryAdapter; refresh: Refresh}
 
-const renders: CapturedProps[] = []
+const renders: Captured[] = []
 
 vi.mock('@sanity/visual-editing/react', () => ({
-  VisualEditing: (props: CapturedProps) => {
+  VisualEditing: (props: Captured) => {
     renders.push(props)
     return null
   },
 }))
 
+const manual: HistoryRefresh = {source: 'manual', livePreviewEnabled: false}
+const last = () => renders[renders.length - 1]!
+
 async function renderVisualEditing(props: VisualEditingOptions = {}) {
-  await renderInAct(React.createElement(VisualEditingComponent, props))
-  return renders[renders.length - 1]
+  const rerender = await renderInAct(<VisualEditingComponent {...props} />)
+  return {
+    props: last(),
+    rerender: async (next: VisualEditingOptions) => {
+      await rerender(<VisualEditingComponent {...next} />)
+      return last()
+    },
+  }
+}
+
+function stubFetch(html: string) {
+  const fetchMock = vi.fn(
+    async () => new Response(html, {status: 200, headers: {'content-type': 'text/html'}}),
+  )
+  vi.stubGlobal('fetch', fetchMock)
+  return fetchMock
 }
 
 beforeEach(() => {
   renders.length = 0
   window.history.replaceState(null, '', '/')
-  vi.useFakeTimers()
 })
 
 afterEach(async () => {
   await unmountAll()
-  vi.useRealTimers()
+  vi.unstubAllGlobals()
+  document.body.replaceChildren()
 })
 
 describe('VisualEditingComponent', () => {
-  it('passes zIndex through and reloads the page on refresh by default', async () => {
-    const reload = vi.fn()
-    const originalLocation = window.location
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: {
-        ...window.location,
-        reload,
-        pathname: '/',
-        search: '',
-        hash: '',
-        href: 'http://localhost/',
-      },
-    })
-
+  it('forces portal and, by default, reloads the page on refresh', async () => {
+    const fetchMock = stubFetch('<html><body></body></html>')
+    const location = mockLocationReload()
     try {
-      const props = await renderVisualEditing({zIndex: 42})
-      await props.refresh()
+      const {props} = await renderVisualEditing({zIndex: 42})
 
+      expect(props.portal).toBe(true)
       expect(props.zIndex).toBe(42)
-      expect(reload).toHaveBeenCalledTimes(1)
+      await expect(props.refresh(manual)).resolves.toBeUndefined()
+      expect(location.reload).toHaveBeenCalledTimes(1)
+      expect(fetchMock).not.toHaveBeenCalled()
     } finally {
-      Object.defineProperty(window, 'location', {configurable: true, value: originalLocation})
+      location.restore()
     }
   })
 
-  it('publishes pushState, replaceState and popstate navigation to Presentation', async () => {
-    const props = await renderVisualEditing()
-    const navigate = vi.fn<Navigate>()
-    props.history.subscribe(navigate)
+  it('morphs the page in place on refresh with experimental_inPlaceRefresh', async () => {
+    const marker = document.createElement('p')
+    marker.id = 'lab-marker'
+    marker.textContent = 'before'
+    document.body.appendChild(marker)
+    const fetchMock = stubFetch(
+      '<html><head></head><body><p id="lab-marker">after</p></body></html>',
+    )
+    const location = mockLocationReload()
+    try {
+      const {props} = await renderVisualEditing({experimental_inPlaceRefresh: true})
 
-    window.history.pushState(null, '', '/movies/walle')
-    window.history.replaceState(null, '', '/movies/walle?tab=cast')
-    window.history.replaceState(null, '', '/people/andrew')
-    window.dispatchEvent(new PopStateEvent('popstate'))
+      await props.refresh(manual)
 
-    expect(navigate.mock.calls.map(([update]) => update.url)).toEqual([
-      '/movies/walle',
-      '/movies/walle?tab=cast',
-      '/people/andrew',
-    ])
-    expect(navigate.mock.calls[0][0]).toEqual({
-      type: 'push',
-      title: document.title,
-      url: '/movies/walle',
-    })
+      expect(fetchMock).toHaveBeenCalledWith(window.location.href, expect.any(Object))
+      expect(document.getElementById('lab-marker')?.textContent).toBe('after')
+      expect(location.reload).not.toHaveBeenCalled()
+    } finally {
+      location.restore()
+    }
   })
 
-  it('publishes a clicked same-origin link before the browser navigates', async () => {
-    const props = await renderVisualEditing()
-    const navigate = vi.fn<Navigate>()
-    props.history.subscribe(navigate)
+  it('forwards every upstream option by reference', async () => {
+    const options = {
+      zIndex: 1234,
+      keepStegaOnCopy: true,
+      components: vi.fn(),
+      plugins: [],
+      onPerspectiveChange: vi.fn(),
+      onVariantChange: vi.fn(),
+      onSuspiciousStega: vi.fn(),
+    } satisfies VisualEditingOptions
 
-    clickAnchor('/movies/guardians')
+    const {props} = await renderVisualEditing(options)
 
-    expect(navigate).toHaveBeenCalledWith(expect.objectContaining({url: '/movies/guardians'}))
+    for (const [key, value] of Object.entries(options)) {
+      expect(props[key], key).toBe(value)
+    }
+    expect(props).not.toHaveProperty('experimental_inPlaceRefresh')
   })
 
-  it('ignores clicks on other origins and drops navigation once unsubscribed', async () => {
-    const props = await renderVisualEditing()
-    const navigate = vi.fn<Navigate>()
-    const unsubscribe = props.history.subscribe(navigate)
-
-    clickAnchor('https://example.com/movies/guardians')
-    expect(navigate).not.toHaveBeenCalled()
-
-    unsubscribe()
-    vi.advanceTimersByTime(250)
-    window.history.pushState(null, '', '/after-unsubscribe')
-
-    expect(navigate).not.toHaveBeenCalled()
-  })
-
-  it('leaves history alone when the consumer brings their own adapter', async () => {
-    const custom: HistoryAdapter = {subscribe: () => () => {}, update: () => {}}
+  it('passes a consumer refresh and history through by identity and leaves window.history alone', async () => {
     const nativePushState = window.history.pushState
+    const refresh = vi.fn(() => false as const)
+    const history: HistoryAdapter = {subscribe: () => () => {}, update: () => {}}
 
-    const props = await renderVisualEditing({history: custom})
+    const {props} = await renderVisualEditing({refresh, history, experimental_inPlaceRefresh: true})
 
-    expect(props.history).toBe(custom)
+    expect(props.refresh).toBe(refresh)
+    expect(props.history).toBe(history)
+    expect(props.portal).toBe(true)
     expect(window.history.pushState).toBe(nativePushState)
+  })
+
+  it('keeps the same defaults across re-renders with new inline callbacks', async () => {
+    const {props, rerender} = await renderVisualEditing({onSuspiciousStega: () => {}})
+
+    const next = await rerender({onSuspiciousStega: () => {}, zIndex: 7})
+
+    expect(next.history).toBe(props.history)
+    expect(next.refresh).toBe(props.refresh)
+    expect(next.zIndex).toBe(7)
+  })
+
+  it('does not rebuild the default history when an inline refresh changes identity', async () => {
+    const {props, rerender} = await renderVisualEditing({refresh: () => false})
+    // The adapter patches pushState on install, so a rebuild would swap in a new wrapper.
+    const patchedPushState = window.history.pushState
+
+    const second = await rerender({refresh: () => false})
+    const third = await rerender({refresh: () => false})
+
+    expect(window.history.pushState).toBe(patchedPushState)
+    expect(second.history).toBe(props.history)
+    expect(third.history).toBe(props.history)
+    expect(third.refresh).not.toBe(second.refresh)
+  })
+
+  it('rebuilds the refresh handler when experimental_inPlaceRefresh changes', async () => {
+    const {props, rerender} = await renderVisualEditing()
+
+    const next = await rerender({experimental_inPlaceRefresh: true})
+
+    expect(next.refresh).not.toBe(props.refresh)
+  })
+
+  it('reports the current URL to Presentation as soon as it subscribes', async () => {
+    window.history.replaceState(null, '', '/movies/abc?x=1#cast')
+    document.title = 'Movie ABC'
+    const {props} = await renderVisualEditing()
+    const navigate = vi.fn<HistoryAdapterNavigate>()
+
+    props.history.subscribe(navigate)
+
+    expect(navigate).toHaveBeenCalledTimes(1)
+    expect(navigate).toHaveBeenCalledWith({
+      type: 'push',
+      title: 'Movie ABC',
+      url: '/movies/abc?x=1#cast',
+    })
   })
 
   it('restores the native history methods on unmount', async () => {
