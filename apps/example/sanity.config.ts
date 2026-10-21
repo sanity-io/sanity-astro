@@ -1,6 +1,6 @@
 import {visionTool} from '@sanity/vision'
 import {defineConfig} from 'sanity'
-import {deskTool} from 'sanity/desk'
+import {structureTool} from 'sanity/structure'
 import {sanityClient} from 'sanity:client'
 
 import {schemaTypes} from './schemas'
@@ -17,7 +17,7 @@ export default defineConfig([
     basePath: '/workspace-1',
     projectId,
     dataset,
-    plugins: [deskTool(), visionTool()],
+    plugins: [structureTool(), visionTool()],
     schema: {
       types: schemaTypes,
     },
@@ -28,7 +28,7 @@ export default defineConfig([
     basePath: '/workspace-2',
     projectId,
     dataset,
-    plugins: [deskTool(), visionTool()],
+    plugins: [structureTool(), visionTool()],
     schema: {
       types: schemaTypes,
     },
