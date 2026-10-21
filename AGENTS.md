@@ -22,7 +22,7 @@ Describe the change for people who use `@sanity/astro`
 
 ## Cursor Cloud specific instructions
 
-This repo is the official **Sanity + Astro** integration ([`@sanity/astro`](./packages/sanity-astro)) — a pnpm + Turborepo monorepo containing the library plus four example Astro apps under `apps/`. There is **no local database**; content is served from **hosted Sanity Cloud**, so the dev servers need outbound network access to Sanity's API/CDN to render content.
+This repo is the official **Sanity + Astro** integration ([`@sanity/astro`](./packages/sanity-astro)) — a pnpm + Turborepo monorepo containing the library plus the example Astro apps under `apps/` (listed in the table below). There is **no local database**; content is served from **hosted Sanity Cloud**, so the dev servers need outbound network access to Sanity's API/CDN to render content.
 
 ### Services
 
@@ -34,6 +34,7 @@ This repo is the official **Sanity + Astro** integration ([`@sanity/astro`](./pa
 | `movies`                               | `pnpm dev:movies`         | 4321                       | Movies + Visual Editing demo.                                                                                                                                                            |
 | `observatory` (+ `observatory-studio`) | `pnpm dev:observatory`    | 4325 (site), 3333 (studio) | **Reference implementation** of advanced Sanity features on Astro 7, deliberately without `@sanity/astro` (see `apps/observatory/README.md`). Public dataset, tokenless published reads. |
 | `minimal`                              | `pnpm dev:minimal`        | 4326                       | Smallest setup: one page, `sanity:client` only, no React, no Studio, **no token required**.                                                                                              |
+| `cinema`                               | `pnpm dev:cinema`         | 4327                       | Static Astro 7 site with content collections through `sanityLoader`, embedded Studio at `/admin`, Tailwind CSS 4. Public movies dataset, **no token required**.                          |
 
 Each `example*`/`movies` app also mounts an **embedded Sanity Studio at `/admin`** (e.g. `http://localhost:4322/admin`); the `observatory` app instead pairs with the standalone `observatory-studio` app on port 3333, and `minimal` has no Studio at all.
 
