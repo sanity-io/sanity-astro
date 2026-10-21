@@ -1,0 +1,45 @@
+---
+import CtaBanner from '../components/CtaBanner.astro'
+import Hero from '../components/Hero.astro'
+import Highlights from '../components/Highlights.astro'
+import Partners from '../components/Partners.astro'
+import Testimonial from '../components/Testimonial.astro'
+import Layout from '../layouts/Layout.astro'
+import {mergeTags, PAGE_CACHE, sanityFetch} from '../sanity/fetch'
+import {ogImageUrl} from '../sanity/image'
+import {HOME_PAGE_QUERY, SITE_SETTINGS_QUERY} from '../sanity/queries'
+
+const fetchContext = {audience: Astro.locals.audience, preview: Astro.locals.preview}
+
+const [settingsResult, pageResult] = await Promise.all([
+  sanityFetch(SITE_SETTINGS_QUERY, fetchContext),
+  sanityFetch(HOME_PAGE_QUERY, fetchContext),
+])
+
+const settings = settingsResult.data
+const page = pageResult.data
+
+if (!settings || !page) {
+  throw new Error('Home page content is missing. Seed the dataset with `pnpm seed`.')
+}
+
+const liveTags = mergeTags(settingsResult, pageResult)
+
+// Cached on the CDN until one of its sync tags is purged, with a TTL backstop.
+// Under `/preview` the middleware turns caching off again after rendering.
+Astro.cache.set({tags: liveTags, ...PAGE_CACHE})
+---
+
+<Layout
+  title={page.seo.title}
+  description={page.seo.description}
+  ogImage={page.seo.ogImage?.asset ? ogImageUrl(page.seo.ogImage) : undefined}
+  liveTags={liveTags}
+  settings={settings}
+>
+  <Hero hero={page.hero} />
+  <Partners heading={page.partnersHeading} partners={page.partners} />
+  <Highlights heading={page.highlightsHeading} highlights={page.highlights} />
+  <Testimonial testimonial={page.testimonial} />
+  <CtaBanner cta={page.cta} />
+</Layout>
