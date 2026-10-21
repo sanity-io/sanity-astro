@@ -6,22 +6,27 @@ import {
 import React from 'react'
 
 import {applyPresentationHistoryUpdate, getPresentationUrl, shouldPublishUrl} from './history'
+import {
+  createDefaultRefresh,
+  type RefreshStrategy,
+  resolveRefreshStrategy,
+} from './refresh-strategy'
 
-export type {SuspiciousStegaReport}
+export type {RefreshStrategy, SuspiciousStegaReport}
 
 export type VisualEditingOptions = Pick<
   InternalVisualEditingOptions,
   'zIndex' | 'refresh' | 'history' | 'keepStegaOnCopy' | 'onSuspiciousStega'
->
+> & {
+  /**
+   * Experimental, opt-in. How the default `refresh` updates the preview when Presentation
+   * reports a change; see {@link RefreshStrategy}. Unset, the default, is a plain page reload.
+   * Ignored when you pass your own `refresh`.
+   */
+  experimental_refreshStrategy?: RefreshStrategy
+}
 type HistoryAdapter = NonNullable<InternalVisualEditingOptions['history']>
 type HistoryNavigate = Parameters<HistoryAdapter['subscribe']>[0]
-
-const defaultRefresh: NonNullable<InternalVisualEditingOptions['refresh']> = () => {
-  return new Promise((resolve) => {
-    window.location.reload()
-    resolve()
-  })
-}
 
 export function VisualEditingComponent(props: VisualEditingOptions) {
   const navigateRef = React.useRef<HistoryNavigate | undefined>()
@@ -31,6 +36,17 @@ export function VisualEditingComponent(props: VisualEditingOptions) {
   const optimisticUntilRef = React.useRef(0)
   const clearNavigateTimeoutRef = React.useRef<number | undefined>()
   const hasCustomHistory = Boolean(props.history)
+  const hasCustomRefresh = Boolean(props.refresh)
+  // A custom `refresh` replaces the strategy, so no follow-up reload is armed for it.
+  const {followUpDelayMs} = hasCustomRefresh
+    ? {followUpDelayMs: undefined}
+    : resolveRefreshStrategy(props.experimental_refreshStrategy)
+  const defaultRefresh = React.useMemo(
+    () => createDefaultRefresh({type: 'reload', followUpDelayMs}, window),
+    [followUpDelayMs],
+  )
+
+  React.useEffect(() => defaultRefresh.arrive(), [defaultRefresh])
 
   React.useEffect(() => {
     // Skip the default URL sync when the consumer supplies their own history adapter.
@@ -161,7 +177,7 @@ export function VisualEditingComponent(props: VisualEditingOptions) {
       portal
       history={props.history ?? defaultHistory}
       zIndex={props.zIndex}
-      refresh={props.refresh ?? defaultRefresh}
+      refresh={props.refresh ?? defaultRefresh.refresh}
       keepStegaOnCopy={props.keepStegaOnCopy}
       onSuspiciousStega={props.onSuspiciousStega}
     />
