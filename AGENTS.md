@@ -33,8 +33,9 @@ This repo is the official **Sanity + Astro** integration ([`@sanity/astro`](./pa
 | `example-latest`                       | `pnpm dev:example-latest` | 4324                       | Same demo on newer Astro/Sanity.                                                                                                                                                         |
 | `movies`                               | `pnpm dev:movies`         | 4321                       | Movies + Visual Editing demo.                                                                                                                                                            |
 | `observatory` (+ `observatory-studio`) | `pnpm dev:observatory`    | 4325 (site), 3333 (studio) | **Reference implementation** of advanced Sanity features on Astro 7, deliberately without `@sanity/astro` (see `apps/observatory/README.md`). Public dataset, tokenless published reads. |
+| `minimal`                              | `pnpm dev:minimal`        | 4326                       | Smallest setup: one page, `sanity:client` only, no React, no Studio, **no token required**.                                                                                              |
 
-Each `example*`/`movies` app also mounts an **embedded Sanity Studio at `/admin`** (e.g. `http://localhost:4322/admin`); the `observatory` app instead pairs with the standalone `observatory-studio` app on port 3333.
+Each `example*`/`movies` app also mounts an **embedded Sanity Studio at `/admin`** (e.g. `http://localhost:4322/admin`); the `observatory` app instead pairs with the standalone `observatory-studio` app on port 3333, and `minimal` has no Studio at all.
 
 ### Non-obvious gotchas
 
