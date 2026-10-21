@@ -1,0 +1,44 @@
+---
+import {type Audience, AUDIENCE_RESET, AUDIENCES} from '../lib/audience'
+
+interface Props {
+  audience: Audience | undefined
+}
+
+const {audience} = Astro.props
+const {pathname} = Astro.url
+---
+
+{/* These GETs redirect with a Set-Cookie, so they are exempt from prefetching. */}
+<aside
+  class="fixed bottom-4 left-4 z-60 flex items-center gap-1 whitespace-nowrap rounded-full border border-line bg-panel px-2 py-1.5 text-[0.8125rem] font-medium text-panel-ink shadow-[0_8px_24px_-8px_rgba(2,6,23,0.9)]"
+  aria-label="View this page as a specific audience"
+>
+  <span class="pr-1 pl-2 text-ink-faint">View as</span>
+  {
+    AUDIENCES.map(({id, label}) => (
+      <a
+        href={`${pathname}?audience=${id}`}
+        class:list={[
+          'rounded-full px-3 py-1 font-semibold no-underline',
+          id === audience ? 'bg-accent text-page' : 'text-panel-ink hover:bg-white/[0.08]',
+        ]}
+        aria-current={id === audience ? 'true' : undefined}
+        data-astro-prefetch="false"
+      >
+        {label}
+      </a>
+    ))
+  }
+  {
+    audience !== undefined && (
+      <a
+        class="ml-1 rounded-r-full rounded-l-none border-l border-white/[0.16] px-3 py-1 font-semibold text-accent-ink no-underline hover:bg-white/[0.08]"
+        href={`${pathname}?audience=${AUDIENCE_RESET}`}
+        data-astro-prefetch="false"
+      >
+        Exit
+      </a>
+    )
+  }
+</aside>

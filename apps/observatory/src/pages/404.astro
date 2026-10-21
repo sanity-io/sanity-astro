@@ -1,0 +1,35 @@
+---
+import {getLiveEntry} from 'astro:content'
+
+import Layout from '../layouts/Layout.astro'
+
+const {entry, error} = await getLiveEntry('siteSettings', {
+  audience: Astro.locals.audience,
+  preview: Astro.locals.preview,
+})
+
+const settings = entry?.data
+
+if (!settings) {
+  throw error ?? new Error('Site settings are missing. Seed the dataset with `pnpm seed`.')
+}
+---
+
+<Layout
+  title="Page not found"
+  description="The page you are looking for does not exist."
+  settings={settings}
+>
+  <section class="py-[clamp(4rem,10vw,7rem)]">
+    <div class="mx-auto max-w-xl px-[clamp(1.25rem,4vw,2.5rem)] text-center">
+      <h1 class="text-[clamp(2rem,4.5vw,3rem)]">Lost in space</h1>
+      <p class="mt-4 mb-8 text-ink-muted">
+        The page you are looking for doesn't exist or has moved.
+      </p>
+      <a
+        class="inline-block rounded-full border border-transparent bg-accent px-6 py-3 font-semibold text-page no-underline transition-colors duration-150 hover:bg-accent-strong"
+        href="/">Back to the home page</a
+      >
+    </div>
+  </section>
+</Layout>

@@ -1,0 +1,176 @@
+---
+// Rendered only while draft preview is active, so production pages ship no JS
+// (and none of the overlay styles below).
+import visualEditingStyles from '@sanity/visual-editing-standalone/styles.css?url'
+
+const {perspective, variant} = Astro.locals.preview
+---
+
+<link rel="stylesheet" href={visualEditingStyles} />
+<script
+  is:inline
+  id="preview-state"
+  type="application/json"
+  set:html={JSON.stringify({perspective: perspective ?? null, variant: variant ?? null})}
+/>
+<script>
+  import {enableVisualEditing, type HistoryAdapterNavigate} from '@sanity/visual-editing-standalone'
+  import {navigate, swapFunctions, TransitionBeforeSwapEvent} from 'astro:transitions/client'
+
+  const state: {perspective: string | null; variant: string | null} = JSON.parse(
+    document.getElementById('preview-state')?.textContent ?? '{"perspective":null,"variant":null}',
+  )
+
+  // Persist a Presentation picker change in its cookie, then re-render in
+  // place through the router. This module survives the swap, so the local
+  // state has to be updated by the callers alongside the cookie.
+  async function persist(endpoint: string, body: Record<string, unknown>): Promise<void> {
+    await fetch(endpoint, {
+      method: 'POST',
+      headers: {'content-type': 'application/json'},
+      body: JSON.stringify(body),
+    })
+    await navigate(window.location.href, {history: 'replace'})
+  }
+
+  const currentUrl = () => `${location.pathname}${location.search}${location.hash}`
+
+  function skipTransition(event: Event): void {
+    if (event instanceof TransitionBeforeSwapEvent) {
+      event.viewTransition.skipTransition()
+      // The router never observes `ready`, and skipping a native view
+      // transition rejects it with an AbortError; absorb it so every skipped
+      // refresh doesn't surface as an unhandled rejection in the console.
+      event.viewTransition.ready.catch(() => {})
+    }
+  }
+
+  // The overlay UI is styled with runtime CSS-in-JS: it injects a
+  // `<style data-styled>` tag into <head> and inserts rules through CSSOM, so
+  // the tag's text content stays empty. Astro's head swap drops every head
+  // element without a match in the incoming document, which would remove that
+  // tag on the first refresh; the engine keeps writing to the orphaned sheet
+  // and all overlay styling is gone for good (re-inserting the tag would not
+  // help, as re-parsing its empty text yields an empty sheet). Instead, tag
+  // each runtime style element with Astro's persist attribute and plant a
+  // matching decoy in the incoming head, so the swap keeps the live element.
+  const PERSIST_ATTR = 'data-astro-transition-persist'
+  let persistedStyleSeq = 0
+  function persistRuntimeStyles(newDocument: Document): void {
+    for (const styleEl of document.head.querySelectorAll(
+      'style[data-styled], style[data-precedence]',
+    )) {
+      if (!styleEl.hasAttribute(PERSIST_ATTR)) {
+        styleEl.setAttribute(PERSIST_ATTR, `sanity-ve-style-${persistedStyleSeq++}`)
+      }
+      const decoy = newDocument.createElement('style')
+      decoy.setAttribute(PERSIST_ATTR, styleEl.getAttribute(PERSIST_ATTR)!)
+      newDocument.head.appendChild(decoy)
+    }
+  }
+
+  // The overlay engine binds its listeners and MutationObserver to the <body>
+  // element present at startup, and that observer is its only rescan path.
+  // Astro's default swap replaces the <body> node on every soft navigation,
+  // which would orphan the observer and permanently kill the overlays. Swap
+  // with Astro's own building blocks, but graft the incoming attributes and
+  // children onto the existing <body> so its identity (and the observer)
+  // survives; the mutation then triggers the overlay rescan by itself.
+  document.addEventListener('astro:before-swap', (event) => {
+    if (!(event instanceof TransitionBeforeSwapEvent)) return
+    event.swap = () => {
+      swapFunctions.deselectScripts(event.newDocument)
+      swapFunctions.swapRootAttributes(event.newDocument)
+      persistRuntimeStyles(event.newDocument)
+      swapFunctions.swapHeadElements(event.newDocument)
+      const restoreFocus = swapFunctions.saveFocus()
+      const originalBody = document.body
+      // Astro's swap handles persisted elements, media, and shadow roots…
+      swapFunctions.swapBodyElement(event.newDocument.body, originalBody)
+      // …then the resulting body is folded back into the original element.
+      const swappedBody = document.body
+      if (swappedBody !== originalBody) {
+        for (const {name} of [...originalBody.attributes]) originalBody.removeAttribute(name)
+        for (const {name, value} of [...swappedBody.attributes]) {
+          originalBody.setAttribute(name, value)
+        }
+        originalBody.replaceChildren(...swappedBody.childNodes)
+        swappedBody.replaceWith(originalBody)
+      }
+      restoreFocus()
+    }
+  })
+
+  // Presentation emits refresh events after edits settle; animating each one
+  // inside the iframe would flash constantly, so framed refreshes swap with
+  // the view transition skipped. Standalone preview tabs keep the transition,
+  // like the published site's update toast.
+  async function refresh(): Promise<void> {
+    if (window.self !== window.top) {
+      document.addEventListener('astro:before-swap', skipTransition, {once: true})
+    }
+    try {
+      await navigate(window.location.href, {history: 'replace'})
+    } finally {
+      document.removeEventListener('astro:before-swap', skipTransition)
+    }
+  }
+
+  // Reports frontend navigations to Presentation so its URL bar and document
+  // context follow ClientRouter's soft navigations inside the iframe.
+  let notifyStudio: HistoryAdapterNavigate | undefined
+  let lastReportedUrl = ''
+  function reportUrl(): void {
+    const url = currentUrl()
+    if (notifyStudio !== undefined && url !== lastReportedUrl) {
+      lastReportedUrl = url
+      notifyStudio({type: 'push', title: document.title, url})
+    }
+  }
+  // Fires after the initial load and after every router navigation.
+  document.addEventListener('astro:page-load', reportUrl)
+
+  // The studio also announces the current values when the frame connects;
+  // only real changes should update cookies and re-render.
+  enableVisualEditing({
+    zIndex: 100,
+    history: {
+      subscribe: (navigateStudio) => {
+        notifyStudio = navigateStudio
+        lastReportedUrl = ''
+        reportUrl()
+        return () => {
+          if (notifyStudio === navigateStudio) notifyStudio = undefined
+        }
+      },
+      // Presentation-driven navigation (e.g. locations, document links) goes
+      // through the router so the iframe soft-navigates like a visitor would.
+      update: (update) => {
+        if (update.type === 'pop') {
+          history.back()
+          return
+        }
+        const target = new URL(update.url, location.origin)
+        if (`${target.pathname}${target.search}${target.hash}` !== currentUrl()) {
+          void navigate(update.url, {history: update.type})
+        }
+      },
+    },
+    // Re-renders in place instead of the default full reload.
+    refresh,
+    onPerspectiveChange: (perspective) => {
+      const next = Array.isArray(perspective) ? perspective.join(',') : perspective
+      if (next !== (state.perspective ?? 'drafts')) {
+        state.perspective = next
+        void persist('/api/preview/perspective', {perspective: next})
+      }
+    },
+    onVariantChange: (variant) => {
+      const next = variant ?? null
+      if (next !== state.variant) {
+        state.variant = next
+        void persist('/api/preview/variant', {variant: next})
+      }
+    },
+  })
+</script>

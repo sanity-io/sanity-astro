@@ -1,0 +1,55 @@
+---
+import type {HOME_PAGE_QUERY_RESULT} from '../sanity/sanity.types'
+import SanityImage from './SanityImage.astro'
+
+interface Props {
+  hero: NonNullable<HOME_PAGE_QUERY_RESULT>['hero']
+}
+
+const {hero} = Astro.props
+---
+
+<section
+  class="bg-page bg-[radial-gradient(60rem_30rem_at_85%_-10%,#1c2447,transparent_70%)] py-[clamp(4rem,10vw,7rem)]"
+>
+  <div
+    class="mx-auto grid max-w-6xl items-center gap-12 px-[clamp(1.25rem,4vw,2.5rem)] lg:grid-cols-[1.05fr_0.95fr]"
+  >
+    <div>
+      {
+        hero.eyebrow && (
+          <p class="mb-5 inline-block rounded-full bg-accent-soft px-3 py-1 text-[0.8125rem] font-semibold tracking-[0.02em] text-accent-ink uppercase">
+            {hero.eyebrow}
+          </p>
+        )
+      }
+      <h1 class="text-[clamp(2.25rem,5vw,3.5rem)]">{hero.heading}</h1>
+      <p class="mt-5 max-w-[46ch] text-[clamp(1.0625rem,1.5vw,1.25rem)] text-ink-muted">
+        {hero.tagline}
+      </p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a
+          class="inline-block rounded-full border border-transparent bg-accent px-6 py-3 font-semibold text-page no-underline transition-colors duration-150 hover:bg-accent-strong"
+          href={hero.primaryCta.href}>{hero.primaryCta.label}</a
+        >
+        {
+          hero.secondaryCta && (
+            <a
+              class="inline-block rounded-full border border-line bg-surface px-6 py-3 font-semibold text-ink no-underline transition-colors duration-150 hover:border-ink-faint"
+              href={hero.secondaryCta.href}
+            >
+              {hero.secondaryCta.label}
+            </a>
+          )
+        }
+      </div>
+    </div>
+    <SanityImage
+      image={hero.image}
+      width={576}
+      sizes="(min-width: 64rem) 36rem, 92vw"
+      priority
+      class="w-full rounded-panel border border-line shadow-[0_24px_48px_-24px_rgba(2,6,23,0.8)]"
+    />
+  </div>
+</section>

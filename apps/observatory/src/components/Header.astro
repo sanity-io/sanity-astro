@@ -1,0 +1,42 @@
+---
+import Logo from '../assets/logo.svg'
+import type {SITE_SETTINGS_QUERY_RESULT} from '../sanity/sanity.types'
+
+interface Props {
+  settings: NonNullable<SITE_SETTINGS_QUERY_RESULT>
+  currentPath: string
+}
+
+const {settings, currentPath} = Astro.props
+---
+
+<header class="border-b border-line bg-surface">
+  <div
+    class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-8 gap-y-4 px-[clamp(1.25rem,4vw,2.5rem)] py-4"
+  >
+    <a
+      class="inline-flex items-center gap-2 text-lg font-bold tracking-[-0.01em] text-ink no-underline"
+      href="/"
+    >
+      <Logo class="text-accent" aria-hidden="true" />
+      <span>{settings.siteTitle}</span>
+    </a>
+    <nav aria-label="Main">
+      <ul class="m-0 flex list-none flex-wrap gap-x-6 gap-y-1 p-0">
+        {
+          settings.nav?.map((link) => (
+            <li>
+              <a
+                class="font-medium text-ink-muted no-underline hover:text-ink aria-[current=page]:text-accent-ink"
+                href={link.href}
+                aria-current={link.href === currentPath ? 'page' : undefined}
+              >
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </div>
+</header>

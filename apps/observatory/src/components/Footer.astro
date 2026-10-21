@@ -1,0 +1,43 @@
+---
+import type {SITE_SETTINGS_QUERY_RESULT} from '../sanity/sanity.types'
+
+interface Props {
+  settings: NonNullable<SITE_SETTINGS_QUERY_RESULT>
+}
+
+const {settings} = Astro.props
+const year = new Date().getFullYear()
+---
+
+{
+  /* The extra bottom padding keeps the fixed bottom-left pill (View as / exit
+preview) and the update toast from covering the footer content. */
+}
+<footer class="border-t border-line bg-surface pt-12 pb-24">
+  <div
+    class="mx-auto flex max-w-6xl flex-wrap justify-between gap-8 px-[clamp(1.25rem,4vw,2.5rem)]"
+  >
+    <div>
+      <p class="font-semibold">{settings.footerTagline}</p>
+      <p class="mt-2 text-sm text-ink-faint">
+        {`© ${year} ${settings.siteTitle}. All rights reserved.`}
+      </p>
+    </div>
+    <nav aria-label="Footer">
+      <ul class="m-0 flex list-none flex-wrap gap-x-6 gap-y-2 p-0">
+        {
+          settings.footerLinks?.map((link) => (
+            <li>
+              <a
+                class="text-[0.9375rem] text-ink-muted no-underline hover:text-ink hover:underline"
+                href={link.href}
+              >
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </div>
+</footer>

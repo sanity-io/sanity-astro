@@ -1,0 +1,84 @@
+---
+import {LIVE_EVENTS_URL} from '../sanity/liveEvents'
+
+interface Props {
+  tags: string[]
+}
+
+const {tags} = Astro.props
+---
+
+<sanity-live data-events-url={LIVE_EVENTS_URL.href} data-tags={tags.join(',')}>
+  <aside
+    class="fixed bottom-4 left-1/2 z-60 -translate-x-1/2 items-center gap-3 whitespace-nowrap rounded-full border border-line bg-panel py-2 pr-2.5 pl-4 text-[0.8125rem] font-medium text-panel-ink shadow-[0_8px_24px_-8px_rgba(2,6,23,0.9)] [&:not([hidden])]:flex"
+    role="status"
+    hidden
+  >
+    <span>This page has been updated</span>
+    <button
+      class="cursor-pointer rounded-full border-0 bg-white/[0.08] px-3 py-1 font-[inherit] font-semibold text-accent-ink hover:bg-white/[0.16]"
+      type="button">Refresh</button
+    >
+  </aside>
+</sanity-live>
+
+<script>
+  import {navigate} from 'astro:transitions/client'
+
+  /**
+   * Keeps the page honest about published content. When Content Lake
+   * announces a change to a sync tag this page depends on, the cached pages
+   * carrying those tags are purged right away, and a toast offers a refresh:
+   * a soft `replace` navigation that re-renders the now-purged URL, arriving
+   * as a view transition instead of a full reload (and re-caching it for
+   * every future visitor). Nothing navigates or mutates the page without the
+   * visitor asking.
+   */
+  class SanityLive extends HTMLElement {
+    #events: EventSource | null = null
+
+    connectedCallback(): void {
+      const url = this.dataset.eventsUrl
+      if (!url) return
+
+      const toast = this.querySelector('aside')
+      this.querySelector('button')?.addEventListener('click', () => {
+        this.#refresh()
+      })
+
+      this.#events = new EventSource(url)
+      this.#events.addEventListener('message', (event) => {
+        const payload: unknown = JSON.parse(event.data)
+        const changed =
+          typeof payload === 'object' && payload !== null && 'tags' in payload
+            ? (payload.tags as string[])
+            : []
+        const tags = this.dataset.tags?.split(',') ?? []
+        const overlap = changed.filter((tag) => tags.includes(tag))
+        if (overlap.length === 0) return
+
+        // Refresh the shared caches immediately so new visitors get fresh
+        // content, while the current visitor decides when to re-render.
+        void fetch('/api/invalidate-tags', {
+          method: 'POST',
+          headers: {'content-type': 'application/json'},
+          body: JSON.stringify({tags: overlap}),
+        })
+        // Inside an iframe, like Presentation's preview pane, the embedding
+        // app manages updates itself, so only top-level visitors get the toast.
+        if (window.self === window.top) toast?.removeAttribute('hidden')
+      })
+    }
+
+    disconnectedCallback(): void {
+      this.#events?.close()
+      this.#events = null
+    }
+
+    #refresh(): void {
+      void navigate(window.location.href, {history: 'replace'})
+    }
+  }
+
+  customElements.define('sanity-live', SanityLive)
+</script>

@@ -1,0 +1,30 @@
+{
+  "name": "observatory-studio",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "sanity build",
+    "dev": "sanity dev --no-auto-updates --port 3333",
+    "seed": "node --env-file-if-exists=.env --import tsx scripts/seed.ts",
+    "typegen": "sanity schema extract --enforce-required-fields --force && sanity typegen generate"
+  },
+  "dependencies": {
+    "@sanity/icons": "^5.2.1",
+    "@sanity/vision": "^6.9.2",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "sanity": "^6.9.2",
+    "styled-components": "^6.5.2"
+  },
+  "devDependencies": {
+    "@sanity/client": "^8.0.0",
+    "@types/node": "^24.13.3",
+    "sharp": "^0.35.3",
+    "tsx": "^4.20.6",
+    "typescript": "^6.0.3"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}
