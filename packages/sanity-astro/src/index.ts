@@ -27,6 +27,13 @@ export type IntegrationOptions = ClientConfig & {
    * its duration, query and calling file.
    */
   logClientRequests?: LogClientRequests
+  /**
+   * Registers the `sanity:client` and `sanity:studio` type declarations through
+   * Astro's `injectTypes` (Astro 4.14 and later), so `env.d.ts` needs no
+   * `/// <reference types="@sanity/astro/module" />`. Off by default; the manual
+   * reference keeps working either way.
+   */
+  injectTypes?: boolean
 }
 
 const defaultClientConfig: ClientConfig = {
@@ -60,6 +67,7 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
     studioBasePath,
     studioRouterHistory: requestedStudioRouterHistory,
     logClientRequests,
+    injectTypes: shouldInjectTypes = false,
     ...clientConfig
   } = options
   const normalizedStudioBasePath = normalizeStudioBasePath(studioBasePath)
@@ -122,6 +130,15 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
           globalThis.sanityClient = sanityClient;
           `,
         )
+      },
+      // `injectTypes` arrived in Astro 4.14; older versions keep using the manual
+      // `/// <reference types="@sanity/astro/module" />` even when opted in.
+      'astro:config:done': ({injectTypes}) => {
+        if (!shouldInjectTypes) return
+        injectTypes?.({
+          filename: 'types.d.ts',
+          content: '/// <reference types="@sanity/astro/module" />\n',
+        })
       },
     },
   }
