@@ -32,12 +32,11 @@
     "@changesets/changelog-github": "^1.0.0",
     "@changesets/cli": "^3.0.1",
     "@sanity/blueprints": "^0.28.0",
-    "@turbo/gen": "^1.13.4",
     "eslint": "^8.57.1",
     "eslint-config-custom": "*",
     "oxfmt": "^0.61.0",
     "rimraf": "^5.0.7",
-    "turbo": "^1.13.4"
+    "turbo": "^2.10.12"
   },
   "packageManager": "pnpm@12.15.0"
 }
