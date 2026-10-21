@@ -8,7 +8,6 @@ import {vitePluginSanityClient} from './vite-plugin-sanity-client'
 import {vitePluginSanityModuleDedupe} from './vite-plugin-sanity-module-dedupe'
 import {vitePluginSanityStudio} from './vite-plugin-sanity-studio'
 import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-chunk-warning'
-import {vitePluginSanityStudioHashRouter} from './vite-plugin-sanity-studio-hash-router'
 
 // The plugin factories return Vite's `PluginOption` from this package's copy of Vite, which can
 // differ from the copy Astro's config types reference. Passing the array to `updateConfig` as is
@@ -117,7 +116,6 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
             studioBasePath: normalizedStudioBasePath,
             studioRouterHistory,
           }),
-          vitePluginSanityStudioHashRouter(),
           vitePluginSanityStudioChunkWarning(),
         ]
 
