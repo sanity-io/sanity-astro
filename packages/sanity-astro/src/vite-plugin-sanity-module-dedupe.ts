@@ -30,7 +30,6 @@ export const SANITY_OPTIMIZE_DEPS_CANDIDATES = [
   'react-compiler-runtime',
   'react-is',
   'styled-components',
-  'lodash/startCase.js',
 ] as const
 
 function canResolveDependency(projectRoot: string, dependency: string): boolean {
