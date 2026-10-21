@@ -1,15 +1,48 @@
 ---
-import {VisualEditingComponent, type VisualEditingOptions} from './visual-editing-component'
+import type {VisualEditingConfig} from './client'
 
-export interface Props extends Pick<VisualEditingOptions, 'zIndex' | 'keepStegaOnCopy'> {
+export interface Props extends VisualEditingConfig {
   enabled?: boolean
 }
 
-const {enabled, zIndex, keepStegaOnCopy} = Astro.props
+const {enabled, zIndex, keepStegaOnCopy, refresh} = Astro.props
+const config: VisualEditingConfig = {zIndex, keepStegaOnCopy, refresh}
 ---
 
 {
   enabled ? (
-    <VisualEditingComponent client:only="react" zIndex={zIndex} keepStegaOnCopy={keepStegaOnCopy} />
+    <sanity-astro-visual-editing hidden data-config={JSON.stringify(config)}></sanity-astro-visual-editing>
   ) : null
 }
+<script>
+  let current: {host: Element | null; stop?: () => void} = {host: null}
+
+  // Astro's <ClientRouter /> swaps the body without re-running this module, so the runtime is
+  // rebound on every page load event and torn down before each swap.
+  async function boot() {
+    const host = document.querySelector('sanity-astro-visual-editing')
+    if (host === current.host) {
+      return
+    }
+    current.stop?.()
+    current = {host}
+    if (!host) {
+      return
+    }
+    try {
+      const {start} = await import('./client')
+      if (current.host === host) {
+        current.stop = start(host)
+      }
+    } catch (error) {
+      console.error('[@sanity/astro] Failed to start Visual Editing', error)
+    }
+  }
+
+  void boot()
+  document.addEventListener('astro:page-load', () => void boot())
+  document.addEventListener('astro:before-swap', () => {
+    current.stop?.()
+    current = {host: null}
+  })
+</script>
