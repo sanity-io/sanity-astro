@@ -271,13 +271,14 @@ const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLE
 </html>
 ```
 
-`VisualEditing` is needed to render Overlays. It's a React component under the hood, so you'll need the [React integration for Astro][astro-react] if you don't already use that at this point.
+`VisualEditing` renders the Overlays from a plain `<script>`. It does not need the [React integration for Astro][astro-react] or any React component in your project, so a site built only from `.astro` files gets Visual Editing by adding this one component. See [`apps/minimal`](https://github.com/sanity-io/sanity-astro/tree/main/apps/minimal) for a React-free setup. The overlay chunk is emitted into your build output whether or not `enabled` is true, exactly as the React island before it was; a page with Visual Editing off never fetches it.
 
 `VisualEditing` takes these props:
 
 - `enabled`: so you can control whether or not visual editing is enabled depending on your environment.
 - `zIndex` (optional): allows you to change the `z-index` of overlay elements.
 - `keepStegaOnCopy` (optional): by default, Visual Editing strips stega from the clipboard on copy. Pass `keepStegaOnCopy` to opt out and leave stega in copied text.
+- `experimental_inPlaceRefresh` (optional, off by default): refreshes the preview in place instead of reloading the page. See [Experimental: refreshing in place](#experimental-refreshing-in-place).
 
 In the example above, `enabled` is controlled using an [environment variable](https://docs.astro.build/en/guides/environment-variables/):
 
@@ -286,11 +287,38 @@ In the example above, `enabled` is controlled using an [environment variable](ht
 PUBLIC_SANITY_VISUAL_EDITING_ENABLED="true"
 ```
 
+#### How the preview refreshes
+
+By default `VisualEditing` reloads the whole page with `window.location.reload()` whenever Presentation asks for a refresh: when the editor clicks the refresh button, and when the document open in the Studio changes. That is what this integration has always done, and nothing below changes it unless you opt in.
+
+#### Experimental: refreshing in place
+
+Pass `experimental_inPlaceRefresh` to update the page without reloading it:
+
+```astro
+<VisualEditing enabled={visualEditingEnabled} experimental_inPlaceRefresh />
+```
+
+Edits then reach the page in two steps.
+
+1. **Instant text.** Presentation streams document changes to the overlays. `VisualEditing` listens to that stream and rewrites the stega-encoded text nodes rendered from the changed document as soon as the change arrives, before any request to your server. A node is rewritten only once the page has been seen rendering that field verbatim and the node still shows a value the field held before. Text your page transformed (truncated, formatted, upper-cased) and text built from several fields are left to the server render.
+2. **In-place morph.** Half a second after the last change, `VisualEditing` fetches the current URL and patches the live DOM with [idiomorph](https://github.com/bigskysoftware/idiomorph) so it matches the fresh server HTML. Everything the text patch cannot express (ordering, images, dates, references, conditionally rendered markup) updates here. Scroll position, focus, form state and the Presentation connection survive because the document never navigates. If the server has not caught up with the change yet, the fetch retries briefly, and a settle pass runs one second later.
+
+The morph makes the DOM match the server HTML, with a short list of exceptions. It leaves the overlay host, Astro's dev toolbar and Vite's error overlay alone. In `<head>` it keeps only nodes a client injected at runtime, recognised by the `data-vite-dev-id`, `data-styled`, `data-styled-version` or `data-astro-transition-persist` attribute; every other head node, including `<title>`, `<meta>`, `<link>` and `<script>` tags, is reconciled against the fresh HTML. Hydrated `<astro-island>` elements keep their client-rendered subtree and receive the new `props` attribute, which Astro re-hydrates from. Form controls the visitor has typed in or toggled keep their value, and `class` and `style` on `<html>` and `<body>` stay as client scripts left them.
+
+**DOM that a third-party script injected is removed by the morph.** Cookie banners, chat widgets, analytics beacons, A/B testing snippets and similar scripts add elements the server HTML does not contain, so the morph deletes them, and they are not re-created until the next real page load. Mark such an element with Astro's `transition:persist` attribute (`data-astro-transition-persist` when a script creates it) if you control it. If you cannot, or if a script relies on running again after each change, keep the default reload on that site. This is one of the reasons the in-place refresh is opt-in.
+
+When the fetch fails, the response is not HTML, the request was redirected elsewhere, or the fresh HTML introduces a `<script>` the page does not have yet, `VisualEditing` falls back to a full reload. The script case exists because a script parsed from a fetched document can be inserted but never executed, so only a reload gives it the behaviour the server intended. Should the in-place refresh itself throw, the error is logged once and the page reloads on every refresh from then on, instead of the failure hiding behind a reload.
+
+Visual Editing needs fresh HTML per request, so run the site with `astro dev` or an SSR adapter while previewing.
+
+Two limits are worth knowing. Values rendered from a release perspective are not patched instantly, because the overlays stream the draft and published forms of a document but not its version form; those update through the morph. And the option is experimental: while it carries the `experimental_` prefix, its name and behaviour can change in a minor release.
+
 #### Customizing how the preview refreshes
 
-By default `VisualEditing` reloads the whole page with `window.location.reload()` whenever the Studio reports a change. If you'd rather refresh another way, for example re-fetching data and swapping the DOM in place, pass your own `refresh` function.
+If you'd rather refresh another way, for example re-fetching data and swapping the DOM in place yourself, pass your own `refresh` function.
 
-`refresh` is a function, and Astro can't serialize functions through to a client component, so it isn't accepted on the `.astro` `VisualEditing` component. Instead, import the React component from `@sanity/astro/visual-editing/component` and render it as a `client:only` island:
+`refresh` is a function, and Astro can't serialize functions through to a client component, so it isn't accepted on the `.astro` `VisualEditing` component. Instead, import the React component from `@sanity/astro/visual-editing/component` and render it as a `client:only` island. It needs the [React integration for Astro][astro-react]:
 
 ```tsx
 // src/components/VisualEditing.tsx
@@ -329,7 +357,20 @@ const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLE
 </body>
 ```
 
-The `payload` tells you why the refresh fired: `payload.source` is `'manual'` when the editor clicks refresh in Presentation, or `'mutation'` when a document changes. The same subpath also accepts `history` if you need to take over URL syncing, and `onSuspiciousStega` for opt-in reporting when stega appears in unsafe placements (`class`, `href`, `<head>`, scripts, and similar).
+The `payload` tells you why the refresh fired: `payload.source` is `'manual'` when the editor clicks refresh in Presentation, or `'mutation'` when a document changes.
+
+`VisualEditingComponent` accepts the full `VisualEditingOptions` type from `@sanity/visual-editing/react` and forwards it unchanged. The one prop of `<VisualEditing />` it does not take is `portal`, which is always on. Beyond `refresh`, the ones worth knowing about are:
+
+- `history`: take over URL syncing. When omitted, the built-in adapter keeps Presentation's URL bar in sync with the preview.
+- `onSuspiciousStega`: opt-in reporting when stega appears in unsafe placements (`class`, `href`, `<head>`, scripts, and similar).
+- `onPerspectiveChange` / `onVariantChange`: keep server-side fetching on the same perspective and variant as the Studio driving the preview.
+- `components` (alpha): a resolver for custom overlay UI, such as an insert menu on an array field.
+- `plugins` (alpha): an array of overlay plugin definitions.
+- `experimental_inPlaceRefresh`: the same opt-in as on the `.astro` component. It is ignored when you pass your own `refresh`.
+
+`refresh` falls back to `window.location.reload()` and `history` to the built-in adapter when you don't pass them; everything else is passed straight through. The alpha options follow `@sanity/visual-editing`'s stability policy rather than this package's: they can change in a minor release of that dependency without a corresponding `@sanity/astro` release, so pin it if you rely on them.
+
+The parameter types for these callbacks (`HistoryAdapter`, `HistoryAdapterNavigate`, `HistoryRefresh`, `HistoryUpdate`, `OverlayComponentResolver`, `OverlayPluginDefinition`, `SuspiciousStegaReport`, and `VisualEditingOptions` itself) are re-exported from `@sanity/astro/visual-editing/component`.
 
 ### 2. Add the Presentation tool to the Studio
 
