@@ -28,8 +28,10 @@ export default defineConfig(() => {
     plugins: [
       dts({
         outDir: 'dist/types',
-        // Type tests augment the global `SanityQueries` registry, which must not ship
-        exclude: ['node_modules/**', 'dist/**', 'src/**/*.test-d.ts'],
+        // Type tests augment the global `SanityQueries` registry, which must not ship. Tests import
+        // helpers from `test/`, which would widen the declaration root to the package directory
+        // and move `index.d.ts` out of the `types` entry point.
+        exclude: ['node_modules/**', 'dist/**', 'src/**/*.test-d.ts', '**/*.test.*'],
       }) as unknown as Plugin,
     ],
   }

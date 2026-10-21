@@ -15,23 +15,39 @@ import {
  * - `{type: 'reload', followUpDelayMs}`: the same reload, plus one more reload `followUpDelayMs`
  *   after a change-triggered one, so text typed in the Studio while the page was reloading
  *   still reaches the preview.
+ * - `'in-place'`: no reload. Stega text is patched from the document stream the moment a change
+ *   arrives, and fresh server HTML is morphed into the live DOM, with a reload as the fallback.
  *
  * Only plain, JSON-serializable values, so the `.astro` component can pass it to the browser.
  */
-export type RefreshStrategy = 'reload' | {type: 'reload'; followUpDelayMs?: number}
+export type RefreshStrategy = 'reload' | {type: 'reload'; followUpDelayMs?: number} | 'in-place'
+
+/** The reload strategies of `RefreshStrategy`, the ones `createDefaultRefresh` handles. */
+export type ReloadRefreshStrategy = Exclude<RefreshStrategy, 'in-place'>
+
+export type ResolvedReloadStrategy = {type: 'reload'; followUpDelayMs: number | undefined}
 
 /** `RefreshStrategy` with the shorthands expanded and invalid values dropped. */
-export type ResolvedRefreshStrategy = {type: 'reload'; followUpDelayMs: number | undefined}
+export type ResolvedRefreshStrategy = ResolvedReloadStrategy | {type: 'in-place'}
 
 /**
  * Expands the shorthand and drops values that would do nothing (a missing, zero, negative or
  * non-finite delay), so every caller sees the same normalized shape.
  */
 export function resolveRefreshStrategy(
+  strategy: ReloadRefreshStrategy | undefined,
+): ResolvedReloadStrategy
+export function resolveRefreshStrategy(
+  strategy: RefreshStrategy | undefined,
+): ResolvedRefreshStrategy
+export function resolveRefreshStrategy(
   strategy: RefreshStrategy | undefined,
 ): ResolvedRefreshStrategy {
   if (strategy === undefined || strategy === 'reload') {
     return {type: 'reload', followUpDelayMs: undefined}
+  }
+  if (strategy === 'in-place') {
+    return {type: 'in-place'}
   }
   const {followUpDelayMs} = strategy
   const valid =
@@ -51,9 +67,9 @@ export interface DefaultRefresh {
   arrive: () => (() => void) | undefined
 }
 
-/** Builds the default `refresh` for the selected strategy. */
+/** Builds the reload-based default `refresh`; `'in-place'` lives in `createRuntime`. */
 export function createDefaultRefresh(
-  strategy: ResolvedRefreshStrategy,
+  strategy: ResolvedReloadStrategy,
   host: DefaultRefreshHost,
 ): DefaultRefresh {
   const {followUpDelayMs} = strategy

@@ -1,17 +1,13 @@
 import {
-  VisualEditing as InternalVisualEditing,
   type HistoryAdapter,
-  type HistoryAdapterNavigate,
+  VisualEditing as InternalVisualEditing,
   type VisualEditingOptions,
 } from '@sanity/visual-editing/react'
 import React from 'react'
 
-import {applyPresentationHistoryUpdate, getPresentationUrl, shouldPublishUrl} from './history'
-import {
-  createDefaultRefresh,
-  type RefreshStrategy,
-  resolveRefreshStrategy,
-} from './refresh-strategy'
+import {createBrowserHistoryAdapter} from './history.js'
+import {type RefreshStrategy, resolveRefreshStrategy} from './refresh-strategy.js'
+import {createRuntime, type Runtime} from './runtime.js'
 
 // `@sanity/visual-editing` is a dependency rather than a peer, so consumers cannot import these
 // from it directly under a non-hoisted layout; re-export what typed callbacks need.
@@ -37,155 +33,51 @@ export type VisualEditingComponentProps = VisualEditingOptions & {
   experimental_refreshStrategy?: RefreshStrategy
 }
 
+interface Defaults {
+  history: HistoryAdapter | undefined
+  runtime: Runtime | undefined
+}
+
+/**
+ * React island wrapper around `VisualEditing` from `@sanity/visual-editing/react` with the same
+ * defaults as the `.astro` component: URL sync with Presentation and a page reload on refresh.
+ * Every other option is forwarded as is, so this is the component to reach for when you need a
+ * custom `refresh` or `history` function, `onSuspiciousStega` or the overlay plugin APIs.
+ */
 export function VisualEditingComponent(props: VisualEditingComponentProps) {
-  // Strip this integration's own option so only upstream props are forwarded.
-  const {experimental_refreshStrategy, ...upstreamProps} = props
-  const navigateRef = React.useRef<HistoryAdapterNavigate | undefined>()
-  const lastUrlRef = React.useRef('')
-  const optimisticUrlRef = React.useRef<string | undefined>()
-  const optimisticUntilRef = React.useRef(0)
-  const clearNavigateTimeoutRef = React.useRef<number | undefined>()
-  const hasCustomHistory = Boolean(props.history)
-  const hasCustomRefresh = Boolean(props.refresh)
-  // A custom `refresh` replaces the strategy, so no follow-up reload is armed for it.
-  const {followUpDelayMs} = hasCustomRefresh
-    ? {followUpDelayMs: undefined}
-    : resolveRefreshStrategy(experimental_refreshStrategy)
-  const defaultRefresh = React.useMemo(
-    () => createDefaultRefresh({type: 'reload', followUpDelayMs}, window),
-    [followUpDelayMs],
-  )
+  const {experimental_refreshStrategy, ...upstream} = props
+  const strategy = resolveRefreshStrategy(experimental_refreshStrategy)
+  const strategyType = strategy.type
+  const followUpDelayMs = strategy.type === 'reload' ? strategy.followUpDelayMs : undefined
+  const hasCustomHistory = upstream.history !== undefined
+  const hasCustomRefresh = upstream.refresh !== undefined
+  const [defaults, setDefaults] = React.useState<Defaults>()
 
-  React.useEffect(() => defaultRefresh.arrive(), [defaultRefresh])
-
-  const publishUrl = React.useCallback((url: string, force = false) => {
-    const navigate = navigateRef.current
-    if (!navigate) {
-      return
-    }
-    const optimisticUrl = optimisticUrlRef.current
-    const optimisticWindowOpen = Date.now() < optimisticUntilRef.current
-    if (!force && optimisticUrl && optimisticWindowOpen && url !== optimisticUrl) {
-      return
-    }
-    if (optimisticUrl && url === optimisticUrl) {
-      optimisticUrlRef.current = undefined
-      optimisticUntilRef.current = 0
-    }
-    if (!force && !shouldPublishUrl(url, lastUrlRef.current)) {
-      return
-    }
-    lastUrlRef.current = url
-    navigate({
-      type: 'push',
-      title: document.title,
-      url,
-    })
-  }, [])
-
+  // Keyed on whether a custom handler exists, not on its identity: an inline `refresh` gets a
+  // new identity every parent render and must not rebuild the defaults. The strategy is keyed on
+  // its resolved values for the same reason, since an inline object is new every render too.
   React.useEffect(() => {
-    // Skip the default URL sync when the consumer supplies their own history adapter.
-    if (hasCustomHistory) {
-      return
-    }
-    const syncCurrentUrl = () => {
-      publishUrl(getPresentationUrl(window.location))
-    }
-    const publishClickedLink = (event: MouseEvent) => {
-      if (event.defaultPrevented || event.button !== 0) {
-        return
-      }
-      if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) {
-        return
-      }
-
-      const eventTarget = event.target
-      if (!(eventTarget instanceof Element)) {
-        return
-      }
-
-      const anchor = eventTarget.closest('a[href]')
-      if (!(anchor instanceof HTMLAnchorElement)) {
-        return
-      }
-      if (anchor.target && anchor.target !== '_self') {
-        return
-      }
-
-      let targetUrl: URL
-      try {
-        targetUrl = new URL(anchor.href, window.location.href)
-      } catch {
-        return
-      }
-      if (targetUrl.origin !== window.location.origin) {
-        return
-      }
-
-      const url = `${targetUrl.pathname}${targetUrl.search}${targetUrl.hash}`
-      optimisticUrlRef.current = url
-      optimisticUntilRef.current = Date.now() + 1_500
-      publishUrl(url, true)
-    }
-
-    window.addEventListener('popstate', syncCurrentUrl)
-    window.addEventListener('hashchange', syncCurrentUrl)
-    document.addEventListener('click', publishClickedLink, true)
-    const nativePushState = window.history.pushState
-    const nativeReplaceState = window.history.replaceState
-    window.history.pushState = function (...args) {
-      nativePushState.apply(window.history, args)
-      syncCurrentUrl()
-    }
-    window.history.replaceState = function (...args) {
-      nativeReplaceState.apply(window.history, args)
-      syncCurrentUrl()
-    }
-
+    const history = hasCustomHistory ? undefined : createBrowserHistoryAdapter()
+    const runtime = hasCustomRefresh
+      ? undefined
+      : createRuntime(
+          strategyType === 'in-place' ? {type: 'in-place'} : {type: 'reload', followUpDelayMs},
+        )
+    // Both install window listeners, so they cannot be built during render; one extra render
+    // at mount is the price of keeping StrictMode's double-invoked initializers clean.
+    // oxlint-disable-next-line react/set-state-in-effect
+    setDefaults({history, runtime})
     return () => {
-      window.removeEventListener('popstate', syncCurrentUrl)
-      window.removeEventListener('hashchange', syncCurrentUrl)
-      document.removeEventListener('click', publishClickedLink, true)
-      window.history.pushState = nativePushState
-      window.history.replaceState = nativeReplaceState
+      runtime?.dispose()
+      history?.dispose()
     }
-  }, [hasCustomHistory, publishUrl])
+  }, [hasCustomHistory, hasCustomRefresh, strategyType, followUpDelayMs])
 
-  const defaultHistory = React.useMemo<HistoryAdapter>(
-    () => ({
-      subscribe: (_navigate) => {
-        window.clearTimeout(clearNavigateTimeoutRef.current)
-        navigateRef.current = _navigate
-        // Presentation can't drive the frame until it has reported a URL, and an MPA has
-        // no router event to report it from, so publish the current one on every subscribe.
-        publishUrl(getPresentationUrl(window.location), true)
-        return () => {
-          // Keep navigation publishing alive briefly for immediate link clicks
-          // after edit mode is toggled off, then release it to respect off mode.
-          clearNavigateTimeoutRef.current = window.setTimeout(() => {
-            if (navigateRef.current === _navigate) {
-              navigateRef.current = undefined
-            }
-          }, 200)
-        }
-      },
-      update: (update) => {
-        applyPresentationHistoryUpdate(update, window.location.href, {
-          assign: (url) => window.location.assign(url),
-          replace: (url) => window.location.replace(url),
-          back: () => window.history.back(),
-        })
-      },
-    }),
-    [publishUrl],
-  )
+  const history = upstream.history ?? defaults?.history
+  const refresh = upstream.refresh ?? defaults?.runtime?.refresh
+  if (!history || !refresh) {
+    return null
+  }
 
-  return (
-    <InternalVisualEditing
-      {...upstreamProps}
-      portal
-      history={props.history ?? defaultHistory}
-      refresh={props.refresh ?? defaultRefresh.refresh}
-    />
-  )
+  return <InternalVisualEditing {...upstream} portal history={history} refresh={refresh} />
 }

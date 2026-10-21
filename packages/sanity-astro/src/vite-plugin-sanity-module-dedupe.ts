@@ -1,3 +1,4 @@
+import {existsSync} from 'node:fs'
 import {createRequire} from 'node:module'
 import path from 'node:path'
 
@@ -43,7 +44,30 @@ export const SANITY_OPTIMIZE_DEPS_CANDIDATES = [
   'styled-components',
 ] as const
 
+/**
+ * Whether `dependency`'s package sits in a `node_modules` directory at or above `projectRoot`,
+ * which is where Vite looks. Node's `require.resolve` also honours `NODE_PATH`, which pnpm's bin
+ * shims point at the hidden `node_modules/.pnpm/node_modules` hoist directory, so on its own it
+ * finds packages the project never installed: a React-free project then gets `styled-components`
+ * aliased to whichever copy pnpm hoisted, built against a different React than the overlays.
+ */
+function isInstalledFrom(projectRoot: string, dependency: string): boolean {
+  const segments = dependency.split('/')
+  const packageName = dependency.startsWith('@') ? segments.slice(0, 2).join('/') : segments[0]!
+  for (let dir = path.resolve(projectRoot); ; dir = path.dirname(dir)) {
+    if (existsSync(path.join(dir, 'node_modules', packageName, 'package.json'))) {
+      return true
+    }
+    if (path.dirname(dir) === dir) {
+      return false
+    }
+  }
+}
+
 function canResolveDependency(projectRoot: string, dependency: string): boolean {
+  if (!isInstalledFrom(projectRoot, dependency)) {
+    return false
+  }
   try {
     const require = createRequire(path.join(projectRoot, 'package.json'))
     require.resolve(dependency)
@@ -54,6 +78,9 @@ function canResolveDependency(projectRoot: string, dependency: string): boolean 
 }
 
 function resolvePackageRoot(projectRoot: string, packageName: string): string | undefined {
+  if (!isInstalledFrom(projectRoot, packageName)) {
+    return undefined
+  }
   try {
     const require = createRequire(path.join(projectRoot, 'package.json'))
     return require.resolve(`${packageName}/package.json`).replace(/\/package\.json$/, '')

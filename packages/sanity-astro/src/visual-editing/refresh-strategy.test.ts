@@ -5,7 +5,7 @@ import {FOLLOW_UP_RELOAD_KEY} from './follow-up-reload'
 import {
   createDefaultRefresh,
   type DefaultRefreshHost,
-  type RefreshStrategy,
+  type ReloadRefreshStrategy,
   resolveRefreshStrategy,
 } from './refresh-strategy'
 
@@ -44,7 +44,7 @@ function createHost() {
 }
 
 /** Runs one change-triggered refresh, then the arrival of the reloaded page. */
-async function refreshThenArrive(strategy: RefreshStrategy | undefined) {
+async function refreshThenArrive(strategy: ReloadRefreshStrategy | undefined) {
   const env = createHost()
   await createDefaultRefresh(resolveRefreshStrategy(strategy), env.host).refresh(mutationRefresh)
   const marked = env.store.has(FOLLOW_UP_RELOAD_KEY)
@@ -66,6 +66,10 @@ describe('resolveRefreshStrategy', () => {
       type: 'reload',
       followUpDelayMs: 1200,
     })
+  })
+
+  it('selects the in-place refresh', () => {
+    expect(resolveRefreshStrategy('in-place')).toEqual({type: 'in-place'})
   })
 
   it('drops a follow-up delay that would do nothing', () => {
