@@ -4,7 +4,7 @@ This integration enables the [Sanity Client][sanity-client] in your [Astro][astr
 
 - [Installation](#installation)
   - [Manual installation of dependencies](#manual-installation-of-dependencies)
-  - [Adding types for `sanity:client`](#adding-types-for-sanityclient)
+  - [Types for `sanity:client` and `sanity:studio`](#types-for-sanityclient-and-sanitystudio)
 - [Usage](#usage)
   - [Setting up the Sanity client](#setting-up-the-sanity-client)
   - [Embedding Sanity Studio on a route](#embedding-sanity-studio-on-a-route)
@@ -29,13 +29,23 @@ Note: `@astrojs/react` is only needed if you plan to embed a Sanity Studio in yo
 npm install @astrojs/react @sanity/astro @sanity/client sanity @types/react-dom @types/react-is @types/react react-dom react-is react styled-components
 ```
 
-### Adding types for `sanity:client`
+### Types for `sanity:client` and `sanity:studio`
 
-This integration leverages [Vite.js' virtual modules][vite-virtual-modules] with Astro's naming convention (e.g. `astro:assets`). Since it's not possible to automatically include module declarations from npm packages, you'll have to add the following line to the `env.d.ts` file that usually resides in the `src` folder of an Astro project:
+This integration leverages [Vite.js' virtual modules][vite-virtual-modules] with Astro's naming convention (e.g. `astro:assets`). Add this line to the `env.d.ts` file in the `src` folder of your project:
 
 ```dts
 /// <reference types="astro/client" />
 /// <reference types="@sanity/astro/module" />
+```
+
+On Astro 4.14 and later you can let the integration register the declarations instead, by setting `injectTypes: true` in the integration options. They then land in `.astro/integrations/_sanity_astro/types.d.ts` after `astro dev`, `astro build` or `astro sync` through Astro's [`injectTypes`][inject-types], and the `env.d.ts` line can go. The option is off by default; keeping the manual reference alongside it is harmless.
+
+```javascript
+sanity({
+  projectId: '<YOUR-PROJECT-ID>',
+  dataset: '<YOUR-DATASET-NAME>',
+  injectTypes: true,
+})
 ```
 
 You might have to restart the TS Server running in your code editor to get it to resolve types after updating this file. The easiest way to do this is to restart the application.
@@ -435,6 +445,7 @@ const {data: movies} = await loadQuery<Array<{title: string}>>({
 [sanity-client]: https://www.sanity.io/docs/js-client
 [image-urls]: https://www.sanity.io/docs/image-urls
 [vite-virtual-modules]: https://vitejs.dev/guide/api-plugin.html#virtual-modules-convention
+[inject-types]: https://docs.astro.build/en/reference/integrations-reference/#injecttypes-option
 [visual-editing]: https://www.sanity.io/docs/introduction-to-visual-editing
 [presentation-tool]: https://www.sanity.io/docs/configuring-the-presentation-tool
 [overlays]: https://www.sanity.io/docs/visual-editing-overlays
