@@ -12,6 +12,8 @@ type SetupOptions = {
   studioRouterHistory?: 'browser' | 'hash'
   studioBasePath?: string
   logClientRequests?: 'dev' | 'build' | 'always'
+  visualEditingStandalone?: boolean
+  integrations?: Array<{name: string}>
 }
 
 async function runSetup({
@@ -19,6 +21,8 @@ async function runSetup({
   studioRouterHistory,
   studioBasePath = '/admin',
   logClientRequests,
+  visualEditingStandalone,
+  integrations = [],
 }: SetupOptions = {}) {
   const integration = sanityIntegration({
     projectId: 'project-id',
@@ -26,18 +30,26 @@ async function runSetup({
     studioBasePath,
     studioRouterHistory,
     logClientRequests,
+    visualEditingStandalone,
   })
   const setup = integration.hooks['astro:config:setup']
   const injectRoute = vi.fn()
   const updateConfig = vi.fn()
   const injectScript = vi.fn()
+  const logger = {warn: vi.fn()}
 
-  await setup({config: {output}, injectRoute, updateConfig, injectScript} as never)
+  await setup({
+    config: {output, integrations},
+    injectRoute,
+    updateConfig,
+    injectScript,
+    logger,
+  } as never)
 
   const vitePlugins: Array<{name?: string; load?: (id: string) => unknown}> =
     updateConfig.mock.calls[0][0].vite.plugins
 
-  return {injectRoute, updateConfig, injectScript, vitePlugins}
+  return {injectRoute, updateConfig, injectScript, logger, vitePlugins}
 }
 
 describe('sanity integration options', () => {
@@ -192,6 +204,27 @@ describe('sanity integration vite config', () => {
     expect(chunkWarningPlugin).toBeDefined()
     expect(chunkWarningPlugin?.apply).toBe('build')
     expect((vitePluginSanityStudioChunkWarning() as {apply?: string}).apply).toBe('build')
+  })
+
+  it('registers the visual editing standalone plugin only when opted in', async () => {
+    const {vitePlugins} = await runSetup({visualEditingStandalone: true})
+
+    expect(vitePlugins.map((plugin) => plugin.name)).toContain('sanity:visual-editing-standalone')
+  })
+
+  it('warns when visualEditingStandalone is combined with @astrojs/react', async () => {
+    const {logger} = await runSetup({
+      visualEditingStandalone: true,
+      integrations: [{name: '@astrojs/react'}],
+    })
+
+    expect(logger.warn).toHaveBeenCalledOnce()
+  })
+
+  it('does not warn about @astrojs/react unless visualEditingStandalone is on', async () => {
+    const {logger} = await runSetup({integrations: [{name: '@astrojs/react'}]})
+
+    expect(logger.warn).not.toHaveBeenCalled()
   })
 })
 

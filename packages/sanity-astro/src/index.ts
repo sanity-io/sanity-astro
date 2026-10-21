@@ -6,6 +6,7 @@ import {vitePluginSanityClient} from './vite-plugin-sanity-client'
 import {vitePluginSanityModuleDedupe} from './vite-plugin-sanity-module-dedupe'
 import {vitePluginSanityStudio} from './vite-plugin-sanity-studio'
 import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-chunk-warning'
+import {vitePluginSanityVisualEditingStandalone} from './vite-plugin-sanity-visual-editing-standalone'
 
 export type StudioRouterHistory = 'browser' | 'hash'
 export type LogClientRequests = 'dev' | 'build' | 'always'
@@ -26,6 +27,13 @@ export type IntegrationOptions = ClientConfig & {
    * its duration, query and calling file.
    */
   logClientRequests?: LogClientRequests
+  /**
+   * Runs the `<VisualEditing />` overlays on `@sanity/visual-editing-standalone`
+   * instead of `@sanity/visual-editing`. The standalone build bundles its own React,
+   * React DOM and styled-components instead of using the project's copies. Requires
+   * `@sanity/visual-editing-standalone` to be installed. Defaults to `false`.
+   */
+  visualEditingStandalone?: boolean
 }
 
 const defaultClientConfig: ClientConfig = {
@@ -59,6 +67,7 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
     studioBasePath,
     studioRouterHistory: requestedStudioRouterHistory,
     logClientRequests,
+    visualEditingStandalone = false,
     ...clientConfig
   } = options
   const normalizedStudioBasePath = normalizeStudioBasePath(studioBasePath)
@@ -72,11 +81,20 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
   return {
     name: '@sanity/astro',
     hooks: {
-      'astro:config:setup': ({config, injectScript, injectRoute, updateConfig}) => {
+      'astro:config:setup': ({config, injectScript, injectRoute, logger, updateConfig}) => {
         const studioRouterHistory = resolveStudioRouterHistory(
           requestedStudioRouterHistory,
           config?.output,
         )
+
+        if (
+          visualEditingStandalone &&
+          config?.integrations?.some((integration) => integration.name === '@astrojs/react')
+        ) {
+          logger?.warn(
+            '`visualEditingStandalone` bundles its own copy of React. This project also uses `@astrojs/react`, so pages with Visual Editing load React twice.',
+          )
+        }
 
         updateConfig({
           vite: {
@@ -93,6 +111,7 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
                 studioRouterHistory,
               }),
               vitePluginSanityStudioChunkWarning(),
+              ...(visualEditingStandalone ? [vitePluginSanityVisualEditingStandalone()] : []),
             ],
           },
         })

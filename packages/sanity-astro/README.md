@@ -358,6 +358,28 @@ Visual Editing needs fresh HTML per request, so run the site with `astro dev` or
 
 Two limits are worth knowing. Values rendered from a release perspective are not patched instantly, because the overlays stream the draft and published forms of a document but not its version form; those update through the morph. And the overlay chunk is emitted into your build output whether or not `enabled` is true, exactly as the previous React island was; a page with Visual Editing off never fetches it.
 
+#### Running the overlays on `@sanity/visual-editing-standalone` (optional)
+
+By default the overlays come from `@sanity/visual-editing`, which Vite bundles together with your project's copy of React, React DOM and styled-components. Set `visualEditingStandalone: true` to load them from [`@sanity/visual-editing-standalone`](https://www.npmjs.com/package/@sanity/visual-editing-standalone) instead. It is a self-contained build with its own copy of those libraries, so the overlays don't depend on the versions installed in your project. Install it next to `@sanity/astro`:
+
+```sh
+npm install @sanity/visual-editing-standalone
+```
+
+```js
+// astro.config.mjs
+export default defineConfig({
+  integrations: [
+    sanity({
+      // ...
+      visualEditingStandalone: true,
+    }),
+  ],
+})
+```
+
+Only the `VisualEditing` component switches; the deprecated React component keeps using `@sanity/visual-editing`. The standalone build isn't smaller: in `apps/minimal` the script that boots the overlays shrinks, but the lazily loaded overlay chunk grows and a stylesheet is added. If your project uses the React integration for Astro, the overlays then ship a second copy of React, and the integration logs a warning.
+
 #### Custom refresh and history handling (deprecated)
 
 If you need a custom `refresh` or `history` function, the React component from `@sanity/astro/visual-editing/component` still accepts them. It wraps the same runtime as the `.astro` component and needs the [React integration for Astro][astro-react]. It is deprecated and will be removed in the next major release; open an issue if the `.astro` component's `refresh` prop does not cover your case.

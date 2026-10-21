@@ -66,6 +66,7 @@
     "@sanity/client": "^8.2.0",
     "@sanity/comlink": "^4.0.3",
     "@sanity/presentation-comlink": "^2.2.3",
+    "@sanity/visual-editing-standalone": "^2.0.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/serialize-javascript": "^5.0.4",
@@ -86,12 +87,18 @@
   },
   "peerDependencies": {
     "@sanity/client": "^7.14.1 || ^8.0.0",
+    "@sanity/visual-editing-standalone": "^2.0.2",
     "astro": "^2.0.0 || ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0",
     "react": "^18.2.0 || ^19.0.0",
     "react-dom": "^18.2.0 || ^19.0.0",
     "react-is": "^18.2.0 || ^19.0.0",
     "sanity": "^3.99.0 || ^4.0.0 || ^5.0.0 || ^6.0.0",
     "styled-components": "^6.1.19"
+  },
+  "peerDependenciesMeta": {
+    "@sanity/visual-editing-standalone": {
+      "optional": true
+    }
   },
   "engines": {
     "node": ">=20.19.0 || >=22.12.0"

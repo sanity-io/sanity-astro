@@ -333,6 +333,9 @@ importers:
       '@sanity/presentation-comlink':
         specifier: ^2.2.3
         version: 2.2.3(@sanity/types@6.11.0(@types/react@19.2.7)(vitest@4.1.11))
+      '@sanity/visual-editing-standalone':
+        specifier: ^2.0.2
+        version: 2.0.2
       '@types/react':
         specifier: ^19
         version: 19.2.7
@@ -4628,6 +4631,10 @@ packages:
     engines: {node: '>=20.19 <22 || >=22.12'}
     peerDependencies:
       '@sanity/client': ^7.26.2 || ^8.0.0
+
+  '@sanity/visual-editing-standalone@2.0.2':
+    resolution: {integrity: sha512-4wSch8DwfEaxGnEbMkKx8RwhGeoXJY9LPQqJ9loN2C98FAbGFlNECmHGI26KaIz5W/Q7JW3dipS5h8GzjWbGPw==}
+    engines: {node: '>=20.19'}
 
   '@sanity/visual-editing-types@2.1.1':
     resolution: {integrity: sha512-t/Aa2HclwUHzNY/CGeQMEVDb4Dc5izI7SwdqwTeSSMc+f0hRgAa2PG3PuBOmpyCta0GGMm7febk4FMWqF+iwaA==}
@@ -17320,6 +17327,8 @@ snapshots:
     transitivePeerDependencies:
       - '@sanity/types'
       - typescript
+
+  '@sanity/visual-editing-standalone@2.0.2': {}
 
   '@sanity/visual-editing-types@2.1.1(@sanity/client@7.26.2)(@sanity/types@5.31.1(@types/react@19.2.7))':
     dependencies:
