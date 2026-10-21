@@ -42,6 +42,8 @@ const service: ExternalImageService = {
       url.searchParams.set('w', String(Math.round(options.width)))
     }
     if (options.height === undefined) {
+      // Clear the base URL's `h` so width-only transforms are not height-capped.
+      url.searchParams.delete('h')
       url.searchParams.set('fit', 'max')
     } else {
       url.searchParams.set('h', String(Math.round(options.height)))
