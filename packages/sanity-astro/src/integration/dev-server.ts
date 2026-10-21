@@ -11,7 +11,7 @@ export type DevServerHandle = {
   stop: () => Promise<void>
 }
 
-async function getAvailablePort(): Promise<number> {
+export async function getAvailablePort(): Promise<number> {
   return new Promise((resolve, reject) => {
     const server = createServer()
     server.unref()

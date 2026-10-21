@@ -1,3 +1,6 @@
+import {mkdtempSync, rmSync} from 'node:fs'
+import Module, {createRequire} from 'node:module'
+import {tmpdir} from 'node:os'
 import path from 'node:path'
 
 import {describe, expect, it} from 'vitest'
@@ -81,6 +84,30 @@ describe('vitePluginSanityModuleDedupe', () => {
 
     for (const entry of alias) {
       expect(path.isAbsolute(entry.replacement)).toBe(true)
+    }
+  })
+
+  it('ignores packages only NODE_PATH reaches, as pnpm bin shims set it to the hoist directory', () => {
+    const projectRoot = mkdtempSync(path.join(tmpdir(), 'sanity-astro-dedupe-'))
+    const previousNodePath = process.env.NODE_PATH
+    // Node reads NODE_PATH once at startup; `_initPaths` re-reads it.
+    const nodeModule = Module as unknown as {_initPaths: () => void}
+    process.env.NODE_PATH = path.resolve(process.cwd(), 'node_modules')
+    nodeModule._initPaths()
+    try {
+      expect(createRequire(path.join(projectRoot, 'package.json')).resolve('react')).toBeTruthy()
+
+      expect(resolveSanityModuleDedupe(projectRoot)).toEqual([])
+      expect(resolveSanityOptimizeDeps(projectRoot)).toEqual([])
+      expect(buildSanityModuleAliases(projectRoot)).toEqual([])
+    } finally {
+      if (previousNodePath === undefined) {
+        delete process.env.NODE_PATH
+      } else {
+        process.env.NODE_PATH = previousNodePath
+      }
+      nodeModule._initPaths()
+      rmSync(projectRoot, {recursive: true, force: true})
     }
   })
 })
