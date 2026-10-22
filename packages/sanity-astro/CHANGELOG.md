@@ -1,5 +1,3 @@
-<!-- markdownlint-disable --><!-- textlint-disable -->
-
 # @sanity/astro
 
 ## 3.5.2
