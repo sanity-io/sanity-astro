@@ -34,11 +34,5 @@
     "rimraf": "^5.0.7",
     "turbo": "^1.13.4"
   },
-  "packageManager": "pnpm@9.15.9",
-  "pnpm": {
-    "overrides": {
-      "braces@<3.0.3": ">=3.0.3",
-      "ws@>=8.0.0 <8.17.1": ">=8.22.0"
-    }
-  }
+  "packageManager": "pnpm@12.15.0"
 }
