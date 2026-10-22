@@ -133,9 +133,11 @@ const renderedValue = (text: string, run: StegaRun, length: number) =>
  *
  * Calibration reads server renders only: the page as loaded and the page after each morph.
  * Text seen between a change and its morph is behind by construction and never decides. A
- * render that shows the raw value settles the field as verbatim; two renders of the same value
- * that both show something else settle it as transformed. A field first rendered by a morph
- * that was behind the stream therefore recovers as soon as the settle pass catches up.
+ * render that shows the raw value settles the field as verbatim; two morphs of the same value
+ * that both show something else settle it as transformed. The initial sync only counts hits, so
+ * an ahead-of-page snapshot cannot spend the first miss before stale retries run. A field first
+ * rendered by a morph that was behind the stream therefore recovers as soon as the settle pass
+ * catches up.
  */
 export function createLiveText(options: LiveTextOptions): LiveText {
   const {stream} = options
@@ -193,21 +195,34 @@ export function createLiveText(options: LiveTextOptions): LiveText {
     return field
   }
 
-  /** Records the field's current raw value and, on a server render, calibrates the field. */
-  const observe = (text: string, run: StegaRun, value: string, render: boolean) => {
+  /**
+   * Records the field's current raw value and, on a server render, calibrates the field.
+   * `misses` is whether a non-matching render counts toward settling as transformed. The initial
+   * sync omits misses: the overlay snapshot can be ahead of the page, and a miss there would pair
+   * with the next still-stale morph to lock the field as transformed before retries can help.
+   */
+  const observe = (
+    text: string,
+    run: StegaRun,
+    value: string,
+    render: boolean,
+    misses: boolean,
+  ) => {
     const field = fieldFor(run.source)
     if (render && !field.settled) {
       if (renderedValue(text, run, value.length) === value) {
         field.verbatim = true
         field.settled = true
-      } else if (field.rendered && field.rendered.pass !== pass) {
-        if (field.rendered.value === value) {
-          field.settled = true
-        } else {
+      } else if (misses) {
+        if (field.rendered && field.rendered.pass !== pass) {
+          if (field.rendered.value === value) {
+            field.settled = true
+          } else {
+            field.rendered = {pass, value}
+          }
+        } else if (!field.rendered) {
           field.rendered = {pass, value}
         }
-      } else if (!field.rendered) {
-        field.rendered = {pass, value}
       }
     }
     if (field.values[field.values.length - 1] !== value) {
@@ -258,13 +273,13 @@ export function createLiveText(options: LiveTextOptions): LiveText {
   }
 
   /** Observes every field the node renders, then rewrites the stale runs in place. */
-  const patchNode = (node: Text, render: boolean) => {
+  const patchNode = (node: Text, render: boolean, misses: boolean) => {
     let text = node.nodeValue ?? ''
     const runs = findStegaRuns(text)
     for (const run of runs) {
       const value = valueOf(run)
       if (value !== undefined) {
-        observe(text, run, value, render)
+        observe(text, run, value, render, misses)
       }
     }
     const stale = staleRuns(text, runs)
@@ -284,7 +299,7 @@ export function createLiveText(options: LiveTextOptions): LiveText {
   }
 
   /** Patches every node rendered from `documentId`. `render` marks the DOM as a server render. */
-  const patch = (documentId: string, render: boolean) => {
+  const patch = (documentId: string, render: boolean, misses: boolean) => {
     if (disposed) {
       return 0
     }
@@ -299,7 +314,7 @@ export function createLiveText(options: LiveTextOptions): LiveText {
         nodes.delete(node)
         continue
       }
-      changed += patchNode(node, render)
+      changed += patchNode(node, render, misses)
     }
     return changed
   }
@@ -319,7 +334,7 @@ export function createLiveText(options: LiveTextOptions): LiveText {
     let changed = 0
     for (const nodes of index.values()) {
       for (const node of nodes) {
-        changed += patchNode(node, true)
+        changed += patchNode(node, true, true)
       }
     }
     return changed
@@ -329,8 +344,22 @@ export function createLiveText(options: LiveTextOptions): LiveText {
     for (const nodes of buildIndex(fetched).values()) {
       for (const node of nodes) {
         const text = node.nodeValue ?? ''
-        if (staleRuns(text, findStegaRuns(text)).length > 0) {
+        const runs = findStegaRuns(text)
+        if (staleRuns(text, runs).length > 0) {
           return true
+        }
+        // Unsettled fields are not yet known to be transformed. A mismatch means the server may
+        // still be behind the stream, so the refresh loop should retry rather than morph and risk
+        // settling the field from two stale misses of the same value.
+        for (const run of runs) {
+          const value = valueOf(run)
+          const field = fields.get(run.source.documentId)?.get(run.source.path)
+          if (value === undefined || !field || field.settled) {
+            continue
+          }
+          if (renderedValue(text, run, value.length) !== value) {
+            return true
+          }
         }
       }
     }
@@ -339,18 +368,20 @@ export function createLiveText(options: LiveTextOptions): LiveText {
 
   const unsubscribe = stream.subscribe({
     // The page was rendered from the snapshot the first sync delivers, give or take a race.
-    'sync': (id) => void patch(id, true),
+    // Only a matching render calibrates here; a miss is left for morph settle passes so an
+    // ahead-of-page snapshot cannot consume the first of the two misses that mark a transform.
+    'sync': (id) => void patch(id, true, false),
     'mutation': (id) => {
-      patch(id, false)
+      patch(id, false, false)
       options.onRemoteChange(id)
     },
     // A refetched snapshot (first load, reconnect) only matters when the DOM disagrees with it.
     'rebased.remote': (id) => {
-      if (patch(id, false) > 0) {
+      if (patch(id, false, false) > 0) {
         options.onRemoteChange(id)
       }
     },
-    'rebased.local': (id) => void patch(id, false),
+    'rebased.local': (id) => void patch(id, false, false),
   })
 
   return {

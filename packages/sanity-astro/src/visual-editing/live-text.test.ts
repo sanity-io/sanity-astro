@@ -223,11 +223,13 @@ describe('createLiveText', () => {
     live.dispose()
   })
 
-  it('settles a field as transformed when two renders of one value both show something else', () => {
+  it('settles a field as transformed when two morphs of one value both show something else', () => {
     mountEncoded('Hello')
     const {live, load, mutate} = setup()
     load(DOC, {title: 'hello'})
-    // The morph after an unrelated change renders the same value the same way.
+    // Sync does not spend a miss (the snapshot may be ahead of the page). Two morphs that both
+    // fail to show the raw value settle the field as transformed.
+    expect(live.patchAll()).toBe(0)
     expect(live.patchAll()).toBe(0)
 
     // A later value the transform leaves untouched must not calibrate the field as verbatim.
@@ -343,6 +345,25 @@ describe('createLiveText', () => {
     expect(live.isStale(render('Sicario'))).toBe(false)
     expect(live.isStale(render('Arrival: Director’s Cut'))).toBe(false)
 
+    live.dispose()
+  })
+
+  it('does not lock instant text when the first sync is ahead of a still-stale page', () => {
+    // Preview HTML is still on the previous title while the overlay snapshot already has the
+    // edit typed during load. Sync must not spend a miss, and the stale fetch must be flagged so
+    // the refresh loop retries instead of morphing twice into a transformed verdict.
+    mountEncoded('Arrival')
+    const {live, load, mutate} = setup()
+    load(DOC, {title: 'Sicario'})
+
+    const stale = parseBody(`<p>${encode('Arrival')}</p>`)
+    expect(live.isStale(stale)).toBe(true)
+
+    applyRender(parseBody(`<p>${encode('Sicario')}</p>`))
+    live.patchAll()
+    mutate(DOC, {title: 'Sicario!'})
+
+    expect(shown(document.body)).toBe('Sicario!')
     live.dispose()
   })
 
