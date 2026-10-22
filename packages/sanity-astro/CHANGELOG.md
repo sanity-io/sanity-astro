@@ -1,5 +1,13 @@
 # @sanity/astro
 
+## 3.5.3
+
+### Patch Changes
+
+- [#488](https://github.com/sanity-io/sanity-astro/pull/488) [`ba762b0`](https://github.com/sanity-io/sanity-astro/commit/ba762b0ceda57cc0f9446cd7f000d1589e50d570) Thanks [@stipsan](https://github.com/stipsan)! - Update bundled `serialize-javascript` to v7 [security]
+
+- [#493](https://github.com/sanity-io/sanity-astro/pull/493) [`4cc3228`](https://github.com/sanity-io/sanity-astro/commit/4cc32281407e60a58751c9f36e78c6bb54cb8015) Thanks [@stipsan](https://github.com/stipsan)! - Stop mutating the options object passed to `sanityIntegration`
+
 ## 3.5.2
 
 [Compare changes](https://github.com/sanity-io/sanity-astro/compare/v3.5.1...v3.5.2) (2026-10-21)
