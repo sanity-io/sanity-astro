@@ -5,6 +5,19 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.6.0](https://github.com/sanity-io/sanity-astro/compare/v3.5.2...v3.6.0) (2026-10-22)
+
+
+### Features
+
+* add observatory reference implementation (Astro 7 + advanced Sanity features) ([#441](https://github.com/sanity-io/sanity-astro/issues/441)) ([08a0050](https://github.com/sanity-io/sanity-astro/commit/08a0050a60fa358c5356f0cccfc3c2a3bfe38a45))
+
+
+### Bug Fixes
+
+* **deps:** update bundled serialize-javascript to v7 [security] ([#488](https://github.com/sanity-io/sanity-astro/issues/488)) ([ba762b0](https://github.com/sanity-io/sanity-astro/commit/ba762b0ceda57cc0f9446cd7f000d1589e50d570))
+* stop mutating the options object passed to sanityIntegration ([#493](https://github.com/sanity-io/sanity-astro/issues/493)) ([4cc3228](https://github.com/sanity-io/sanity-astro/commit/4cc32281407e60a58751c9f36e78c6bb54cb8015))
+
 ## [3.5.2](https://github.com/sanity-io/sanity-astro/compare/v3.5.1...v3.5.2) (2026-10-21)
 
 
