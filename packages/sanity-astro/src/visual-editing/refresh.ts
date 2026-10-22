@@ -121,6 +121,7 @@ export function createRefresher(options: RefreshOptions): Refresher {
         controller = undefined
       }
       if (outcome === 'reload') {
+        settle = false
         if (!signal.aborted) {
           reload()
         }
@@ -142,8 +143,7 @@ export function createRefresher(options: RefreshOptions): Refresher {
     if (disposed) {
       return Promise.resolve()
     }
-    clearTimeout(timer)
-    timer = undefined
+    clearTimers()
     dirty = true
     const promise = untilDrained()
     if (!pumping) {
