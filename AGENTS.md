@@ -1,5 +1,25 @@
 # AGENTS.md
 
+## Changesets
+
+Releases are managed with [Changesets](https://github.com/changesets/changesets). Every PR that changes what `@sanity/astro` publishes needs a changeset. That covers source, runtime dependencies, peer dependency ranges, and `package.json` fields that reach npm. Add one file per change to `.changeset/`:
+
+```markdown
+---
+'@sanity/astro': patch
+---
+
+Describe the change for people who use `@sanity/astro`
+```
+
+- `patch` for fixes and dependency updates, `minor` for new opt-in features, `major` for breaking changes. Default behavior must not change outside a `major`.
+- Write the summary for users of the package; it becomes the CHANGELOG entry verbatim.
+- `pnpm changeset add` writes the file interactively; `pnpm changeset status` lists what the next release will bump.
+- Changes confined to `apps/*`, `packages/ailf`, CI or docs need no changeset.
+- Renovate PRs get their changeset automatically from `.github/workflows/renovate.yml`.
+- Merging to `main` opens or updates a "Version Packages" PR (`.github/workflows/release.yml`). Merging that PR publishes to npm through trusted publishing. Never bump the version or edit `CHANGELOG.md` by hand.
+- Add the `trigger: preview` label to a PR to publish a preview build with [pkg.pr.new](https://pkg.pr.new).
+
 ## Cursor Cloud specific instructions
 
 This repo is the official **Sanity + Astro** integration ([`@sanity/astro`](./packages/sanity-astro)) — a pnpm + Turborepo monorepo containing the library plus four example Astro apps under `apps/`. There is **no local database**; content is served from **hosted Sanity Cloud**, so the dev servers need outbound network access to Sanity's API/CDN to render content.

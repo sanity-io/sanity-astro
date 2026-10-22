@@ -1,0 +1,8 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config/schema.json",
+  "changelog": ["@changesets/changelog-github", {"repo": "sanity-io/sanity-astro"}],
+  "access": "public",
+  "baseBranch": "main",
+  "format": "oxfmt",
+  "privatePackages": false
+}
