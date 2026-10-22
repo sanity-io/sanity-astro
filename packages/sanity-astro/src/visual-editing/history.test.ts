@@ -240,6 +240,36 @@ describe('createBrowserHistoryAdapter', () => {
     }
   })
 
+  it('skips push and replace when Presentation echoes the current relative URL', () => {
+    window.history.replaceState(null, '', '/movies/abc?x=1#cast')
+    const adapter = createBrowserHistoryAdapter()
+    adapters.push(adapter)
+    const assign = vi.fn()
+    const replace = vi.fn()
+    const originalLocation = window.location
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        ...originalLocation,
+        pathname: '/movies/abc',
+        search: '?x=1',
+        hash: '#cast',
+        href: 'http://localhost:4321/movies/abc?x=1#cast',
+        assign,
+        replace,
+      },
+    })
+
+    try {
+      adapter.update({type: 'push', url: '/movies/abc?x=1#cast'})
+      adapter.update({type: 'replace', url: '/movies/abc?x=1#cast'})
+      expect(assign).not.toHaveBeenCalled()
+      expect(replace).not.toHaveBeenCalled()
+    } finally {
+      Object.defineProperty(window, 'location', {configurable: true, value: originalLocation})
+    }
+  })
+
   it('restores native history methods on dispose', () => {
     const nativePushState = window.history.pushState
     const nativeReplaceState = window.history.replaceState

@@ -163,7 +163,9 @@ export function createBrowserHistoryAdapter(): BrowserHistoryAdapter {
       }
     },
     update: (update) => {
-      applyPresentationHistoryUpdate(update, window.location.href, {
+      // Compare against the same relative form we publish; window.location.href is absolute
+      // and would never equal Presentation's echoed path, so same-page updates would assign.
+      applyPresentationHistoryUpdate(update, getPresentationUrl(window.location), {
         assign: (url) => window.location.assign(url),
         replace: (url) => window.location.replace(url),
         back: () => window.history.back(),
