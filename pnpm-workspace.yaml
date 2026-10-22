@@ -1,3 +1,18 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+
+overrides:
+  'braces@<3.0.3': '>=3.0.3'
+  'ws@>=8.0.0 <8.17.1': '>=8.22.0'
+
+allowBuilds:
+  '@swc/core': true
+  esbuild: true
+  sharp: true
+  # Only pulled in by the ailf eval tooling (promptfoo), which installs with --ignore-scripts
+  '@playwright/browser-chromium': false
+  better-sqlite3: false
+  core-js-pure: false
+  onnxruntime-node: false
+  protobufjs: false
