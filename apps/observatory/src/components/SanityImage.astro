@@ -1,0 +1,37 @@
+---
+import {Image} from 'astro:assets'
+
+import {type ProjectedImage, sanityImage} from '../sanity/image'
+
+interface Props {
+  image: ProjectedImage | null
+  /** Width the image renders at; drives the generated srcset and sizes. */
+  width: number
+  /** Forces an aspect ratio; the crop moves towards the editor's hotspot. */
+  height?: number
+  /** Overrides the art-directed `sizes` the layout would generate. */
+  sizes?: string
+  layout?: 'constrained' | 'fixed' | 'full-width'
+  priority?: boolean
+  class?: string
+}
+
+const {image, width, height, sizes, layout, priority, class: className} = Astro.props
+
+const resolved = sanityImage(image, height === undefined ? {width} : {width, height})
+---
+
+{
+  resolved !== null && (
+    <Image
+      src={resolved.src}
+      width={resolved.width}
+      height={resolved.height}
+      alt={image?.alt ?? ''}
+      {...(sizes === undefined ? {} : {sizes})}
+      {...(layout === undefined ? {} : {layout})}
+      {...(priority === undefined ? {} : {priority})}
+      {...(className === undefined ? {} : {class: className})}
+    />
+  )
+}

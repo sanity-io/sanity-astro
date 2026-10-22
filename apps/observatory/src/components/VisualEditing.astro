@@ -1,0 +1,44 @@
+---
+// Rendered only in draft preview, so published pages ship none of this.
+import visualEditingStyles from '@sanity/visual-editing-standalone/styles.css?url'
+
+const {perspective, variant} = Astro.locals.preview
+---
+
+<link rel="stylesheet" href={visualEditingStyles} />
+<script
+  is:inline
+  id="preview-state"
+  type="application/json"
+  set:html={JSON.stringify({perspective: perspective ?? 'drafts', variant: variant ?? null})}
+/>
+<script>
+  import {enableVisualEditing} from '@sanity/visual-editing-standalone'
+
+  const state: {perspective: string; variant: string | null} = JSON.parse(
+    document.getElementById('preview-state')?.textContent ?? '{"perspective":"drafts","variant":null}',
+  )
+
+  async function persist(endpoint: string, body: Record<string, unknown>): Promise<void> {
+    await fetch(endpoint, {
+      method: 'POST',
+      headers: {'content-type': 'application/json'},
+      body: JSON.stringify(body),
+    })
+    location.reload()
+  }
+
+  // Presentation announces the current values when it connects; only a real
+  // change should rewrite the cookie and reload, or the frame would loop.
+  enableVisualEditing({
+    zIndex: 100,
+    onPerspectiveChange: (perspective) => {
+      const next = Array.isArray(perspective) ? perspective.join(',') : perspective
+      if (next !== state.perspective) void persist('/api/preview/perspective', {perspective: next})
+    },
+    onVariantChange: (variant) => {
+      const next = variant ?? null
+      if (next !== state.variant) void persist('/api/preview/variant', {variant: next})
+    },
+  })
+</script>
