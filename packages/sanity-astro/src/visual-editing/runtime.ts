@@ -59,8 +59,11 @@ export function createRuntime(options: RuntimeOptions = {}): Runtime {
         next = await fetchDocument(href, fetch, signal)
       } catch {
         // A failed fetch, a non-HTML response or a redirect: whatever the server is doing, a
-        // navigation shows it to the editor and a morph cannot.
-        return signal.aborted ? 'applied' : 'reload'
+        // navigation shows it to the editor and a morph cannot. A client-side navigation that
+        // raced the fetch leaves this response for a page that is no longer showing.
+        return signal.aborted || stripHash(window.location.href) !== stripHash(href)
+          ? 'applied'
+          : 'reload'
       }
       // A client-side navigation or a teardown while the fetch was in flight makes this HTML
       // belong to a page that is no longer showing. An in-page `#anchor` jump does not.
