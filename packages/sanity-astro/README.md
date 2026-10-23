@@ -290,7 +290,7 @@ TypeGen only picks up queries tagged with `groq` or wrapped in `defineQuery`, an
 - Give each resource its own `path` glob. Every query in the matched files is typed against that resource's schema, so overlapping globs type the same query against both schemas.
 - A resource without `schema` uses the schema deployed for that project and dataset, so `npx sanity schema deploy` has to have run for it.
 - `projectId` and `dataset` have to match the client config exactly. A mismatch is not an error, the client just stays an untyped `SanityClient`.
-- With `typegen.resources`, `overloadClientMethods` defaults to `false`, so the flat `SanityQueries` registry from single-resource typegen is not written. Typed clients resolve results through `SanityQueriesByResource` only, a leftover flat registry has no effect on them.
+- With `typegen.resources`, `overloadClientMethods` defaults to `false`, so the flat `SanityQueries` registry from single-resource typegen is not written. Typed clients resolve results through `SanityQueriesByResource` only, a leftover flat registry has no effect on them. A query imported from a `.groq` file (see [Typing query results](#typing-query-results)) brings its own types, which win over the registry.
 
 Without `typegen.resources`, every client is a regular `SanityClient`.
 
