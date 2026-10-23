@@ -7,6 +7,7 @@ This integration enables the [Sanity Client][sanity-client] in your [Astro][astr
   - [Types for `sanity:client` and `sanity:studio`](#types-for-sanityclient-and-sanitystudio)
 - [Usage](#usage)
   - [Setting up the Sanity client](#setting-up-the-sanity-client)
+  - [Loading Sanity documents into content collections](#loading-sanity-documents-into-content-collections)
   - [Embedding Sanity Studio on a route](#embedding-sanity-studio-on-a-route)
 - [Rendering rich text and block content with Portable Text](#rendering-rich-text-and-block-content-with-portable-text)
 - [Presenting images](#presenting-images)
@@ -107,6 +108,53 @@ To log server-side requests made with `sanity:client`, set `logClientRequests` i
 - `logClientRequests: 'always'` logs during both development and builds
 
 If omitted, request logging is disabled.
+
+### Loading Sanity documents into content collections
+
+On Astro 5 and later, `sanityLoader` feeds a GROQ query into the [Content Layer][content-layer], so `getCollection()` and `getEntry()` work the same way for Sanity documents as for local Markdown. The loader is **experimental**: it is opt-in through its own `@sanity/astro/loader` entrypoint and its options may change in a minor release. Pass the client from `sanity:client` so the loader reuses your integration config:
+
+```typescript
+// src/content.config.ts
+import {sanityLoader} from '@sanity/astro/loader'
+import {defineCollection} from 'astro:content'
+import {z} from 'astro/zod'
+import {sanityClient} from 'sanity:client'
+
+const movies = defineCollection({
+  loader: sanityLoader<{_id: string; slug: string}>({
+    client: sanityClient,
+    query: `*[_type == "movie" && defined(slug.current)]{_id, title, "slug": slug.current, releaseDate}`,
+    // Entry ids default to `_id`. Use the slug when pages are addressed by it.
+    id: (movie) => movie.slug,
+  }),
+  schema: z.object({
+    _id: z.string(),
+    title: z.string(),
+    slug: z.string(),
+    releaseDate: z.string().optional(),
+  }),
+})
+
+export const collections = {movies}
+```
+
+```astro
+---
+// src/pages/movies/[slug].astro
+import {getCollection} from 'astro:content'
+
+export async function getStaticPaths() {
+  const movies = await getCollection('movies')
+  return movies.map((movie) => ({params: {slug: movie.id}, props: {movie}}))
+}
+
+const {movie} = Astro.props
+---
+
+<h1>{movie.data.title}</h1>
+```
+
+Every load fetches the whole query result, writes each document with a content digest so unchanged entries are skipped, and removes entries that left the result, so edits and deletions in Sanity show up on the next build or dev-server restart. Two documents mapping to the same entry id (for example a draft and its published document when the query uses the `raw` or `drafts` perspective) make the loader throw, naming both `_id`s, rather than silently dropping one.
 
 ### Embedding Sanity Studio on a route
 
@@ -458,6 +506,7 @@ const {data: movies} = await loadQuery<Array<{title: string}>>({
 [image-urls]: https://www.sanity.io/docs/image-urls
 [vite-virtual-modules]: https://vitejs.dev/guide/api-plugin.html#virtual-modules-convention
 [inject-types]: https://docs.astro.build/en/reference/integrations-reference/#injecttypes-option
+[content-layer]: https://docs.astro.build/en/guides/content-collections/
 [visual-editing]: https://www.sanity.io/docs/introduction-to-visual-editing
 [presentation-tool]: https://www.sanity.io/docs/configuring-the-presentation-tool
 [overlays]: https://www.sanity.io/docs/visual-editing-overlays

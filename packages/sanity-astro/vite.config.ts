@@ -13,9 +13,13 @@ export default defineConfig(() => {
       // transient package entry resolution failures in consuming apps.
       emptyOutDir: false,
       lib: {
-        entry: [path.resolve(__dirname, 'src/index.ts')],
-        name,
-        fileName: (format) => (format === 'es' ? `${name}.mjs` : `${name}.js`),
+        entry: {
+          [name]: path.resolve(__dirname, 'src/index.ts'),
+          loader: path.resolve(__dirname, 'src/loader.ts'),
+        },
+        // Two entries rule out UMD; the `.js` build becomes CJS instead.
+        formats: ['es', 'cjs'],
+        fileName: (format, entryName) => (format === 'es' ? `${entryName}.mjs` : `${entryName}.js`),
       },
       rollupOptions: {
         external: [/^node:/, 'vite', 'astro', '@sanity/client'],
