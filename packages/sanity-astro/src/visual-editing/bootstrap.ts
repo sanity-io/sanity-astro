@@ -46,6 +46,11 @@ export function install(options: BootstrapOptions = {}): () => void {
       }
     } catch (error) {
       console.error('[@sanity/astro] Failed to start Visual Editing', error)
+      // Clear the pinned host so a later page-load can retry; leave generation alone when a
+      // newer boot already owns the page.
+      if (generation === mine) {
+        host = null
+      }
     }
   }
 

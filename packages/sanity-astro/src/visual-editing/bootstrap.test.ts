@@ -133,4 +133,30 @@ describe('install', () => {
     expect(error.mock.calls[0]?.[0]).toMatch(/Failed to start Visual Editing/)
     expect(() => uninstall()).not.toThrow()
   })
+
+  it('retries on the next page-load after a failed start', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    mountHost()
+    const stop = vi.fn()
+    const start = vi.fn(() => stop)
+    let attempt = 0
+    const load = vi.fn(async () => {
+      attempt++
+      if (attempt === 1) {
+        throw new Error('chunk 404')
+      }
+      return {start}
+    })
+    const uninstall = install({load})
+    await flush()
+
+    expect(start).not.toHaveBeenCalled()
+    document.dispatchEvent(new Event('astro:page-load'))
+    await flush()
+
+    expect(load).toHaveBeenCalledTimes(2)
+    expect(start).toHaveBeenCalledTimes(1)
+    expect(error).toHaveBeenCalledTimes(1)
+    uninstall()
+  })
 })

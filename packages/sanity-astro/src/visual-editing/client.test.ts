@@ -102,4 +102,16 @@ describe('start', () => {
     stop()
     expect(disposeSpy).toHaveBeenCalledTimes(1)
   })
+
+  it('disposes the history adapter when enableVisualEditing throws', async () => {
+    const host = mountHost({experimental_inPlaceRefresh: true})
+    const nativePushState = window.history.pushState
+    enableVisualEditing.mockImplementationOnce(() => {
+      throw new Error('enable failed')
+    })
+
+    expect(() => start(host)).toThrow('enable failed')
+    expect(window.history.pushState).toBe(nativePushState)
+    expect(liveText.dispose).toHaveBeenCalledTimes(1)
+  })
 })

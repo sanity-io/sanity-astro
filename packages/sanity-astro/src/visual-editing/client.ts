@@ -22,16 +22,26 @@ export function start(host: Element): () => void {
   // Nothing but visual-editing.astro writes data-config, from a VisualEditingConfig it typed.
   const config = JSON.parse(host.getAttribute('data-config') ?? '{}') as VisualEditingConfig
   const history = createBrowserHistoryAdapter()
-  const runtime = createRuntime({inPlaceRefresh: config.experimental_inPlaceRefresh === true})
-  const disable = enableVisualEditing({
-    history,
-    refresh: runtime.refresh,
-    ...(config.zIndex !== undefined && {zIndex: config.zIndex}),
-    ...(config.keepStegaOnCopy !== undefined && {keepStegaOnCopy: config.keepStegaOnCopy}),
-  })
-  return () => {
-    disable()
-    runtime.dispose()
+  try {
+    const runtime = createRuntime({inPlaceRefresh: config.experimental_inPlaceRefresh === true})
+    try {
+      const disable = enableVisualEditing({
+        history,
+        refresh: runtime.refresh,
+        ...(config.zIndex !== undefined && {zIndex: config.zIndex}),
+        ...(config.keepStegaOnCopy !== undefined && {keepStegaOnCopy: config.keepStegaOnCopy}),
+      })
+      return () => {
+        disable()
+        runtime.dispose()
+        history.dispose()
+      }
+    } catch (error) {
+      runtime.dispose()
+      throw error
+    }
+  } catch (error) {
     history.dispose()
+    throw error
   }
 }

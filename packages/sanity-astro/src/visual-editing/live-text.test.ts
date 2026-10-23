@@ -261,6 +261,26 @@ describe('createLiveText', () => {
     live.dispose()
   })
 
+  it('does not lock instant text when the first sync is ahead of a still-stale page', () => {
+    // Preview HTML is still on the previous title while the overlay snapshot already has the
+    // edit typed during load. Sync must not mark the field transformed, must ask for a morph,
+    // and the stale fetch must be flagged so the refresh loop retries.
+    mountEncoded('Arrival')
+    const {live, onRemoteChange, load, mutate} = setup()
+    load(DOC, {title: 'Sicario'})
+
+    expect(onRemoteChange).toHaveBeenCalledWith(DOC)
+    const stale = parseBody(`<p>${encode('Arrival')}</p>`)
+    expect(live.isStale(stale)).toBe(true)
+
+    applyRender(parseBody(`<p>${encode('Sicario')}</p>`))
+    live.patchAll()
+    mutate(DOC, {title: 'Sicario!'})
+
+    expect(shown(document.body)).toBe('Sicario!')
+    live.dispose()
+  })
+
   it('recovers instant text after the page loaded behind the stream and a stale morph', () => {
     // The editor typed while the preview loaded: the first snapshot is ahead of the page, and
     // the morph that follows is served from an index that has not caught up either.

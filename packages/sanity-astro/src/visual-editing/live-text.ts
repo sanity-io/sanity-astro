@@ -98,11 +98,12 @@ const FIELD_HISTORY_LENGTH = 64
 /**
  * What is known about one rendered field. `values` are the raw strings the field has held,
  * newest last. `verbatim` is whether the page shows the raw value, decided by server renders
- * only and revised by each one that can tell. `hit` is the pass whose render last showed the
- * raw value, so a field the page renders both raw and transformed keeps patching the raw copy.
+ * only and revised by each one that can tell: `undefined` until a render has decided, then
+ * `true` or `false`. `hit` is the pass whose render last showed the raw value, so a field the
+ * page renders both raw and transformed keeps patching the raw copy.
  */
 interface FieldState {
-  verbatim: boolean
+  verbatim: boolean | undefined
   hit: number | undefined
   values: string[]
 }
@@ -149,6 +150,8 @@ const shows = (text: string, run: StegaRun, candidate: string) =>
  * first render that has caught up, and a transform that happens to leave one value unchanged
  * costs a single patch rather than every one after it. A render that shows an older value is
  * the server behind the stream; it decides nothing and is repaired from the field history.
+ * The initial sync only counts hits: its snapshot can be ahead of the HTML, and a miss there
+ * would mark the field transformed before history exists to recognise the lag.
  */
 export function createLiveText(options: LiveTextOptions): LiveText {
   const {stream} = options
@@ -200,7 +203,7 @@ export function createLiveText(options: LiveTextOptions): LiveText {
     }
     let field = byPath.get(source.path)
     if (!field) {
-      field = {verbatim: false, hit: undefined, values: []}
+      field = {verbatim: undefined, hit: undefined, values: []}
       byPath.set(source.path, field)
     }
     return field
@@ -209,23 +212,41 @@ export function createLiveText(options: LiveTextOptions): LiveText {
   /**
    * One server render's verdict on a field. The raw value on screen proves it verbatim; an
    * older value is the server behind the stream and proves nothing; anything else is a
-   * transform. A raw copy seen earlier in the same pass outranks a transformed copy of the same
-   * field elsewhere on the page.
+   * transform when `allowMiss` is set. The initial sync omits misses so an ahead-of-page
+   * snapshot cannot lock the field as transformed before history can recognise the lag. A raw
+   * copy seen earlier in the same pass outranks a transformed copy of the same field elsewhere
+   * on the page.
    */
-  const calibrate = (text: string, run: StegaRun, field: FieldState, value: string) => {
+  const calibrate = (
+    text: string,
+    run: StegaRun,
+    field: FieldState,
+    value: string,
+    allowMiss: boolean,
+  ) => {
     if (shows(text, run, value)) {
       field.verbatim = true
       field.hit = pass
-    } else if (field.hit !== pass && !field.values.some((older) => shows(text, run, older))) {
+    } else if (
+      allowMiss &&
+      field.hit !== pass &&
+      !field.values.some((older) => shows(text, run, older))
+    ) {
       field.verbatim = false
     }
   }
 
   /** Records the field's current raw value and, on a server render, calibrates the field. */
-  const observe = (text: string, run: StegaRun, value: string, render: boolean) => {
+  const observe = (
+    text: string,
+    run: StegaRun,
+    value: string,
+    render: boolean,
+    allowMiss: boolean,
+  ) => {
     const field = fieldFor(run.source)
     if (render) {
-      calibrate(text, run, field, value)
+      calibrate(text, run, field, value, allowMiss)
     }
     if (field.values[field.values.length - 1] !== value) {
       field.values.push(value)
@@ -272,13 +293,13 @@ export function createLiveText(options: LiveTextOptions): LiveText {
   }
 
   /** Observes every field the node renders, then rewrites the stale runs in place. */
-  const patchNode = (node: Text, render: boolean) => {
+  const patchNode = (node: Text, render: boolean, allowMiss: boolean) => {
     let text = node.nodeValue ?? ''
     const runs = findStegaRuns(text)
     for (const run of runs) {
       const value = valueOf(run)
       if (value !== undefined) {
-        observe(text, run, value, render)
+        observe(text, run, value, render, allowMiss)
       }
     }
     const stale = staleRuns(text, runs)
@@ -298,7 +319,7 @@ export function createLiveText(options: LiveTextOptions): LiveText {
   }
 
   /** Patches every node rendered from `documentId`. `render` marks the DOM as a server render. */
-  const patch = (documentId: string, render: boolean) => {
+  const patch = (documentId: string, render: boolean, allowMiss: boolean) => {
     if (disposed) {
       return 0
     }
@@ -313,7 +334,7 @@ export function createLiveText(options: LiveTextOptions): LiveText {
         nodes.delete(node)
         continue
       }
-      changed += patchNode(node, render)
+      changed += patchNode(node, render, allowMiss)
     }
     return changed
   }
@@ -333,18 +354,46 @@ export function createLiveText(options: LiveTextOptions): LiveText {
     let changed = 0
     for (const nodes of index.values()) {
       for (const node of nodes) {
-        changed += patchNode(node, true)
+        changed += patchNode(node, true, true)
       }
     }
     return changed
+  }
+
+  /** Whether any field of `documentId` still has no server-render verdict. */
+  const undecided = (documentId: string) => {
+    const byPath = fields.get(documentId)
+    if (!byPath) {
+      return false
+    }
+    for (const field of byPath.values()) {
+      if (field.verbatim === undefined) {
+        return true
+      }
+    }
+    return false
   }
 
   const isStale = (fetched: ParentNode) => {
     for (const nodes of buildIndex(fetched).values()) {
       for (const node of nodes) {
         const text = node.nodeValue ?? ''
-        if (staleRuns(text, findStegaRuns(text)).length > 0) {
+        const runs = findStegaRuns(text)
+        if (staleRuns(text, runs).length > 0) {
           return true
+        }
+        // Undecided fields are not yet known to be transformed. A mismatch means the server may
+        // still be behind the stream, so the refresh loop should retry rather than morph and risk
+        // locking the field from a stale miss before a current render can prove it verbatim.
+        for (const run of runs) {
+          const value = valueOf(run)
+          const field = fields.get(run.source.documentId)?.get(run.source.path)
+          if (value === undefined || !field || field.verbatim !== undefined) {
+            continue
+          }
+          if (!shows(text, run, value)) {
+            return true
+          }
         }
       }
     }
@@ -352,20 +401,26 @@ export function createLiveText(options: LiveTextOptions): LiveText {
   }
 
   const unsubscribe = stream.subscribe({
-    // The page was rendered from the snapshot the first sync delivers, give or take a race
-    // that the next server render settles.
-    'sync': (id) => void patch(id, true),
+    // The page was rendered from the snapshot the first sync delivers, give or take a race.
+    // Only a matching render calibrates here; a miss asks for a morph and leaves the field
+    // undecided so an ahead-of-page snapshot cannot lock it as transformed.
+    'sync': (id) => {
+      patch(id, true, false)
+      if (undecided(id)) {
+        options.onRemoteChange(id)
+      }
+    },
     'mutation': (id) => {
-      patch(id, false)
+      patch(id, false, false)
       options.onRemoteChange(id)
     },
     // A refetched snapshot (first load, reconnect) only matters when the DOM disagrees with it.
     'rebased.remote': (id) => {
-      if (patch(id, false) > 0) {
+      if (patch(id, false, false) > 0) {
         options.onRemoteChange(id)
       }
     },
-    'rebased.local': (id) => void patch(id, false),
+    'rebased.local': (id) => void patch(id, false, false),
   })
 
   return {
