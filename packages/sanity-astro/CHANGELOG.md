@@ -1,5 +1,19 @@
 # @sanity/astro
 
+## 3.6.0
+
+### Minor Changes
+
+- [#497](https://github.com/sanity-io/sanity-astro/pull/497) [`564fd38`](https://github.com/sanity-io/sanity-astro/commit/564fd38f0d602cc493e186098860304282099935) Thanks [@stipsan](https://github.com/stipsan)! - Add an experimental `sanityLoader` for Astro content collections, exported from the new `@sanity/astro/loader` entrypoint. It feeds a GROQ query into the Content Layer, so `getCollection()` and `getEntry()` work for Sanity documents, skips unchanged entries using a content digest, prunes entries that left the query result, and throws when two documents map to the same entry id
+
+- [#448](https://github.com/sanity-io/sanity-astro/pull/448) [`eaabecc`](https://github.com/sanity-io/sanity-astro/commit/eaabecce0f600c4aa1f8df70fc715c5c151282a9) Thanks [@stipsan](https://github.com/stipsan)! - `VisualEditingComponent` from `@sanity/astro/visual-editing/component` now accepts and forwards every `VisualEditingOptions` prop of `@sanity/visual-editing`, adding `onPerspectiveChange`, `onVariantChange` and the alpha `components` and `plugins` options. The default `history` and `refresh` behavior is unchanged and `portal` stays forced on. The callback parameter types (`HistoryAdapter`, `HistoryAdapterNavigate`, `HistoryRefresh`, `HistoryUpdate`, `OverlayComponentResolver`, `OverlayPluginDefinition`, `SuspiciousStegaReport` and `VisualEditingOptions`) are re-exported from the same subpath, and test files are no longer included in the published package. Thanks [@skezo](https://github.com/skezo) ([#420](https://github.com/sanity-io/sanity-astro/pull/420)).
+
+- [#450](https://github.com/sanity-io/sanity-astro/pull/450) [`78695fe`](https://github.com/sanity-io/sanity-astro/commit/78695fe7f78a60295047ce09361e6d18f996ee4b) Thanks [@stipsan](https://github.com/stipsan)! - Add an experimental, opt-in `experimental_refreshStrategy` prop to `VisualEditing` and `VisualEditingComponent` that picks how the preview updates when the Studio reports a change. `'reload'`, the default, reloads the page exactly as before. `{type: 'reload', followUpDelayMs: 1200}` reloads once more that many milliseconds after a change-triggered reload, so text typed in the Studio while the page was reloading shows up in the preview. Nothing changes unless you set it.
+
+### Patch Changes
+
+- [#462](https://github.com/sanity-io/sanity-astro/pull/462) [`0b295a5`](https://github.com/sanity-io/sanity-astro/commit/0b295a5a5791817150b0e8ae6b2800002166b5f0) Thanks [@stipsan](https://github.com/stipsan)! - Stop deduping `@sanity/ui` in `astro dev`, so apps that render both the Studio and visual editing no longer load two incompatible `@sanity/ui` versions in the same page
+
 ## 3.5.3
 
 ### Patch Changes
