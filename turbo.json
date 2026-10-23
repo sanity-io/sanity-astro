@@ -29,7 +29,9 @@
         ".vercel/output/**"
       ]
     },
-    "check": {},
+    "check": {
+      "dependsOn": ["^build"]
+    },
     "lint": {},
     "dev": {
       "dependsOn": ["^build"],
