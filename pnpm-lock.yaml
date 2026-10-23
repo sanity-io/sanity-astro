@@ -256,8 +256,8 @@ importers:
         specifier: ^0.5.7
         version: 0.5.10
       '@astrojs/prism':
-        specifier: ^3.3.0
-        version: 3.3.0
+        specifier: ^4.1.1
+        version: 4.1.1
       '@astrojs/react':
         specifier: ^4.4.1
         version: 4.4.1(@types/node@22.13.4)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(jiti@2.7.0)(lightningcss@1.33.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(supports-color@8.1.1)(terser@5.39.0)(tsx@4.22.4)(yaml@2.9.0)
@@ -356,8 +356,8 @@ importers:
         specifier: ^0.5.7
         version: 0.5.10
       '@astrojs/prism':
-        specifier: ^3.3.0
-        version: 3.3.0
+        specifier: ^4.1.1
+        version: 4.1.1
       '@astrojs/react':
         specifier: ^4.4.1
         version: 4.4.1(@types/node@22.13.4)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(jiti@2.7.0)(lightningcss@1.33.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(supports-color@8.1.1)(terser@5.39.0)(tsx@4.22.4)(yaml@2.9.0)
@@ -1006,10 +1006,6 @@ packages:
   '@astrojs/prism@3.2.0':
     resolution: {integrity: sha512-GilTHKGCW6HMq7y3BUv9Ac7GMe/MO9gi9GW62GzKtth0SwukCu/qp2wLiGpEujhY+VVhaG9v7kv/5vFzvf4NYw==}
     engines: {node: ^18.17.1 || ^20.3.0 || >=22.0.0}
-
-  '@astrojs/prism@3.3.0':
-    resolution: {integrity: sha512-q8VwfU/fDZNoDOf+r7jUnMC2//H2l0TuQ6FkGJL8vD8nw/q5KiL3DS1KKBI3QhI9UQhpJ5dc7AtqfbXWuOgLCQ==}
-    engines: {node: 18.20.8 || ^20.3.0 || >=22.0.0}
 
   '@astrojs/prism@4.0.2':
     resolution: {integrity: sha512-KTivpmnz6lDsC6o9H4+DNm2SrE/GHzw8cNAvEJwAvUT+eoaEnn/4NtbDNfRRaxaJHdp15gf+tfHAWiXR4wB3BA==}
@@ -15420,10 +15416,6 @@ snapshots:
       satteri: 0.10.5
 
   '@astrojs/prism@3.2.0':
-    dependencies:
-      prismjs: 1.30.0
-
-  '@astrojs/prism@3.3.0':
     dependencies:
       prismjs: 1.30.0
 
