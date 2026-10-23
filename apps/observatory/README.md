@@ -60,7 +60,8 @@ secret.
 [`/api/invalidate-tags`](src/pages/api/invalidate-tags.ts) hard-deletes the tagged pages from the CDN.
 It accepts only `s1:` sync tags, so no caller can purge the whole site, and it fails closed. Set
 `SANITY_INVALIDATE_SECRET` on the deployment; until that variable is set, the endpoint returns 503
-and deletes nothing. With it set, a request must send `Authorization: Bearer <secret>` or it returns 401. Purging is a server-side caller's job, such as a Sanity Function on document changes.
+and deletes nothing. With it set, a request must send `Authorization: Bearer <secret>` or it returns 401. Purging is the job of the sync tag invalidate Function described in
+[Sanity Function](#sanity-function).
 `PAGE_CACHE` (5 minutes fresh, a day stale-while-revalidate) bounds how long a missed purge can keep
 stale content. CDN semantics only apply on a deployment; locally the flow still works, minus the
 actual cache.
@@ -143,6 +144,51 @@ backlog for streamlining the integration.
 | Edition routing and personalization (variants)    | `src/middleware.ts` + `src/lib/routing.ts` + `audience.ts`       | Missing                                                       |
 | TypeGen wiring                                    | studio `typegen` script + committed types                        | Missing                                                       |
 
+## Sanity Function
+
+[`sanity.blueprint.ts`](../../sanity.blueprint.ts) at the repository root defines a
+[sync tag invalidate Function](https://www.sanity.io/docs/functions) for the observatory's dataset,
+following the same setup as
+[`template-nextjs-personal-website`](https://github.com/sanity-io/template-nextjs-personal-website).
+When published content changes, Sanity calls
+[`apps/observatory-functions/invalidate-sync-tags`](../observatory-functions/invalidate-sync-tags/index.ts)
+with the affected sync tags. The Function POSTs them to `/api/invalidate-tags` with the
+`SANITY_INVALIDATE_SECRET` bearer token, then calls `done`, which releases the live event to every
+`<sanity-live>` island subscribed with `waitFor=function`. A visitor's refresh therefore always
+lands on a purged page. If the purge fails, the Function logs the error and still calls `done`, so
+live updates keep flowing and `PAGE_CACHE` bounds how stale the page can be.
+
+A dataset can have only one sync tag invalidate Function. To deploy it, run these commands from the
+repository root:
+
+```sh
+# 1. The same secret on the site deployment and the Function
+openssl rand -hex 32
+vercel env add SANITY_INVALIDATE_SECRET
+
+# 2. Once per checkout: log in and link a Blueprint stack in the observatory's project
+pnpm dlx sanity@latest login
+pnpm dlx sanity@latest blueprints init
+
+# 3. Deploy the Function with the site's purge endpoint and the secret
+INVALIDATE_URL=https://<domain>/api/invalidate-tags \
+SANITY_INVALIDATE_SECRET=<secret> \
+pnpm dlx sanity@latest blueprints deploy
+
+# 4. Hold live events until the purge has happened, then redeploy the site
+vercel env add PUBLIC_SANITY_LIVE_WAIT_FOR_FUNCTION   # value: true
+```
+
+The Function's environment is additive, so a later `blueprints deploy` without `INVALIDATE_URL`
+or `SANITY_INVALIDATE_SECRET` keeps the deployed values. Tail its output with
+`pnpm dlx sanity@latest functions logs invalidate-sync-tags`. To try it locally against the dev
+server (started with `SANITY_INVALIDATE_SECRET` set), run:
+
+```sh
+INVALIDATE_URL=http://localhost:4325/api/invalidate-tags SANITY_INVALIDATE_SECRET=<secret> \
+pnpm dlx sanity@latest functions test invalidate-sync-tags --data '{"syncTags":["s1:example"]}'
+```
+
 ## Environment
 
 Copy [`.env.example`](.env.example) to `.env`. Defaults point at the seeded demo project
@@ -154,6 +200,9 @@ Copy [`.env.example`](.env.example) to `.env`. Defaults point at the seeded demo
   the endpoint returns 503 and deletes nothing. Set the same value on the deployment and send it as
   `Authorization: Bearer <secret>` from the server-side caller that should purge (see
   [Caching](#caching-editions-in-the-url-purged-by-sync-tag)).
+- `PUBLIC_SANITY_LIVE_WAIT_FOR_FUNCTION` — flip to `true` once the Function is deployed, so live
+  events wait for the purge (see [Sanity Function](#sanity-function)).
+- `INVALIDATE_URL` — only read by `sanity.blueprint.ts` when deploying the Function.
 
 To point at your own project: change the project id / dataset in `.env` (both apps), add CORS
 origins for :4325 and :3333, then seed content with `pnpm seed:observatory` (needs

@@ -40,3 +40,7 @@ yarn-error.log*
 
 # Output of 'npm pack'
 *.tgz
+
+# sanity blueprints (stack config and function builds)
+.sanity/
+**/.build

@@ -1,0 +1,16 @@
+{
+  "name": "observatory-functions",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "tsc"
+  },
+  "dependencies": {
+    "@sanity/functions": "^1.10.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "typescript": "^5.9.3"
+  }
+}
