@@ -4,7 +4,7 @@ import {
   type FollowUpReloadHost,
   markFollowUpReload,
   scheduleFollowUpReload,
-} from './follow-up-reload'
+} from './follow-up-reload.js'
 
 /**
  * How the default `refresh` brings the preview up to date when Presentation reports a change.
