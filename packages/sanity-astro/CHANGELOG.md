@@ -1,5 +1,49 @@
 # @sanity/astro
 
+## 3.6.0
+
+### Minor Changes
+
+- [#497](https://github.com/sanity-io/sanity-astro/pull/497) [`564fd38`](https://github.com/sanity-io/sanity-astro/commit/564fd38f0d602cc493e186098860304282099935) Thanks [@stipsan](https://github.com/stipsan)! - Add an experimental `sanityLoader` for Astro content collections, exported from the new `@sanity/astro/loader` entrypoint. It feeds a GROQ query into the Content Layer, so `getCollection()` and `getEntry()` work for Sanity documents, skips unchanged entries using a content digest, prunes entries that left the query result, and throws when two documents map to the same entry id
+
+- [#448](https://github.com/sanity-io/sanity-astro/pull/448) [`eaabecc`](https://github.com/sanity-io/sanity-astro/commit/eaabecce0f600c4aa1f8df70fc715c5c151282a9) Thanks [@stipsan](https://github.com/stipsan)! - `VisualEditingComponent` from `@sanity/astro/visual-editing/component` now accepts and forwards every `VisualEditingOptions` prop of `@sanity/visual-editing`, adding `onPerspectiveChange`, `onVariantChange` and the alpha `components` and `plugins` options. The default `history` and `refresh` behavior is unchanged and `portal` stays forced on. The callback parameter types (`HistoryAdapter`, `HistoryAdapterNavigate`, `HistoryRefresh`, `HistoryUpdate`, `OverlayComponentResolver`, `OverlayPluginDefinition`, `SuspiciousStegaReport` and `VisualEditingOptions`) are re-exported from the same subpath, and test files are no longer included in the published package. Thanks [@skezo](https://github.com/skezo) ([#420](https://github.com/sanity-io/sanity-astro/pull/420)).
+
+- [#505](https://github.com/sanity-io/sanity-astro/pull/505) [`1fae0a5`](https://github.com/sanity-io/sanity-astro/commit/1fae0a50b38b64f47d7ba1dd486fc8f81c79ea95) Thanks [@stipsan](https://github.com/stipsan)! - Add an opt-in `clients` option for reading from several Sanity projects or datasets in one Astro site. `sanity:client` keeps exporting `sanityClient` and adds `getClient(name)` and `presentationClient`. When `clients` is set, typed client names are generated for Astro 4.14 and later. Sites that don't set `clients` are unaffected.
+
+- [#514](https://github.com/sanity-io/sanity-astro/pull/514) [`47c6613`](https://github.com/sanity-io/sanity-astro/commit/47c6613eab88251231a30cd988c28a7decc19287) Thanks [@stipsan](https://github.com/stipsan)! - Your `.groq` files can now type your queries for you. With `@sanity/client` 7.28.0 or 8.11.0 and later, `sanityClient.fetch` from `sanity:client` reads the result and params types off a query imported through the experimental [`@sanity-labs/groq-content-mapper`](https://github.com/sanity-labs/groq-content-mapper), so you can stop writing the result type by hand.
+  
+  Before, you spelled out the type yourself:
+  
+  ```ts
+  import {sanityClient} from 'sanity:client'
+  
+  const post = await sanityClient.fetch<{title: string | null} | null>(
+    `*[_type == "post" && slug.current == $slug][0]{title}`,
+    {slug},
+  )
+  ```
+  
+  After, the query lives in `post.groq` and brings its types along:
+  
+  ```ts
+  import {sanityClient} from 'sanity:client'
+  
+  import query from './post.groq' with {type: 'text'}
+  
+  const post = await sanityClient.fetch(query, {slug})
+  //    ^? {title: string | null} | null, and a typo in `slug` is a type error
+  ```
+  
+  The experimental `sanityLoader` gets the same treatment: hand it a `.groq` import as `query`, and `params` are checked and the `id` callback's document is typed, no generic needed. So do the named clients from `getClient(name)` that `typegen.resources` types per project and dataset: a `.groq` import's own types win over the generated registry.
+  
+  The mapper and the client's support for it are experimental, and the mapper needs TypeScript 7.1. The new "Typing query results" section of the README shows the Astro setup, plus how to type your own `sanityFetch` helpers with `ClientReturn` and `ClientParams` so they keep the inferred types. Plain strings, explicit generics and Sanity TypeGen queries work exactly as before.
+
+- [#450](https://github.com/sanity-io/sanity-astro/pull/450) [`78695fe`](https://github.com/sanity-io/sanity-astro/commit/78695fe7f78a60295047ce09361e6d18f996ee4b) Thanks [@stipsan](https://github.com/stipsan)! - Add an experimental, opt-in `experimental_refreshStrategy` prop to `VisualEditing` and `VisualEditingComponent` that picks how the preview updates when the Studio reports a change. `'reload'`, the default, reloads the page exactly as before. `{type: 'reload', followUpDelayMs: 1200}` reloads once more that many milliseconds after a change-triggered reload, so text typed in the Studio while the page was reloading shows up in the preview. Nothing changes unless you set it.
+
+### Patch Changes
+
+- [#462](https://github.com/sanity-io/sanity-astro/pull/462) [`0b295a5`](https://github.com/sanity-io/sanity-astro/commit/0b295a5a5791817150b0e8ae6b2800002166b5f0) Thanks [@stipsan](https://github.com/stipsan)! - Stop deduping `@sanity/ui` in `astro dev`, so apps that render both the Studio and visual editing no longer load two incompatible `@sanity/ui` versions in the same page
+
 ## 3.5.3
 
 ### Patch Changes
