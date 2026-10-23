@@ -1,6 +1,16 @@
 import type {QueryParams, SanityClient} from '@sanity/client'
 import type {Loader} from 'astro/loaders'
 
+// Like `astro/loaders`, this entry carries both kinds of loader: `sanityLoader` for the Content
+// Layer below, and the live loader that the generated `sanity:loader` module builds on.
+export {
+  createSanityLiveLoader,
+  type CreateSanityLiveLoaderConfig,
+  type SanityLiveCollectionFilter,
+  type SanityLiveEntryFilter,
+  type SanityLiveLoaderOptions,
+} from './live-loader'
+
 /**
  * @experimental The loader API may change in a minor release.
  */

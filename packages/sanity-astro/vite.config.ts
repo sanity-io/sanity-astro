@@ -22,7 +22,7 @@ export default defineConfig(() => {
         fileName: (format, entryName) => (format === 'es' ? `${entryName}.mjs` : `${entryName}.js`),
       },
       rollupOptions: {
-        external: [/^node:/, 'vite', 'astro', '@sanity/client'],
+        external: [/^node:/, 'vite', /^astro(\/|$)/, '@sanity/client', 'groq-js'],
       },
     },
     plugins: [

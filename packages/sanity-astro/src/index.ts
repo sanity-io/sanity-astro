@@ -1,12 +1,25 @@
+import {writeFile} from 'node:fs/promises'
+import {fileURLToPath} from 'node:url'
+
 import type {ClientConfig} from '@sanity/client'
 import type {AstroIntegration} from 'astro'
 
+import {type LiveState, setupLive, watchSchema} from './live/integration'
+import type {SanityLiveOptions} from './live/options'
 import {normalizeStudioBasePath, studioRoutePattern} from './studio-base-path'
 import {vitePluginSanityClient} from './vite-plugin-sanity-client'
+import {vitePluginSanityLoader} from './vite-plugin-sanity-loader'
 import {vitePluginSanityModuleDedupe} from './vite-plugin-sanity-module-dedupe'
 import {vitePluginSanityStudio} from './vite-plugin-sanity-studio'
 import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-chunk-warning'
 import {vitePluginSanityStudioHashRouter} from './vite-plugin-sanity-studio-hash-router'
+
+export type {
+  SanityLiveLoaderConfig,
+  SanityLiveOptions,
+  SanityLiveOrderBy,
+  SanityLiveSchemaOptions,
+} from './live/options'
 
 export type StudioRouterHistory = 'browser' | 'hash'
 export type LogClientRequests = 'dev' | 'build' | 'always'
@@ -34,6 +47,12 @@ export type IntegrationOptions = ClientConfig & {
    * reference keeps working either way.
    */
   injectTypes?: boolean
+  /**
+   * Generates typed live loaders, Zod schemas and the `sanity:loader` module from your Sanity
+   * schema for Astro live collections. Nothing runs unless this is set.
+   * @experimental The option name and shape may change in minor releases.
+   */
+  experimental_live?: SanityLiveOptions
 }
 
 const defaultClientConfig: ClientConfig = {
@@ -68,6 +87,7 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
     studioRouterHistory: requestedStudioRouterHistory,
     logClientRequests,
     injectTypes: shouldInjectTypes = false,
+    experimental_live: liveOptions,
     ...clientConfig
   } = options
   const normalizedStudioBasePath = normalizeStudioBasePath(studioBasePath)
@@ -78,14 +98,46 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
     )
   }
 
+  let live: LiveState | undefined
+
+  // With `experimental_live` unset the integration registers the same hooks and Vite plugins as
+  // before the option existed.
+  const liveHooks: AstroIntegration['hooks'] = liveOptions
+    ? {
+        'astro:server:setup': async ({server, logger}) => {
+          if (live) {
+            await watchSchema(live, server, logger)
+          }
+        },
+      }
+    : {}
+
   return {
     name: '@sanity/astro',
     hooks: {
-      'astro:config:setup': ({config, injectScript, injectRoute, updateConfig}) => {
+      'astro:config:setup': async ({
+        config,
+        command,
+        injectScript,
+        injectRoute,
+        updateConfig,
+        createCodegenDir,
+        logger,
+      }) => {
         const studioRouterHistory = resolveStudioRouterHistory(
           requestedStudioRouterHistory,
           config?.output,
         )
+        // `astro preview` runs this hook too but serves the built output, so it never imports
+        // `sanity:loader` and does not need an extraction.
+        if (liveOptions && command !== 'preview') {
+          live = await setupLive(liveOptions, {
+            root: fileURLToPath(config.root),
+            command,
+            createCodegenDir,
+            logger,
+          })
+        }
         const vitePlugins = [
           ...(process.env.SANITY_ASTRO_DISABLE_MODULE_DEDUPE
             ? []
@@ -97,6 +149,7 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
             },
             {logClientRequests},
           ),
+          ...(live ? [vitePluginSanityLoader(live)] : []),
           vitePluginSanityStudio({
             studioBasePath: normalizedStudioBasePath,
             studioRouterHistory,
@@ -133,13 +186,25 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
       },
       // `injectTypes` arrived in Astro 4.14; older versions keep using the manual
       // `/// <reference types="@sanity/astro/module" />` even when opted in.
-      'astro:config:done': ({injectTypes}) => {
-        if (!shouldInjectTypes) return
-        injectTypes?.({
-          filename: 'types.d.ts',
-          content: '/// <reference types="@sanity/astro/module" />\n',
+      'astro:config:done': async ({injectTypes}) => {
+        if (shouldInjectTypes) {
+          injectTypes?.({
+            filename: 'types.d.ts',
+            content: '/// <reference types="@sanity/astro/module" />\n',
+          })
+        }
+        if (!live) {
+          return
+        }
+        live.typesFile = injectTypes({
+          filename: 'sanity-loader.d.ts',
+          content: live.module.types,
         })
+        // Astro only writes injected types during sync, which a config-triggered dev restart
+        // skips, so the file is written here as well to keep the declarations current.
+        await writeFile(live.typesFile, live.module.types)
       },
+      ...liveHooks,
     },
   }
 }
