@@ -35,7 +35,7 @@
     "@turbo/gen": "^1.13.4",
     "eslint": "^8.57.1",
     "eslint-config-custom": "*",
-    "oxfmt": "^0.61.0",
+    "oxfmt": "^0.74.0",
     "rimraf": "^5.0.7",
     "turbo": "^1.13.4"
   },
