@@ -16,3 +16,7 @@ allowBuilds:
   core-js-pure: false
   onnxruntime-node: false
   protobufjs: false
+
+# First-party release this repo adopts on publish day; pnpm's default minimumReleaseAge would block it for 24h
+minimumReleaseAgeExclude:
+  - '@sanity/client@8.11.0'

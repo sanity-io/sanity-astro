@@ -1,4 +1,4 @@
-import type {QueryParams, SanityClient} from '@sanity/client'
+import type {ClientParams, ClientReturn, SanityClient} from '@sanity/client'
 import type {Loader} from 'astro/loaders'
 
 /**
@@ -7,17 +7,33 @@ import type {Loader} from 'astro/loaders'
 export type SanityDocumentLike = Record<string, unknown> & {_id: string}
 
 /**
+ * The document type a query loads: the element type of its typed result, such as the one a
+ * branded `.groq` import or a `SanityQueries` registration carries, else `SanityDocumentLike`.
+ *
  * @experimental The loader API may change in a minor release.
  */
-export type SanityLoaderOptions<TDocument extends SanityDocumentLike = SanityDocumentLike> = {
+export type SanityLoaderDocument<Q extends string> =
+  ClientReturn<Q, SanityDocumentLike[]> extends readonly (infer TDocument)[]
+    ? TDocument extends SanityDocumentLike
+      ? TDocument
+      : SanityDocumentLike
+    : SanityDocumentLike
+
+/**
+ * @experimental The loader API may change in a minor release.
+ */
+export type SanityLoaderOptions<
+  TDocument extends SanityDocumentLike = SanityDocumentLike,
+  Q extends string = string,
+> = {
   /**
    * The client to fetch with. Pass `sanityClient` from `sanity:client` to reuse the
    * integration's configuration.
    */
   client: SanityClient
   /** A GROQ query that returns an array of documents. Every document needs a string `_id`. */
-  query: string
-  params?: QueryParams
+  query: Q
+  params?: ClientParams<Q>
   /**
    * Picks the entry id used by `getEntry()` and `getStaticPaths()`. Defaults to `_id`.
    * Return `slug.current` here when pages are addressed by slug.
@@ -45,9 +61,23 @@ function assertDocuments<TDocument extends SanityDocumentLike>(
 /**
  * Feeds a GROQ query into Astro's Content Layer for `defineCollection()`.
  *
+ * A branded query, such as a `.groq` import, types the `id` callback and checks `params` with
+ * no generic argument.
+ *
  * @experimental The loader API may change in a minor release.
  */
-export function sanityLoader<TDocument extends SanityDocumentLike = SanityDocumentLike>({
+export function sanityLoader<
+  TDocument extends SanityDocumentLike = never,
+  const Q extends string = string,
+>(
+  // A single signature rather than overloads: an overload taking `query: string` would accept a
+  // branded query whose params failed the brand check.
+  options: SanityLoaderOptions<
+    [TDocument] extends [never] ? SanityLoaderDocument<Q> : TDocument,
+    Q
+  >,
+): Loader
+export function sanityLoader<TDocument extends SanityDocumentLike>({
   client,
   query,
   params = {},
