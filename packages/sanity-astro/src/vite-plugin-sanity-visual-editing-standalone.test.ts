@@ -5,6 +5,7 @@ import {describe, expect, it, vi} from 'vitest'
 import {
   ENABLE_VISUAL_EDITING_SPECIFIER,
   isVisualEditingClient,
+  STANDALONE_STYLES_PERSIST_ID,
   standaloneModuleSource,
   VIRTUAL_STANDALONE_ID,
   vitePluginSanityVisualEditingStandalone,
@@ -49,11 +50,14 @@ describe('vitePluginSanityVisualEditingStandalone', () => {
     expect(await resolveId('@sanity/visual-editing/react', clientPath)).toBeNull()
   })
 
-  it('loads a module that imports the standalone styles and re-exports enableVisualEditing', () => {
+  it('loads a module that injects the standalone styles with a morph-persist attribute', () => {
     const {load} = setup()
     expect(load(VIRTUAL_STANDALONE_ID)).toBe(standaloneModuleSource)
     expect(standaloneModuleSource).toContain(
-      "import '@sanity/visual-editing-standalone/styles.css'",
+      "import href from '@sanity/visual-editing-standalone/styles.css?url'",
+    )
+    expect(standaloneModuleSource).toContain(
+      `link.setAttribute('data-astro-transition-persist', '${STANDALONE_STYLES_PERSIST_ID}')`,
     )
     expect(standaloneModuleSource).toContain(
       "export {enableVisualEditing} from '@sanity/visual-editing-standalone'",
@@ -74,12 +78,12 @@ describe('vitePluginSanityVisualEditingStandalone', () => {
 
   it('falls back to resolving the standalone package from the client', async () => {
     const {resolveId} = setup({
-      [`@sanity/visual-editing-standalone/styles.css|${clientPath}`]: '/astro/styles.css',
+      [`@sanity/visual-editing-standalone/styles.css?url|${clientPath}`]: '/astro/styles.css?url',
     })
     await resolveId(ENABLE_VISUAL_EDITING_SPECIFIER, clientPath)
     expect(
-      await resolveId('@sanity/visual-editing-standalone/styles.css', VIRTUAL_STANDALONE_ID),
-    ).toEqual({id: '/astro/styles.css'})
+      await resolveId('@sanity/visual-editing-standalone/styles.css?url', VIRTUAL_STANDALONE_ID),
+    ).toEqual({id: '/astro/styles.css?url'})
   })
 
   it('throws an install hint when the standalone package is missing', async () => {

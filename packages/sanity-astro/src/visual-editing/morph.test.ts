@@ -129,7 +129,14 @@ describe('morphDocument', () => {
     viteStyle.setAttribute('data-vite-dev-id', '/src/page.css')
     const styledSheet = document.createElement('style')
     styledSheet.setAttribute('data-styled', 'active')
-    document.head.append(viteStyle, styledSheet)
+    const standaloneSheet = document.createElement('link')
+    standaloneSheet.rel = 'stylesheet'
+    standaloneSheet.href = '/visual-editing-standalone.css'
+    standaloneSheet.setAttribute(
+      'data-astro-transition-persist',
+      'sanity-visual-editing-standalone',
+    )
+    document.head.append(viteStyle, styledSheet, standaloneSheet)
 
     morphDocument(
       document,
@@ -146,6 +153,7 @@ describe('morphDocument', () => {
     expect(document.head.querySelectorAll('script[type="application/ld+json"]')).toHaveLength(1)
     expect(document.head.contains(viteStyle)).toBe(true)
     expect(document.head.contains(styledSheet)).toBe(true)
+    expect(document.head.contains(standaloneSheet)).toBe(true)
     expect(document.head.contains(dropped)).toBe(false)
   })
 

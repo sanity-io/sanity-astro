@@ -12,8 +12,19 @@ export function isVisualEditingClient(importer: string | undefined): importer is
   return !!importer && VISUAL_EDITING_CLIENT.test(importer.split('?')[0])
 }
 
+/**
+ * Persist id for the standalone overlay stylesheet. The in-place morph only keeps head
+ * nodes tagged as client-injected; without this the sheet is dropped on the first refresh.
+ */
+export const STANDALONE_STYLES_PERSIST_ID = 'sanity-visual-editing-standalone'
+
 export const standaloneModuleSource = [
-  `import '${STANDALONE_PACKAGE}/styles.css'`,
+  `import href from '${STANDALONE_PACKAGE}/styles.css?url'`,
+  `const link = document.createElement('link')`,
+  `link.rel = 'stylesheet'`,
+  `link.href = href`,
+  `link.setAttribute('data-astro-transition-persist', '${STANDALONE_STYLES_PERSIST_ID}')`,
+  `document.head.appendChild(link)`,
   `export {enableVisualEditing} from '${STANDALONE_PACKAGE}'`,
   '',
 ].join('\n')
