@@ -11,6 +11,7 @@ This integration enables the [Sanity Client][sanity-client] in your [Astro][astr
   - [Multiple clients](#multiple-clients)
   - [Typing query results](#typing-query-results)
   - [Embedding Sanity Studio on a route](#embedding-sanity-studio-on-a-route)
+- [Live collections](#live-collections)
 - [Rendering rich text and block content with Portable Text](#rendering-rich-text-and-block-content-with-portable-text)
 - [Presenting images](#presenting-images)
   - [Resources](#resources)
@@ -467,6 +468,100 @@ When Studio is embedded through `@sanity/astro`, the integration owns workspace 
 
 If you are also using Visual Editing stega, set `stega.studioUrl` to your Studio route path (for example `'/admin'`) and avoid appending a manual hash suffix.
 
+## Live collections
+
+> **Experimental.** Everything in this section is opt-in behind the `experimental_live` option and may change in minor releases. With the option unset, the integration behaves exactly as before: no schema extraction, no `sanity:loader` module, no extra hooks. The `@sanity/astro/loader` entry point it relies on is experimental too.
+
+Astro 6 and later can serve content through [live collections][astro-live-collections], which fetch on every request instead of at build time. Where [`sanityLoader`](#loading-sanity-documents-into-content-collections) loads a query into the Content Layer at build time, the `experimental_live` option generates a typed live loader and a Zod schema for each document type you list, derived from your Sanity schema:
+
+```typescript
+// astro.config.mjs
+sanity({
+  projectId: '<YOUR-PROJECT-ID>',
+  dataset: '<YOUR-DATASET-NAME>',
+  experimental_live: {
+    schema: './sanity.config.ts',
+    loaders: {
+      movie: {
+        type: 'movie',
+        projection: 'title, releaseDate, poster, "slug": slug.current',
+        orderBy: ['title', 'asc'],
+      },
+    },
+  },
+})
+```
+
+`experimental_live.schema` accepts either kind of input:
+
+- A `sanity.config.ts` (or `.js`, `.mjs`, `.tsx`, `.jsx`). The integration extracts the schema itself with the same node API as `sanity schema extract`, using the `sanity` package installed next to that config. This needs `sanity` 5.29 or later (`@sanity/cli` 6.7 or later); on older versions extract the schema yourself and use the `.json` form.
+- A `schema.json` produced by `npx sanity schema extract`, which can live in another directory or repository.
+
+The object form adds extraction options:
+
+```typescript
+experimental_live: {
+  schema: {
+    path: '../studio/sanity.config.ts',
+    workspace: 'default', // only needed when the config defines several workspaces
+    enforceRequiredFields: false,
+    // extra globs, relative to the studio directory, that re-extract the schema in dev
+    // (same shape as `schemaExtraction.watchPatterns` in sanity.cli.ts)
+    watchPatterns: ['src/lib/**/*.ts'],
+  },
+  loaders: {...},
+}
+```
+
+Each key in `experimental_live.loaders` becomes a set of exports on the `sanity:loader` virtual module: `<key>Loader`, `<key>Schema` and the type `<Key>` (`blog-posts` gives `blogPostsLoader`, `blogPostsSchema` and `BlogPosts`). A loader takes:
+
+- `type` (required): the document `_type` the loader serves.
+- `filter`: an extra GROQ condition, combined with the type check using `&&`.
+- `projection`: the GROQ projection body, defaulting to `...`. `_id` and `_updatedAt` are always added; `_id` is the entry id and `_updatedAt` its `lastModified` cache hint.
+- `orderBy`: a `[field, 'asc' | 'desc']` tuple or a list of them, applied to the collection query only.
+- `entryBy`: which field the id passed to `getLiveEntry` is compared with. `'id'` (default) matches `_id == $id`; `'slug'` matches `slug.current == $id`, so `getLiveEntry('people', 'ridley-scott')` looks the person up by slug.
+
+Wire the loaders up in `src/live.config.ts`:
+
+```typescript
+import {defineLiveCollection} from 'astro:content'
+import {movieLoader, movieSchema} from 'sanity:loader'
+
+export const collections = {
+  movies: defineLiveCollection({loader: movieLoader(), schema: movieSchema}),
+}
+```
+
+`movieLoader()` uses the `sanity:client` instance and is built on `createSanityLiveLoader` from `@sanity/astro/loader`, the same experimental entry point as `sanityLoader`. Pass your own client for Draft Mode or Visual Editing:
+
+```typescript
+import {sanityClient} from 'sanity:client'
+
+const client = sanityClient.withConfig({
+  token: import.meta.env.SANITY_API_READ_TOKEN,
+  perspective: 'drafts',
+  useCdn: false,
+  stega: true,
+})
+movieLoader({client})
+```
+
+Then query the collection in your pages. `getLiveCollection` accepts flat GROQ parameters as its filter, and `getLiveEntry` takes the id (or `{id, ...params}` to bind extra GROQ parameters):
+
+```mdx
+---
+import {getLiveCollection, getLiveEntry} from 'astro:content'
+
+const {entries, error} = await getLiveCollection('movies')
+const {entry} = await getLiveEntry('movies', 'movie-alien')
+// entry.data is typed as Movie: {_id: string; _updatedAt: string; title: string | null; ...}
+---
+```
+
+In a dynamic route, check the parameter first (`Astro.params.id` is typed `string | undefined`) and return a 404 when the entry is missing; `apps/movies/src/pages/movies/[id].astro` shows the full pattern.
+
+The generated files live in `.astro/integrations/_sanity_astro/`: `schema.json` (when extracting from a studio config) and `sanity-loader.d.ts`, which Astro references from `.astro/types.d.ts` so the exports of `sanity:loader` are typed without any manual setup. `astro build` and `astro sync` always extract a fresh schema. `astro dev` starts from the previous `schema.json` so the server is ready immediately, re-extracts in the background, and re-extracts again whenever a schema file changes, regenerating `sanity:loader` and its types in place. Which files count is decided by the patterns of `sanity schema extract --watch` from the installed CLI (`sanity.config.*` and `schema*/**/*.{js,jsx,ts,tsx,mjs}` next to it) plus your `watchPatterns`.
+
 ## Rendering rich text and block content with Portable Text
 
 Sanity uses an open specification for rich text and block content called [Portable Text][portabletext]. Portable Text stores content from the editor as JSON (and not HTML or Markdown). This makes it platform/framework agnostic, and also queryable (for example, you can query for blog posts that have more than 4 TypeScript code blocks).
@@ -745,6 +840,7 @@ const {data: movies} = await loadQuery<Array<{title: string}>>({
 - [Egghead's Introduction to GROQ][groq-intro]
 
 [astro]: https://astro.build
+[astro-live-collections]: https://docs.astro.build/en/guides/content-collections/#live-content-collections
 [astro-react]: https://docs.astro.build/en/guides/integrations-guide/react/
 [guide]: https://www.sanity.io/guides/sanity-astro-blog
 [docs]: https://www.sanity.io/docs
