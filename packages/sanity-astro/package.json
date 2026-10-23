@@ -22,7 +22,8 @@
     "dist",
     "src/studio",
     "src/visual-editing",
-    "module.d.ts"
+    "module.d.ts",
+    "!**/*.test.*"
   ],
   "types": "./dist/types/index.d.ts",
   "exports": {

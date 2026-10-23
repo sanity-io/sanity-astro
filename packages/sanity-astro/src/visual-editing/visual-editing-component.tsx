@@ -1,30 +1,35 @@
 import {
   VisualEditing as InternalVisualEditing,
-  type SuspiciousStegaReport,
-  type VisualEditingOptions as InternalVisualEditingOptions,
+  type HistoryAdapter,
+  type HistoryAdapterNavigate,
+  type HistoryRefresh,
+  type VisualEditingOptions,
 } from '@sanity/visual-editing/react'
 import React from 'react'
 
 import {applyPresentationHistoryUpdate, getPresentationUrl, shouldPublishUrl} from './history'
 
-export type {SuspiciousStegaReport}
+// `@sanity/visual-editing` is a dependency rather than a peer, so consumers cannot import these
+// from it directly under a non-hoisted layout; re-export what typed callbacks need.
+export type {
+  HistoryAdapter,
+  HistoryAdapterNavigate,
+  HistoryRefresh,
+  HistoryUpdate,
+  OverlayComponentResolver,
+  OverlayPluginDefinition,
+  SuspiciousStegaReport,
+  VisualEditingOptions,
+} from '@sanity/visual-editing/react'
 
-export type VisualEditingOptions = Pick<
-  InternalVisualEditingOptions,
-  'zIndex' | 'refresh' | 'history' | 'keepStegaOnCopy' | 'onSuspiciousStega'
->
-type HistoryAdapter = NonNullable<InternalVisualEditingOptions['history']>
-type HistoryNavigate = Parameters<HistoryAdapter['subscribe']>[0]
-
-const defaultRefresh: NonNullable<InternalVisualEditingOptions['refresh']> = () => {
-  return new Promise((resolve) => {
+const defaultRefresh: (payload: HistoryRefresh) => Promise<void> = () =>
+  new Promise<void>((resolve) => {
     window.location.reload()
     resolve()
   })
-}
 
 export function VisualEditingComponent(props: VisualEditingOptions) {
-  const navigateRef = React.useRef<HistoryNavigate | undefined>()
+  const navigateRef = React.useRef<HistoryAdapterNavigate | undefined>()
   const lastUrlRef = React.useRef('')
   const optimisticUrlRef = React.useRef<string | undefined>()
   const optimisticUntilRef = React.useRef(0)
@@ -155,12 +160,10 @@ export function VisualEditingComponent(props: VisualEditingOptions) {
 
   return (
     <InternalVisualEditing
+      {...props}
       portal
       history={props.history ?? defaultHistory}
-      zIndex={props.zIndex}
       refresh={props.refresh ?? defaultRefresh}
-      keepStegaOnCopy={props.keepStegaOnCopy}
-      onSuspiciousStega={props.onSuspiciousStega}
     />
   )
 }
