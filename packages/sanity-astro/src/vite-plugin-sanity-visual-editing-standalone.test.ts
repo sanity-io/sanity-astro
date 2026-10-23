@@ -50,20 +50,26 @@ describe('vitePluginSanityVisualEditingStandalone', () => {
     expect(await resolveId('@sanity/visual-editing/react', clientPath)).toBeNull()
   })
 
-  it('loads a module that imports the standalone styles and re-exports enableVisualEditing', () => {
+  it('loads a module that imports the standalone styles and wraps enableVisualEditing', () => {
     const {load} = setup()
     expect(load(VIRTUAL_STANDALONE_ID)).toBe(standaloneModuleSource)
     expect(standaloneModuleSource).toContain(
       "import css from '@sanity/visual-editing-standalone/styles.css?inline'",
     )
     expect(standaloneModuleSource).toContain(
+      "import {enableVisualEditing as enable} from '@sanity/visual-editing-standalone'",
+    )
+    expect(standaloneModuleSource).toContain('function ensureStandaloneStyles()')
+    expect(standaloneModuleSource).toContain(
       `style.setAttribute('data-astro-transition-persist', standaloneStyleId)`,
     )
+    expect(standaloneModuleSource).toContain('ensureStandaloneStyles()')
+    expect(standaloneModuleSource).toContain('return enable(options)')
     expect(standaloneModuleSource).toContain(STANDALONE_STYLE_PERSIST_ID)
     expect(standaloneModuleSource).not.toContain(
       "import '@sanity/visual-editing-standalone/styles.css'",
     )
-    expect(standaloneModuleSource).toContain(
+    expect(standaloneModuleSource).not.toContain(
       "export {enableVisualEditing} from '@sanity/visual-editing-standalone'",
     )
     expect(load('/project/src/other.ts')).toBeNull()

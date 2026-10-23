@@ -15,20 +15,29 @@ export function isVisualEditingClient(importer: string | undefined): importer is
 /**
  * `data-astro-transition-persist` value on the overlay stylesheet. An in-place morph keeps
  * `<head>` nodes that carry this attribute and drops every other runtime `<style>`, which is
- * what Vite emits for a plain CSS import from the lazy client chunk.
+ * what Vite emits for a plain CSS import from the lazy client chunk. ClientRouter's head swap
+ * still removes it when the next document has no matching persist id, so styles are ensured
+ * again each time `enableVisualEditing` runs (including after `astro:page-load`).
  */
 export const STANDALONE_STYLE_PERSIST_ID = 'sanity-visual-editing-standalone'
 
 export const standaloneModuleSource = [
   `import css from '${STANDALONE_PACKAGE}/styles.css?inline'`,
+  `import {enableVisualEditing as enable} from '${STANDALONE_PACKAGE}'`,
   `const standaloneStyleId = '${STANDALONE_STYLE_PERSIST_ID}'`,
-  `if (typeof document !== 'undefined' && !document.head.querySelector('style[data-astro-transition-persist="' + standaloneStyleId + '"]')) {`,
+  `function ensureStandaloneStyles() {`,
+  `  if (typeof document === 'undefined' || document.head.querySelector('style[data-astro-transition-persist="' + standaloneStyleId + '"]')) {`,
+  `    return`,
+  `  }`,
   `  const style = document.createElement('style')`,
   `  style.setAttribute('data-astro-transition-persist', standaloneStyleId)`,
   `  style.textContent = css`,
   `  document.head.appendChild(style)`,
   `}`,
-  `export {enableVisualEditing} from '${STANDALONE_PACKAGE}'`,
+  `export function enableVisualEditing(options) {`,
+  `  ensureStandaloneStyles()`,
+  `  return enable(options)`,
+  `}`,
   '',
 ].join('\n')
 
