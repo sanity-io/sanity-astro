@@ -120,16 +120,32 @@ describe('visual editing follow-up reload', () => {
     expect(reload).toHaveBeenCalledTimes(1)
   })
 
-  it('cancels the pending reload when asked to', () => {
-    const {host, timers, fireTimers} = createHost()
+  it('cancels the pending reload when asked to and restores the marker', () => {
+    const {host, store, timers, fireTimers} = createHost()
     const reload = vi.fn()
     markFollowUpReload(mutationRefresh, host)
 
     scheduleFollowUpReload(host, reload, DELAY)?.()
 
     expect(timers.size).toBe(0)
+    expect(store.get(FOLLOW_UP_RELOAD_KEY)).toBe(PAGE_URL)
     fireTimers()
     expect(reload).not.toHaveBeenCalled()
+  })
+
+  it('re-arms after cancel so a remount still runs the follow-up', () => {
+    const {host, timers, fireTimers} = createHost()
+    const reload = vi.fn()
+    markFollowUpReload(mutationRefresh, host)
+
+    // Effect mount → cleanup (Strict Mode / island remount) → mount again.
+    scheduleFollowUpReload(host, reload, DELAY)?.()
+    const cancel = scheduleFollowUpReload(host, reload, DELAY)
+
+    expect(typeof cancel).toBe('function')
+    expect([...timers.values()].map((timer) => timer.delayMs)).toEqual([DELAY])
+    fireTimers()
+    expect(reload).toHaveBeenCalledTimes(1)
   })
 
   it('degrades to no follow-up when storage is unavailable', () => {

@@ -41,26 +41,36 @@ export function markFollowUpReload(
  * Call once on page arrival. Consumes the marker left by `markFollowUpReload`
  * and, if it was left for this URL, schedules exactly one `reload` after
  * `delayMs`. Returns a cancel function when a reload was scheduled, otherwise
- * `undefined`.
+ * `undefined`. Cancel clears the timer and restores the marker so a remount
+ * (e.g. React Strict Mode) can schedule again.
  */
 export function scheduleFollowUpReload(
   host: FollowUpReloadHost,
   reload: () => void,
   delayMs: number,
 ): (() => void) | undefined {
-  let pending = false
+  let markerUrl: string | undefined
   try {
     const marker = host.sessionStorage.getItem(FOLLOW_UP_RELOAD_KEY)
     if (marker !== null) {
       host.sessionStorage.removeItem(FOLLOW_UP_RELOAD_KEY)
-      pending = marker === host.location.href
+      if (marker === host.location.href) {
+        markerUrl = marker
+      }
     }
   } catch {
-    pending = false
+    markerUrl = undefined
   }
-  if (!pending) {
+  if (markerUrl === undefined) {
     return undefined
   }
   const id = host.setTimeout(reload, delayMs)
-  return () => host.clearTimeout(id)
+  return () => {
+    host.clearTimeout(id)
+    try {
+      host.sessionStorage.setItem(FOLLOW_UP_RELOAD_KEY, markerUrl)
+    } catch {
+      // Storage can be unavailable; the follow-up is already cancelled.
+    }
+  }
 }
