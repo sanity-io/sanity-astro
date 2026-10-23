@@ -2,12 +2,16 @@ import {
   VisualEditing as InternalVisualEditing,
   type HistoryAdapter,
   type HistoryAdapterNavigate,
-  type HistoryRefresh,
   type VisualEditingOptions,
 } from '@sanity/visual-editing/react'
 import React from 'react'
 
 import {applyPresentationHistoryUpdate, getPresentationUrl, shouldPublishUrl} from './history'
+import {
+  createDefaultRefresh,
+  type RefreshStrategy,
+  resolveRefreshStrategy,
+} from './refresh-strategy'
 
 // `@sanity/visual-editing` is a dependency rather than a peer, so consumers cannot import these
 // from it directly under a non-hoisted layout; re-export what typed callbacks need.
@@ -21,20 +25,38 @@ export type {
   SuspiciousStegaReport,
   VisualEditingOptions,
 } from '@sanity/visual-editing/react'
+export type {RefreshStrategy}
 
-const defaultRefresh: (payload: HistoryRefresh) => Promise<void> = () =>
-  new Promise<void>((resolve) => {
-    window.location.reload()
-    resolve()
-  })
+/** Everything `@sanity/visual-editing`'s `VisualEditing` accepts, plus this integration's own options. */
+export type VisualEditingComponentProps = VisualEditingOptions & {
+  /**
+   * Experimental, opt-in. How the default `refresh` updates the preview when Presentation
+   * reports a change; see {@link RefreshStrategy}. Unset, the default, is a plain page reload.
+   * Ignored when you pass your own `refresh`.
+   */
+  experimental_refreshStrategy?: RefreshStrategy
+}
 
-export function VisualEditingComponent(props: VisualEditingOptions) {
+export function VisualEditingComponent(props: VisualEditingComponentProps) {
+  // Strip this integration's own option so only upstream props are forwarded.
+  const {experimental_refreshStrategy, ...upstreamProps} = props
   const navigateRef = React.useRef<HistoryAdapterNavigate | undefined>()
   const lastUrlRef = React.useRef('')
   const optimisticUrlRef = React.useRef<string | undefined>()
   const optimisticUntilRef = React.useRef(0)
   const clearNavigateTimeoutRef = React.useRef<number | undefined>()
   const hasCustomHistory = Boolean(props.history)
+  const hasCustomRefresh = Boolean(props.refresh)
+  // A custom `refresh` replaces the strategy, so no follow-up reload is armed for it.
+  const {followUpDelayMs} = hasCustomRefresh
+    ? {followUpDelayMs: undefined}
+    : resolveRefreshStrategy(experimental_refreshStrategy)
+  const defaultRefresh = React.useMemo(
+    () => createDefaultRefresh({type: 'reload', followUpDelayMs}, window),
+    [followUpDelayMs],
+  )
+
+  React.useEffect(() => defaultRefresh.arrive(), [defaultRefresh])
 
   const publishUrl = React.useCallback((url: string, force = false) => {
     const navigate = navigateRef.current
@@ -160,10 +182,10 @@ export function VisualEditingComponent(props: VisualEditingOptions) {
 
   return (
     <InternalVisualEditing
-      {...props}
+      {...upstreamProps}
       portal
       history={props.history ?? defaultHistory}
-      refresh={props.refresh ?? defaultRefresh}
+      refresh={props.refresh ?? defaultRefresh.refresh}
     />
   )
 }

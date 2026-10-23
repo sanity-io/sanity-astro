@@ -336,6 +336,7 @@ const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLE
 - `enabled`: so you can control whether or not visual editing is enabled depending on your environment.
 - `zIndex` (optional): allows you to change the `z-index` of overlay elements.
 - `keepStegaOnCopy` (optional): by default, Visual Editing strips stega from the clipboard on copy. Pass `keepStegaOnCopy` to opt out and leave stega in copied text.
+- `experimental_refreshStrategy` (optional, experimental, opt-in): how the preview updates when the Studio reports a change. Unset (the default) reloads the page, as it always has. See [Customizing how the preview refreshes](#customizing-how-the-preview-refreshes).
 
 In the example above, `enabled` is controlled using an [environment variable](https://docs.astro.build/en/guides/environment-variables/):
 
@@ -346,7 +347,21 @@ PUBLIC_SANITY_VISUAL_EDITING_ENABLED="true"
 
 #### Customizing how the preview refreshes
 
-By default `VisualEditing` reloads the whole page with `window.location.reload()` whenever the Studio reports a change. If you'd rather refresh another way, for example re-fetching data and swapping the DOM in place, pass your own `refresh` function.
+By default `VisualEditing` reloads the whole page with `window.location.reload()` whenever the Studio reports a change. The experimental `experimental_refreshStrategy` prop picks another strategy. It's accepted by both the `.astro` `VisualEditing` component and `VisualEditingComponent`, and it's ignored when you pass your own `refresh`:
+
+| Strategy                                  | What happens on a change                                                     | Trade-offs                                                                                                                                                                                                                                              |
+| ----------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `'reload'` (default)                      | The page reloads.                                                            | Always correct for whatever the server renders. A reload discards the follow-up refresh Visual Editing runs about a second after a change, so text typed in the Studio while the page was reloading can be missing until the next edit.                 |
+| `{type: 'reload', followUpDelayMs: 1200}` | The page reloads, then reloads once more `followUpDelayMs` after it is back. | Catches text typed during the first reload, at the cost of a second reload per change. Only change-triggered reloads arm it, never ordinary navigations or the manual refresh button, and the follow-up does not re-arm itself. Needs `sessionStorage`. |
+
+```astro
+<VisualEditing
+  enabled={visualEditingEnabled}
+  experimental_refreshStrategy={{type: 'reload', followUpDelayMs: 1200}}
+/>
+```
+
+If you'd rather refresh another way, for example re-fetching data and swapping the DOM in place, pass your own `refresh` function.
 
 `refresh` is a function, and Astro can't serialize functions through to a client component, so it isn't accepted on the `.astro` `VisualEditing` component. Instead, import the React component from `@sanity/astro/visual-editing/component` and render it as a `client:only` island:
 
@@ -389,7 +404,7 @@ const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLE
 
 The `payload` tells you why the refresh fired: `payload.source` is `'manual'` when the editor clicks refresh in Presentation, or `'mutation'` when a document changes.
 
-`VisualEditingComponent` accepts the full `VisualEditingOptions` type from `@sanity/visual-editing/react` and forwards it unchanged. The one prop of `<VisualEditing />` it does not take is `portal`, which is always on. Beyond `refresh`, the ones worth knowing about are:
+`VisualEditingComponent` accepts the full `VisualEditingOptions` type from `@sanity/visual-editing/react` and forwards it unchanged, plus this integration's own `experimental_refreshStrategy` (see above), which is not forwarded. The one prop of `<VisualEditing />` it does not take is `portal`, which is always on. Beyond `refresh`, the ones worth knowing about are:
 
 - `history`: take over URL syncing. When omitted, the built-in adapter keeps Presentation's URL bar in sync with the preview.
 - `onSuspiciousStega`: opt-in reporting when stega appears in unsafe placements (`class`, `href`, `<head>`, scripts, and similar).
@@ -399,7 +414,7 @@ The `payload` tells you why the refresh fired: `payload.source` is `'manual'` wh
 
 `refresh` falls back to `window.location.reload()` and `history` to the built-in adapter when you don't pass them; everything else is passed straight through. The alpha options follow `@sanity/visual-editing`'s stability policy rather than this package's: they can change in a minor release of that dependency without a corresponding `@sanity/astro` release, so pin it if you rely on them.
 
-The parameter types for these callbacks (`HistoryAdapter`, `HistoryAdapterNavigate`, `HistoryRefresh`, `HistoryUpdate`, `OverlayComponentResolver`, `OverlayPluginDefinition`, `SuspiciousStegaReport`, and `VisualEditingOptions` itself) are re-exported from `@sanity/astro/visual-editing/component`.
+The parameter types for these callbacks (`HistoryAdapter`, `HistoryAdapterNavigate`, `HistoryRefresh`, `HistoryUpdate`, `OverlayComponentResolver`, `OverlayPluginDefinition`, `SuspiciousStegaReport`, and `VisualEditingOptions` itself) are re-exported from `@sanity/astro/visual-editing/component`, along with `RefreshStrategy` and `VisualEditingComponentProps` (`VisualEditingOptions` plus `experimental_refreshStrategy`).
 
 ### 2. Add the Presentation tool to the Studio
 
