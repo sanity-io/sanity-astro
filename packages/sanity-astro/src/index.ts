@@ -1,6 +1,8 @@
 import type {ClientConfig} from '@sanity/client'
 import type {AstroIntegration, AstroUserConfig} from 'astro'
 
+import {CLIENT_TYPES_FILENAME, generateClientTypes} from './client-types'
+import {type NamedClientConfig, resolveClientConfigs} from './resolve-clients'
 import {normalizeStudioBasePath, studioRoutePattern} from './studio-base-path'
 import {vitePluginSanityClient} from './vite-plugin-sanity-client'
 import {vitePluginSanityModuleDedupe} from './vite-plugin-sanity-module-dedupe'
@@ -12,6 +14,8 @@ import {vitePluginSanityStudioHashRouter} from './vite-plugin-sanity-studio-hash
 // differ from the copy Astro's config types reference. Passing the array to `updateConfig` as is
 // crashes TypeScript 5.9 while it reports the mismatch, so it is typed as Astro's own option.
 type AstroVitePlugins = NonNullable<NonNullable<AstroUserConfig['vite']>['plugins']>
+
+export type {NamedClientConfig}
 
 export type StudioRouterHistory = 'browser' | 'hash'
 export type LogClientRequests = 'dev' | 'build' | 'always'
@@ -39,6 +43,12 @@ export type IntegrationOptions = ClientConfig & {
    * reference keeps working either way.
    */
   injectTypes?: boolean
+  /**
+   * Named Sanity clients. `clients.default` is exported from `sanity:client` as `sanityClient`,
+   * every client is available through `getClient(name)`.
+   * Top-level client options can be used instead of `clients.default`, but not together with it.
+   */
+  clients?: Record<string, NamedClientConfig>
 }
 
 const defaultClientConfig: ClientConfig = {
@@ -73,6 +83,7 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
     studioRouterHistory: requestedStudioRouterHistory,
     logClientRequests,
     injectTypes: shouldInjectTypes = false,
+    clients,
     ...clientConfig
   } = options
   const normalizedStudioBasePath = normalizeStudioBasePath(studioBasePath)
@@ -82,6 +93,12 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
       "[@sanity/astro]: The `studioBasePath` option should be a relative URL. For example — `studioBasePath: '/admin'`",
     )
   }
+
+  const resolvedClients = resolveClientConfigs({
+    clientConfig,
+    clients,
+    defaults: defaultClientConfig,
+  })
 
   return {
     name: '@sanity/astro',
@@ -95,13 +112,7 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
           ...(process.env.SANITY_ASTRO_DISABLE_MODULE_DEDUPE
             ? []
             : [vitePluginSanityModuleDedupe()]),
-          vitePluginSanityClient(
-            {
-              ...defaultClientConfig,
-              ...clientConfig,
-            },
-            {logClientRequests},
-          ),
+          vitePluginSanityClient(resolvedClients, {logClientRequests}),
           vitePluginSanityStudio({
             studioBasePath: normalizedStudioBasePath,
             studioRouterHistory,
@@ -139,11 +150,22 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
       // `injectTypes` arrived in Astro 4.14; older versions keep using the manual
       // `/// <reference types="@sanity/astro/module" />` even when opted in.
       'astro:config:done': ({injectTypes}) => {
-        if (!shouldInjectTypes) return
-        injectTypes?.({
-          filename: 'types.d.ts',
-          content: '/// <reference types="@sanity/astro/module" />\n',
-        })
+        if (typeof injectTypes !== 'function') return
+        if (shouldInjectTypes) {
+          injectTypes({
+            filename: 'types.d.ts',
+            content: '/// <reference types="@sanity/astro/module" />\n',
+          })
+        }
+        // Only projects that set `clients` get generated client types. Injecting them into
+        // every project would pull `module.d.ts` in automatically and change type-checking
+        // for single-client setups.
+        if (clients !== undefined) {
+          injectTypes({
+            filename: CLIENT_TYPES_FILENAME,
+            content: generateClientTypes(resolvedClients),
+          })
+        }
       },
     },
   }

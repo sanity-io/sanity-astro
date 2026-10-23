@@ -7,21 +7,24 @@ import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-ch
 type SetupOptions = Pick<
   IntegrationOptions,
   'studioBasePath' | 'studioRouterHistory' | 'logClientRequests'
-> & {output?: 'static' | 'server'}
+> & {output?: 'static' | 'server'; options?: IntegrationOptions}
 
 async function runSetup({
   output = 'static',
   studioRouterHistory,
   studioBasePath = '/admin',
   logClientRequests,
+  options,
 }: SetupOptions = {}) {
-  const integration = sanityIntegration({
-    projectId: 'project-id',
-    dataset: 'dataset-name',
-    studioBasePath,
-    studioRouterHistory,
-    logClientRequests,
-  })
+  const integration = sanityIntegration(
+    options ?? {
+      projectId: 'project-id',
+      dataset: 'dataset-name',
+      studioBasePath,
+      studioRouterHistory,
+      logClientRequests,
+    },
+  )
   const setup = integration.hooks['astro:config:setup']
   const injectRoute = vi.fn()
   const updateConfig = vi.fn()
@@ -32,7 +35,30 @@ async function runSetup({
   const vitePlugins: Array<{name?: string; load?: (id: string) => unknown}> =
     updateConfig.mock.calls[0][0].vite.plugins
 
-  return {injectRoute, updateConfig, injectScript, vitePlugins}
+  return {integration, injectRoute, updateConfig, injectScript, vitePlugins}
+}
+
+function loadVirtualClientModule(updateConfig: ReturnType<typeof vi.fn>): string {
+  const viteConfig = updateConfig.mock.calls[0][0].vite
+  const clientPlugin = viteConfig.plugins.find(
+    (plugin: {name?: string}) => plugin.name === 'sanity:client',
+  ) as {load: (id: string) => string | undefined}
+
+  const code = clientPlugin.load('\0sanity:client')
+  if (typeof code !== 'string') {
+    throw new Error('Expected the sanity:client virtual module to produce code')
+  }
+  return code
+}
+
+async function runConfigDone(integration: ReturnType<typeof sanityIntegration>) {
+  const injectTypes = vi.fn()
+  const configDone = integration.hooks['astro:config:done']
+  if (!configDone) {
+    throw new Error('Expected the integration to register an astro:config:done hook')
+  }
+  await configDone({injectTypes} as never)
+  return {injectTypes, configDone}
 }
 
 describe('sanity integration options', () => {
@@ -207,6 +233,85 @@ describe('sanity integration vite config', () => {
     expect(chunkWarningPlugin).toBeDefined()
     expect(chunkWarningPlugin?.apply).toBe('build')
     expect((vitePluginSanityStudioChunkWarning() as {apply?: string}).apply).toBe('build')
+  })
+})
+
+describe('sanity integration named clients', () => {
+  it('maps top-level client options to the default client', async () => {
+    const {updateConfig} = await runSetup()
+    const code = loadVirtualClientModule(updateConfig)
+
+    expect(code).toMatch(
+      /\["default", createNamedClient\("default", \{[^}]*"projectId":"project-id"/,
+    )
+    expect(code).not.toContain('"studioBasePath"')
+    expect(code).not.toContain('"studioRouterHistory"')
+    expect(code).not.toContain('"logClientRequests"')
+  })
+
+  it('passes every named client to the virtual module', async () => {
+    const {updateConfig} = await runSetup({
+      options: {
+        clients: {
+          default: {projectId: 'project-id', dataset: 'marketing'},
+          community: {projectId: 'community-id', dataset: 'community', presentation: true},
+        },
+      },
+    })
+    const code = loadVirtualClientModule(updateConfig)
+
+    expect(code).toMatch(
+      /\["default", createNamedClient\("default", \{[^}]*"projectId":"project-id"/,
+    )
+    expect(code).toMatch(
+      /\["community", createNamedClient\("community", \{[^}]*"projectId":"community-id"/,
+    )
+    expect(code).not.toContain('"presentation"')
+    expect(code).not.toContain('"clients"')
+    expect(code).toContain('const presentationClient = clients.get("community")')
+  })
+
+  it('rejects invalid client configuration before Astro runs any hook', () => {
+    expect(() => sanityIntegration({clients: {}})).toThrowErrorMatchingInlineSnapshot(
+      `[Error: [@sanity/astro]: \`clients.default\` is required when using the \`clients\` option, it is the client exported as \`sanityClient\`. Add it to \`clients\` or configure it with the top-level client options]`,
+    )
+  })
+
+  it('injects client types with the configured client names', async () => {
+    const {integration} = await runSetup({
+      options: {
+        clients: {
+          default: {projectId: 'project-id', dataset: 'marketing'},
+          community: {projectId: 'community-id', dataset: 'community', presentation: true},
+        },
+      },
+    })
+    const {injectTypes} = await runConfigDone(integration)
+
+    expect(injectTypes).toHaveBeenCalledTimes(1)
+    const [{filename, content}] = injectTypes.mock.calls[0]
+    expect(filename).toBe('clients.d.ts')
+    expect(content).toContain('"default": "project-id.marketing"')
+    expect(content).toContain('"community": "community-id.community"')
+    expect(content).toContain('name: "community"')
+  })
+
+  it('does not inject client types unless the clients option is set', async () => {
+    const {integration} = await runSetup()
+    const {injectTypes} = await runConfigDone(integration)
+
+    expect(injectTypes).not.toHaveBeenCalled()
+  })
+
+  it('skips type injection on Astro versions without injectTypes', async () => {
+    const {integration} = await runSetup({
+      options: {
+        clients: {default: {projectId: 'project-id', dataset: 'marketing'}},
+      },
+    })
+    const configDone = integration.hooks['astro:config:done']
+
+    expect(() => configDone?.({} as never)).not.toThrow()
   })
 })
 
