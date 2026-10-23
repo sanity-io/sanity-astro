@@ -32,16 +32,18 @@ describe('vitePluginSanityModuleDedupe', () => {
     expect(plugin.enforce).toBe('pre')
   })
 
-  it('dedupes react, styled-components, sanity, and @sanity/ui when installed (#406)', () => {
+  it('pins the dedupe list (see module docblock for the membership rule and the @sanity/ui exclusion)', () => {
+    expect(SANITY_MODULE_DEDUPE).toEqual(['react', 'react-dom', 'styled-components', 'sanity'])
+  })
+
+  it('dedupes react, styled-components, and sanity when installed (#406)', () => {
     const plugin = vitePluginSanityModuleDedupe() as PluginLike
     const projectRoot = process.cwd()
     const config = plugin.config?.({root: projectRoot}, {command: 'serve', mode: 'development'})
     const dedupe = resolveSanityModuleDedupe(projectRoot)
 
     expect(config?.resolve?.dedupe).toEqual(dedupe)
-    expect(dedupe.every((dependency) => SANITY_MODULE_DEDUPE.includes(dependency as never))).toBe(
-      true,
-    )
+    expect(dedupe).toEqual(SANITY_MODULE_DEDUPE)
   })
 
   it('resolves dependencies from config.root instead of process.cwd()', () => {

@@ -1,4 +1,6 @@
 ---
+import {VisualEditing} from '@sanity/astro/visual-editing'
+
 import {NewsBar} from '../components/NewsBar'
 
 interface Props {
@@ -6,6 +8,7 @@ interface Props {
 }
 
 const {title} = Astro.props
+const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED === 'true'
 ---
 
 <!doctype html>
@@ -21,6 +24,7 @@ const {title} = Astro.props
   <body>
     <NewsBar client:only="react" />
     <slot />
+    <VisualEditing enabled={visualEditingEnabled} />
   </body>
 </html>
 <style is:global>

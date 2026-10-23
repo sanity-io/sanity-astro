@@ -1,10 +1,7 @@
 import {describe, expect, it, vi} from 'vitest'
 
 import sanityIntegration, {type IntegrationOptions} from './index'
-import {
-  SANITY_MODULE_DEDUPE,
-  vitePluginSanityModuleDedupe,
-} from './vite-plugin-sanity-module-dedupe'
+import {vitePluginSanityModuleDedupe} from './vite-plugin-sanity-module-dedupe'
 import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-chunk-warning'
 
 type SetupOptions = Pick<
@@ -124,14 +121,6 @@ describe('sanity integration vite config', () => {
     expect(moduleDedupePlugin).toBeDefined()
     expect((moduleDedupePlugin as {apply?: string}).apply).toBe('serve')
     expect((vitePluginSanityModuleDedupe() as {apply?: string}).apply).toBe('serve')
-    expect(SANITY_MODULE_DEDUPE).toEqual([
-      'react',
-      'react-dom',
-      'react-dom/client',
-      'styled-components',
-      'sanity',
-      '@sanity/ui',
-    ])
   })
 
   it('skips module dedupe plugin when SANITY_ASTRO_DISABLE_MODULE_DEDUPE is set (integration tests)', async () => {
