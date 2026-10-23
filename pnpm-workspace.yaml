@@ -5,10 +5,6 @@ packages:
 overrides:
   'braces@<3.0.3': '>=3.0.3'
   'ws@>=8.0.0 <8.17.1': '>=8.22.0'
-  # The library typechecks Astro's Vite plugin slot against its own `vite` types.
-  # astro@7.4.2 otherwise nests Vite 8.3 while the library resolves Vite 8.2, and
-  # that mismatch crashes tsc while it reports the error.
-  'astro@7.4.2>vite': '8.2.2'
 
 allowBuilds:
   '@swc/core': true
