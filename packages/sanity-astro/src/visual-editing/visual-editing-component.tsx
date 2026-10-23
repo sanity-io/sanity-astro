@@ -40,11 +40,11 @@ export type VisualEditingComponentProps = VisualEditingOptions & {
 export function VisualEditingComponent(props: VisualEditingComponentProps) {
   // Strip this integration's own option so only upstream props are forwarded.
   const {experimental_refreshStrategy, ...upstreamProps} = props
-  const navigateRef = React.useRef<HistoryAdapterNavigate | undefined>()
+  const navigateRef = React.useRef<HistoryAdapterNavigate | undefined>(undefined)
   const lastUrlRef = React.useRef('')
-  const optimisticUrlRef = React.useRef<string | undefined>()
+  const optimisticUrlRef = React.useRef<string | undefined>(undefined)
   const optimisticUntilRef = React.useRef(0)
-  const clearNavigateTimeoutRef = React.useRef<number | undefined>()
+  const clearNavigateTimeoutRef = React.useRef<number | undefined>(undefined)
   const hasCustomHistory = Boolean(props.history)
   const hasCustomRefresh = Boolean(props.refresh)
   // A custom `refresh` replaces the strategy, so no follow-up reload is armed for it.
