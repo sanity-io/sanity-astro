@@ -362,6 +362,41 @@ describe('setupLive', () => {
     expect(extract).toHaveBeenCalledTimes(2)
   })
 
+  it('re-extracts immediately in dev when the stale schema is missing a loader type', async () => {
+    await mkdir(join(dir, 'codegen'), {recursive: true})
+    await writeFile(join(dir, 'codegen', 'schema.json'), JSON.stringify(movieSchema('string')))
+    const articleSchema: SchemaType = [
+      ...movieSchema('string'),
+      {
+        type: 'document',
+        name: 'article',
+        attributes: {
+          _id: {type: 'objectAttribute', value: {type: 'string'}},
+          _type: {type: 'objectAttribute', value: {type: 'string', value: 'article'}},
+          _updatedAt: {type: 'objectAttribute', value: {type: 'string'}},
+          title: {type: 'objectAttribute', value: {type: 'string'}},
+        },
+      },
+    ]
+    const extract = extractor(articleSchema)
+    const liveOptions: SanityLiveOptions = {
+      schema: './studio/sanity.config.ts',
+      loaders: {
+        movie: {type: 'movie', projection: 'title'},
+        article: {type: 'article', projection: 'title'},
+      },
+    }
+
+    const state = await setupLive(liveOptions, context('dev'), tools(extract))
+
+    expect(extract).toHaveBeenCalledTimes(1)
+    expect(state.refresh).toBeUndefined()
+    expect(state.module.runtime).toContain('export const articleLoader = (options = {}) =>')
+    expect(logger.warn).toHaveBeenCalledWith(
+      'Previously extracted schema is incompatible with the current loaders; extracting a fresh schema',
+    )
+  })
+
   it('requires Astro 6 or later', async () => {
     await writeAstroVersion('5.11.1')
     await expect(

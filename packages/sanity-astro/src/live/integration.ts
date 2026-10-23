@@ -86,8 +86,21 @@ export async function setupLive(
   const codegenDir = fileURLToPath(ctx.createCodegenDir())
   const load = (allowStale: boolean) =>
     loadSchema(plan.source, {codegenDir, allowStale, logger: ctx.logger}, tools.extract)
-  const {schema, stale} = await load(ctx.command === 'dev')
-  const module = generateLoaderModule(schema, plan)
+  let {schema, stale} = await load(ctx.command === 'dev')
+  let module: GeneratedLoaderModule
+  try {
+    module = generateLoaderModule(schema, plan)
+  } catch (error) {
+    // Warm-start cache can predate a new/renamed loader type; extract fresh instead of aborting.
+    if (!stale) {
+      throw error
+    }
+    ctx.logger.warn(
+      `Previously extracted schema is incompatible with the current loaders; extracting a fresh schema`,
+    )
+    ;({schema, stale} = await load(false))
+    module = generateLoaderModule(schema, plan)
+  }
   logWarnings(ctx.logger, module)
   const reload = () => load(false).then((loaded) => loaded.schema)
   const refresh = stale ? reload() : undefined
