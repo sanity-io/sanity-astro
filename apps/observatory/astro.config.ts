@@ -85,6 +85,15 @@ export default defineConfig({
         access: 'public',
         default: false,
       }),
+      // Hold live events back until the sync tag invalidate Function (see
+      // `sanity.blueprint.ts`) has purged the CDN, so the refresh toast never
+      // leads to a stale page. Leave off until that Function is deployed for
+      // this dataset: until then, held events are never released.
+      PUBLIC_SANITY_LIVE_WAIT_FOR_FUNCTION: envField.boolean({
+        context: 'server',
+        access: 'public',
+        default: false,
+      }),
       // Only needed for draft preview (Presentation / Visual Editing). The
       // dataset is public, so published reads work without it.
       SANITY_API_READ_TOKEN: envField.string({
