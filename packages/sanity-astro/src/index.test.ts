@@ -102,6 +102,65 @@ describe('sanity integration options', () => {
   })
 })
 
+describe('sanity integration types', () => {
+  it('does not touch .astro/ types unless injectTypes is enabled', async () => {
+    const integration = sanityIntegration({projectId: 'project-id', dataset: 'dataset-name'})
+    const injectTypes = vi.fn()
+
+    await integration.hooks['astro:config:done']!({injectTypes} as never)
+
+    expect(injectTypes).not.toHaveBeenCalled()
+  })
+
+  it('injects a reference to the shipped module declarations when opted in', async () => {
+    const integration = sanityIntegration({
+      projectId: 'project-id',
+      dataset: 'dataset-name',
+      injectTypes: true,
+    })
+    const injectTypes = vi.fn()
+
+    await integration.hooks['astro:config:done']!({injectTypes} as never)
+
+    expect(injectTypes).toHaveBeenCalledWith({
+      filename: 'types.d.ts',
+      content: expect.stringContaining('/// <reference types="@sanity/astro/module" />'),
+    })
+  })
+
+  it('keeps injectTypes out of the client config', async () => {
+    const integration = sanityIntegration({
+      projectId: 'project-id',
+      dataset: 'dataset-name',
+      injectTypes: true,
+    })
+    const updateConfig = vi.fn()
+
+    await integration.hooks['astro:config:setup']!({
+      config: {output: 'static'},
+      injectRoute: vi.fn(),
+      updateConfig,
+      injectScript: vi.fn(),
+    } as never)
+    const clientPlugin = updateConfig.mock.calls[0][0].vite.plugins.find(
+      (plugin: {name?: string}) => plugin.name === 'sanity:client',
+    )
+    const code = await clientPlugin.load('\0sanity:client')
+
+    expect(code).not.toContain('injectTypes')
+  })
+
+  it('tolerates Astro versions without injectTypes when opted in', async () => {
+    const integration = sanityIntegration({
+      projectId: 'project-id',
+      dataset: 'dataset-name',
+      injectTypes: true,
+    })
+
+    expect(() => integration.hooks['astro:config:done']!({} as never)).not.toThrow()
+  })
+})
+
 describe('sanity integration vite config', () => {
   it('registers module dedupe plugin (#406)', async () => {
     const {updateConfig} = await runSetup()
