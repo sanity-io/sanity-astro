@@ -1,5 +1,5 @@
 import type {ClientConfig} from '@sanity/client'
-import type {AstroIntegration} from 'astro'
+import type {AstroIntegration, AstroUserConfig} from 'astro'
 
 import {normalizeStudioBasePath, studioRoutePattern} from './studio-base-path'
 import {vitePluginSanityClient} from './vite-plugin-sanity-client'
@@ -7,6 +7,11 @@ import {vitePluginSanityModuleDedupe} from './vite-plugin-sanity-module-dedupe'
 import {vitePluginSanityStudio} from './vite-plugin-sanity-studio'
 import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-chunk-warning'
 import {vitePluginSanityStudioHashRouter} from './vite-plugin-sanity-studio-hash-router'
+
+// The plugin factories return Vite's `PluginOption` from this package's copy of Vite, which can
+// differ from the copy Astro's config types reference. Passing the array to `updateConfig` as is
+// crashes TypeScript 5.9 while it reports the mismatch, so it is typed as Astro's own option.
+type AstroVitePlugins = NonNullable<NonNullable<AstroUserConfig['vite']>['plugins']>
 
 export type StudioRouterHistory = 'browser' | 'hash'
 export type LogClientRequests = 'dev' | 'build' | 'always'
@@ -107,7 +112,7 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
 
         updateConfig({
           vite: {
-            plugins: vitePlugins,
+            plugins: vitePlugins as AstroVitePlugins,
           },
         })
 
