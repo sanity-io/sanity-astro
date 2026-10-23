@@ -13,6 +13,7 @@
     "build:observatory": "turbo run build --filter=observatory... --filter=observatory-studio...",
     "changeset": "changeset",
     "check": "turbo run check",
+    "check:package": "pnpm --filter @sanity/astro check:package",
     "clean": "turbo run clean && rimraf .turbo && rimraf node_modules",
     "dev": "pnpm --filter @sanity/astro build && turbo run dev",
     "dev:cinema": "pnpm --filter @sanity/astro build && turbo run dev --filter=cinema",
