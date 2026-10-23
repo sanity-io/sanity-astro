@@ -6,7 +6,6 @@ import {vitePluginSanityClient} from './vite-plugin-sanity-client'
 import {vitePluginSanityModuleDedupe} from './vite-plugin-sanity-module-dedupe'
 import {vitePluginSanityStudio} from './vite-plugin-sanity-studio'
 import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-chunk-warning'
-import {vitePluginSanityStudioHashRouter} from './vite-plugin-sanity-studio-hash-router'
 
 export type StudioRouterHistory = 'browser' | 'hash'
 export type LogClientRequests = 'dev' | 'build' | 'always'
@@ -93,7 +92,6 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
             studioBasePath: normalizedStudioBasePath,
             studioRouterHistory,
           }),
-          vitePluginSanityStudioHashRouter(),
           vitePluginSanityStudioChunkWarning(),
         ]
 
