@@ -8,6 +8,8 @@ interface SanityQueriesByResource {}
 
 declare module 'sanity:client' {
   import type {
+    ClientParams,
+    ClientReturn,
     FilteredResponseQueryOptions,
     QueryParams,
     QueryWithoutParams,
@@ -36,9 +38,15 @@ declare module 'sanity:client' {
     ? SanityQueriesByResource[Key]
     : never
 
-  type ResourceQueryReturn<Queries, Query extends string, Fallback> = Query extends keyof Queries
-    ? Queries[Query]
-    : Fallback
+  // A branded query (such as a `.groq` import) carries its own result type, which wins over the
+  // per-resource registry the same way it wins over `SanityQueries` in `@sanity/client`.
+  type ResourceQueryReturn<Queries, Query extends string, Fallback> = Query extends {
+    readonly __groqResult?: unknown
+  }
+    ? ClientReturn<Query, Fallback>
+    : Query extends keyof Queries
+      ? Queries[Query]
+      : Fallback
 
   /**
    * A `SanityClient` whose `fetch` resolves query result types through a per-resource query
@@ -59,7 +67,7 @@ declare module 'sanity:client' {
       const G extends string = string,
     >(
       query: G,
-      params: Q extends QueryWithoutParams ? QueryWithoutParams : Q,
+      params: Q extends QueryWithoutParams ? QueryWithoutParams : ClientParams<G, Q>,
       options?: FilteredResponseQueryOptions,
     ): Promise<ResourceQueryReturn<Queries, G, R>>
     fetch<
@@ -68,7 +76,7 @@ declare module 'sanity:client' {
       const G extends string = string,
     >(
       query: G,
-      params: Q extends QueryWithoutParams ? QueryWithoutParams : Q,
+      params: Q extends QueryWithoutParams ? QueryWithoutParams : ClientParams<G, Q>,
       options: UnfilteredResponseQueryOptions,
     ): Promise<RawQueryResponse<ResourceQueryReturn<Queries, G, R>>>
     fetch<
@@ -77,7 +85,7 @@ declare module 'sanity:client' {
       const G extends string = string,
     >(
       query: G,
-      params: Q extends QueryWithoutParams ? QueryWithoutParams : Q,
+      params: Q extends QueryWithoutParams ? QueryWithoutParams : ClientParams<G, Q>,
       options: UnfilteredResponseWithoutQuery,
     ): Promise<RawQuerylessQueryResponse<ResourceQueryReturn<Queries, G, R>>>
   }

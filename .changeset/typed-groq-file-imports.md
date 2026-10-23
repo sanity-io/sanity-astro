@@ -26,6 +26,6 @@ const post = await sanityClient.fetch(query, {slug})
 //    ^? {title: string | null} | null, and a typo in `slug` is a type error
 ```
 
-The experimental `sanityLoader` gets the same treatment: hand it a `.groq` import as `query`, and `params` are checked and the `id` callback's document is typed, no generic needed.
+The experimental `sanityLoader` gets the same treatment: hand it a `.groq` import as `query`, and `params` are checked and the `id` callback's document is typed, no generic needed. So do the named clients from `getClient(name)` that `typegen.resources` types per project and dataset: a `.groq` import's own types win over the generated registry.
 
 The mapper and the client's support for it are experimental, and the mapper needs TypeScript 7.1. The new "Typing query results" section of the README shows the Astro setup, plus how to type your own `sanityFetch` helpers with `ClientReturn` and `ClientParams` so they keep the inferred types. Plain strings, explicit generics and Sanity TypeGen queries work exactly as before.
