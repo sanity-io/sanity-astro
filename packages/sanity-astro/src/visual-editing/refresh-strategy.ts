@@ -58,17 +58,26 @@ export function createDefaultRefresh(
 ): DefaultRefresh {
   const {followUpDelayMs} = strategy
   const reload = () => host.location.reload()
+  // Shared so `refresh` can drop a timer `arrive` armed. `location.reload()` does
+  // not tear the document down synchronously, so a due callback could otherwise
+  // clearMarker() a marker written for a newer mutation refresh.
+  let cancelFollowUp: (() => void) | undefined
   return {
     refresh: (payload) => {
+      cancelFollowUp?.()
+      cancelFollowUp = undefined
       if (followUpDelayMs !== undefined) {
         markFollowUpReload(payload, host)
       }
       reload()
       return Promise.resolve()
     },
-    arrive: () =>
-      followUpDelayMs === undefined
-        ? undefined
-        : scheduleFollowUpReload(host, reload, followUpDelayMs),
+    arrive: () => {
+      cancelFollowUp =
+        followUpDelayMs === undefined
+          ? undefined
+          : scheduleFollowUpReload(host, reload, followUpDelayMs)
+      return cancelFollowUp
+    },
   }
 }

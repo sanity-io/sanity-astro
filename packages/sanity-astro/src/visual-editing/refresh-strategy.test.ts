@@ -121,4 +121,30 @@ describe('createDefaultRefresh', () => {
     fireTimers()
     expect(reload).toHaveBeenCalledTimes(2)
   })
+
+  it('does not let a stale follow-up timer clear a marker from a newer mutation refresh', async () => {
+    const strategy = resolveRefreshStrategy({type: 'reload', followUpDelayMs: 1200})
+    const {host, store, timers, reload, fireTimers} = createHost()
+    const defaultRefresh = createDefaultRefresh(strategy, host)
+
+    await defaultRefresh.refresh(mutationRefresh)
+    defaultRefresh.arrive()
+    expect(timers.size).toBe(1)
+
+    // Editor keeps typing: Presentation fires another mutation refresh near the
+    // follow-up deadline. reload() does not unload the document synchronously,
+    // so the prior timer is still due unless refresh cancels it.
+    await defaultRefresh.refresh(mutationRefresh)
+    expect(store.has(FOLLOW_UP_RELOAD_KEY)).toBe(true)
+    expect(timers.size).toBe(0)
+
+    fireTimers()
+    expect(store.has(FOLLOW_UP_RELOAD_KEY)).toBe(true)
+    expect(reload).toHaveBeenCalledTimes(2)
+
+    // The page that lands from the second refresh still finds the marker.
+    const next = createDefaultRefresh(strategy, host)
+    expect(typeof next.arrive()).toBe('function')
+    expect(timers.size).toBe(1)
+  })
 })
