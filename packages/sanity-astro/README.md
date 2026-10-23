@@ -8,6 +8,7 @@ This integration enables the [Sanity Client][sanity-client] in your [Astro][astr
 - [Usage](#usage)
   - [Setting up the Sanity client](#setting-up-the-sanity-client)
   - [Loading Sanity documents into content collections](#loading-sanity-documents-into-content-collections)
+  - [Multiple clients](#multiple-clients)
   - [Embedding Sanity Studio on a route](#embedding-sanity-studio-on-a-route)
 - [Rendering rich text and block content with Portable Text](#rendering-rich-text-and-block-content-with-portable-text)
 - [Presenting images](#presenting-images)
@@ -39,7 +40,7 @@ This integration leverages [Vite.js' virtual modules][vite-virtual-modules] with
 /// <reference types="@sanity/astro/module" />
 ```
 
-On Astro 4.14 and later you can let the integration register the declarations instead, by setting `injectTypes: true` in the integration options. They then land in `.astro/integrations/_sanity_astro/types.d.ts` after `astro dev`, `astro build` or `astro sync` through Astro's [`injectTypes`][inject-types], and the `env.d.ts` line can go. The option is off by default; keeping the manual reference alongside it is harmless.
+On Astro 4.14 and later you can let the integration register the declarations instead, by setting `injectTypes: true` in the integration options. They then land in `.astro/integrations/_sanity_astro/types.d.ts` after `astro dev`, `astro build` or `astro sync` through Astro's [`injectTypes`][inject-types], and the `env.d.ts` line can go. The option is off by default; keeping the manual reference alongside it is harmless. Setting the `clients` option also adds the reference on Astro 4.14 and later (see [Typed queries per client](#typed-queries-per-client)).
 
 ```javascript
 sanity({
@@ -155,6 +156,142 @@ const {movie} = Astro.props
 ```
 
 Every load fetches the whole query result, writes each document with a content digest so unchanged entries are skipped, and removes entries that left the result, so edits and deletions in Sanity show up on the next build or dev-server restart. Two documents mapping to the same entry id (for example a draft and its published document when the query uses the `raw` or `drafts` perspective) make the loader throw, naming both `_id`s, rather than silently dropping one.
+
+### Multiple clients
+
+To read from more than one project or dataset, configure named clients with the `clients` option. Each entry takes the same options as [@sanity/client](https://github.com/sanity-io/client#readme). `clients.default` is the client exported as `sanityClient`, so existing code keeps working:
+
+```typescript
+import sanity from '@sanity/astro'
+import {defineConfig} from 'astro/config'
+
+export default defineConfig({
+  integrations: [
+    sanity({
+      clients: {
+        default: {
+          projectId: '<YOUR-PROJECT-ID>',
+          dataset: 'marketing',
+          useCdn: false,
+        },
+        community: {
+          projectId: '<COMMUNITY-PROJECT-ID>',
+          dataset: 'community',
+          useCdn: true,
+        },
+      },
+    }),
+  ],
+})
+```
+
+Top-level client options (`projectId`, `dataset`, …) still work and configure the `default` client. They can be combined with `clients` as long as `clients` has no `default` entry of its own.
+
+Every client is available through `getClient(name)`, and `sanityClient` stays the `default` one:
+
+```mdx
+---
+import {getClient, sanityClient} from 'sanity:client'
+
+const posts = await sanityClient.fetch(`*[_type == "post"]`)
+const members = await getClient('community').fetch(`*[_type == "member"]`)
+---
+```
+
+Calling `getClient` with a name that is not configured throws, and the generated types reject it at compile time as well. To pass names around, type them with the `ClientName` type exported from `sanity:client`.
+
+Named clients that are configured with a `token` or `headers` are only available in server code (frontmatter, endpoints, middleware). In the browser, `getClient(name)` returns a stand-in for them that throws on first use, so the credentials never end up in a client bundle. `presentationClient` is that same stand-in when it points at such a client. The `default` client is shipped to the browser as before, so keep its token out of the integration config and pass it per request instead, like the `loadQuery` helper below does.
+
+#### The presentation client
+
+Mark the client your Presentation and Visual Editing code reads from with `presentation: true`; without the flag the `default` client is used. The flag only decides which client the `presentationClient` export returns, the client itself is configured like any other, so give it the `stega.studioUrl` from [Enable Stega](#3-enable-stega):
+
+```typescript
+sanity({
+  studioBasePath: '/admin',
+  clients: {
+    default: {projectId: '<YOUR-PROJECT-ID>', dataset: 'marketing'},
+    community: {
+      projectId: '<COMMUNITY-PROJECT-ID>',
+      dataset: 'community',
+      presentation: true,
+      stega: {studioUrl: '/admin'},
+    },
+  },
+})
+```
+
+Read from `presentationClient` in the helpers that feed Presentation, so they follow the flag instead of hardcoding a name. In the `loadQuery` helper from [Enable Stega](#3-enable-stega) that is a one-line change:
+
+```ts
+// load-query.ts
+import {presentationClient} from 'sanity:client'
+
+// ...
+
+const {result, resultSourceMap} = await presentationClient.fetch<QueryResponse>(
+  query,
+  params ?? {},
+  {
+    filterResponse: false,
+    perspective,
+    resultSourceMap: visualEditingEnabled ? 'withKeyArraySelector' : false,
+    stega: visualEditingEnabled,
+    ...(visualEditingEnabled ? {token} : {}),
+    useCdn: !visualEditingEnabled,
+  },
+)
+```
+
+Only one client can set `presentation: true`.
+
+#### Typed queries per client
+
+When the `clients` option is set (Astro 4.14 or later), the integration writes the configured client names to `.astro/integrations/_sanity_astro/clients.d.ts` whenever Astro syncs types (`astro dev`, `astro build`, `astro check`, `astro sync`). That types `getClient(name)` and rejects unknown names. Combine it with [Sanity TypeGen](https://www.sanity.io/docs/sanity-typegen) and the `typegen.resources` option (beta, `@sanity/cli` 8.16.0 or later, which bundles `@sanity/codegen` 8.2.0 or later) in `sanity.cli.ts` to get query result types per project and dataset:
+
+```ts
+// sanity.cli.ts
+import {defineCliConfig} from 'sanity/cli'
+
+export default defineCliConfig({
+  typegen: {
+    resources: [
+      {
+        projectId: '<YOUR-PROJECT-ID>',
+        dataset: 'marketing',
+        schema: './schema.json',
+        path: './src/marketing/**/*.{ts,tsx,astro}',
+        generates: './src/sanity/marketing.types.ts',
+      },
+      {
+        projectId: '<COMMUNITY-PROJECT-ID>',
+        dataset: 'community',
+        path: './src/community/**/*.{ts,tsx,astro}',
+        generates: './src/sanity/community.types.ts',
+      },
+    ],
+  },
+})
+```
+
+Each generated file augments the global `SanityQueriesByResource` registry under its `"projectId.dataset"` key. The integration maps every client to its key, so `getClient('community').fetch(MEMBERS_QUERY)` returns the `community` result type while `sanityClient.fetch(POSTS_QUERY)` returns the `marketing` one:
+
+```ts
+import {defineQuery} from 'groq'
+
+const POSTS_QUERY = defineQuery(`*[_type == "post"]`)
+const MEMBERS_QUERY = defineQuery(`*[_type == "member"]`)
+```
+
+TypeGen only picks up queries tagged with `groq` or wrapped in `defineQuery`, and `fetch` matches results by the query's literal type, which `defineQuery` keeps and the `groq` tag widens to `string`. Use `defineQuery` for queries fetched through a typed client: a `groq`-tagged query, or an inline string TypeGen never saw, resolves to `any`. Things to know:
+
+- Run `npx sanity typegen generate` after changing queries, or keep `npx sanity typegen generate --watch` running (`@sanity/cli` 8.22.0 or later; older versions reject `--watch` together with `typegen.resources`). `sanity dev`'s built-in typegen does not support `typegen.resources` yet.
+- Give each resource its own `path` glob. Every query in the matched files is typed against that resource's schema, so overlapping globs type the same query against both schemas.
+- A resource without `schema` uses the schema deployed for that project and dataset, so `npx sanity schema deploy` has to have run for it.
+- `projectId` and `dataset` have to match the client config exactly. A mismatch is not an error, the client just stays an untyped `SanityClient`.
+- With `typegen.resources`, `overloadClientMethods` defaults to `false`, so the flat `SanityQueries` registry from single-resource typegen is not written. Typed clients resolve results through `SanityQueriesByResource` only, a leftover flat registry has no effect on them.
+
+Without `typegen.resources`, every client is a regular `SanityClient`.
 
 ### Embedding Sanity Studio on a route
 

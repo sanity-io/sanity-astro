@@ -1,7 +1,8 @@
-import type {ClientConfig} from '@sanity/client'
 import serialize from 'serialize-javascript'
 import type {PartialDeep} from 'type-fest'
 import type {PluginOption} from 'vite'
+
+import {DEFAULT_CLIENT_NAME, type ResolvedClients} from './resolve-clients'
 
 const virtualModuleId = 'sanity:client'
 const resolvedVirtualModuleId = '\0' + virtualModuleId
@@ -10,8 +11,32 @@ type PluginOptions = {
   logClientRequests?: 'dev' | 'build' | 'always'
 }
 
-export function vitePluginSanityClient(config: ClientConfig, options: PluginOptions = {}) {
+export function vitePluginSanityClient(
+  {clients, presentationClientName}: ResolvedClients,
+  options: PluginOptions = {},
+) {
   const logClientRequests = options.logClientRequests
+
+  function serializeClients(isServerBuild: boolean): string {
+    return Object.entries(clients)
+      .map(([name, config]) => {
+        // Named clients are where privileged credentials end up. Keep those out of browser
+        // bundles; the `default` client keeps shipping as-is so existing islands that import
+        // it still work. `headers` counts too: an Authorization header is a credential even
+        // when `token` is unset. Any header is treated as one, since narrowing this later
+        // would put a secret in a bundle that already shipped without it.
+        const headers = config.headers
+        const hasCredentials =
+          typeof config.token === 'string' ||
+          (typeof headers === 'object' && headers !== null && Object.keys(headers).length > 0)
+        const isServerOnly = !isServerBuild && name !== DEFAULT_CLIENT_NAME && hasCredentials
+        const client = isServerOnly
+          ? `serverOnlyClient(${serialize(name)})`
+          : `createNamedClient(${serialize(name)}, ${serialize(config)})`
+        return `[${serialize(name)}, ${client}],`
+      })
+      .join('\n')
+  }
 
   return {
     name: 'sanity:client',
@@ -20,13 +45,11 @@ export function vitePluginSanityClient(config: ClientConfig, options: PluginOpti
         return resolvedVirtualModuleId
       }
     },
-    load(id: string) {
+    load(id: string, loadOptions?: {ssr?: boolean}) {
       if (id === resolvedVirtualModuleId) {
+        const serializedClients = serializeClients(loadOptions?.ssr === true)
         return `
           import { createClient } from "@sanity/client";
-          const sanityClient = createClient(
-            ${serialize(config)}
-          );
 
           const logClientRequests = ${serialize(logClientRequests)};
           const shouldLogInCurrentMode =
@@ -37,7 +60,11 @@ export function vitePluginSanityClient(config: ClientConfig, options: PluginOpti
             shouldLogInCurrentMode &&
             typeof window === "undefined";
 
-          if (shouldLogClientRequests) {
+          const instrumentClient = (sanityClient, clientName) => {
+            if (!shouldLogClientRequests) {
+              return sanityClient;
+            }
+
             const dimOpen = "\\u001B[2m";
             const dimClose = "\\u001B[22m";
             const viteLikeCyanOpen = "\\u001B[36m";
@@ -72,7 +99,12 @@ export function vitePluginSanityClient(config: ClientConfig, options: PluginOpti
             const logRequestResult = (kind, label, startedAt, error) => {
               const durationMs = Math.round(performance.now() - startedAt);
               const timestamp = dimOpen + getTimestamp24h() + dimClose;
-              const clientLabel = viteLikeCyanOpen + "[sanity:client]" + colorClose;
+              const clientLabel =
+                viteLikeCyanOpen +
+                (clientName === ${serialize(DEFAULT_CLIENT_NAME)}
+                  ? "[sanity:client]"
+                  : "[sanity:client:" + clientName + "]") +
+                colorClose;
               const message = clientLabel + " " + kind + " " + label + " (" + durationMs + "ms)";
 
               if (error) {
@@ -121,6 +153,7 @@ export function vitePluginSanityClient(config: ClientConfig, options: PluginOpti
                   const lowerLine = line.toLowerCase();
                   if (
                     lowerLine.includes("sanityclient.fetch") ||
+                    lowerLine.includes("instrumentclient") ||
                     lowerLine.includes("logrequestresult") ||
                     lowerLine.includes("getfetchsourceandargs") ||
                     lowerLine.includes("getsourcefromstack") ||
@@ -224,9 +257,61 @@ export function vitePluginSanityClient(config: ClientConfig, options: PluginOpti
                 }
               };
             }
+
+            return sanityClient;
+          };
+
+          const createNamedClient = (name, config) => {
+            let client;
+            try {
+              client = createClient(config);
+            } catch (error) {
+              throw new Error(
+                "[@sanity/astro]: Invalid config for Sanity client " +
+                  JSON.stringify(name) +
+                  ": " +
+                  (error instanceof Error ? error.message : String(error)),
+                {cause: error}
+              );
+            }
+            return instrumentClient(client, name);
+          };
+
+          const serverOnlyClient = (name) =>
+            new Proxy(Object.create(null), {
+              get(_target, property) {
+                if (property === "then" || typeof property === "symbol") {
+                  return undefined;
+                }
+                throw new Error(
+                  "[@sanity/astro]: The Sanity client " +
+                    JSON.stringify(name) +
+                    " is configured with a token or headers and is only available in server code, not in the browser"
+                );
+              },
+            });
+
+          const clients = new Map([
+            ${serializedClients}
+          ]);
+          const sanityClient = clients.get(${serialize(DEFAULT_CLIENT_NAME)});
+          const presentationClient = clients.get(${serialize(presentationClientName)});
+
+          function getClient(name) {
+            const client = clients.get(name);
+            if (client) {
+              return client;
+            }
+
+            throw new Error(
+              "[@sanity/astro]: Unknown Sanity client " +
+                JSON.stringify(name) +
+                ". Configured clients: " +
+                Array.from(clients.keys(), (clientName) => JSON.stringify(clientName)).join(", ")
+            );
           }
 
-          export { sanityClient };
+          export { getClient, presentationClient, sanityClient };
         `
       }
     },
