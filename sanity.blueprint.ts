@@ -8,12 +8,8 @@ for (const file of ['apps/observatory/.env', 'apps/observatory/.env.example']) {
   } catch {}
 }
 
-const {
-  PUBLIC_SANITY_PROJECT_ID,
-  PUBLIC_SANITY_DATASET,
-  INVALIDATE_URL,
-  SANITY_INVALIDATE_SECRET,
-} = process.env
+const {PUBLIC_SANITY_PROJECT_ID, PUBLIC_SANITY_DATASET, INVALIDATE_URL, SANITY_INVALIDATE_SECRET} =
+  process.env
 
 // Blueprint `env` is additive, so leaving a value out keeps whatever is already deployed.
 const env: Record<string, string> = {}
