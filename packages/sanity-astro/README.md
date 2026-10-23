@@ -377,6 +377,30 @@ Visual Editing needs fresh HTML per request, so run the site with `astro dev` or
 
 Two limits are worth knowing. Values rendered from a release perspective are not patched instantly, because the overlays stream the draft and published forms of a document but not its version form; those update through the morph. And the option is experimental: while it carries the `experimental_` prefix, its name and behaviour can change in a minor release.
 
+#### Running the overlays on `@sanity/visual-editing-standalone` (optional)
+
+By default the overlays come from `@sanity/visual-editing`, which Vite bundles together with your project's copy of React, React DOM and styled-components. Set `visualEditingStandalone: true` to load them from [`@sanity/visual-editing-standalone`](https://www.npmjs.com/package/@sanity/visual-editing-standalone) instead. It is a self-contained build with its own copy of those libraries, so the overlays don't depend on the versions installed in your project. Install it next to `@sanity/astro`:
+
+```sh
+npm install @sanity/visual-editing-standalone
+```
+
+```js
+// astro.config.mjs
+export default defineConfig({
+  integrations: [
+    sanity({
+      // ...
+      visualEditingStandalone: true,
+    }),
+  ],
+})
+```
+
+Only the `VisualEditing` component switches; the deprecated React component keeps using `@sanity/visual-editing`. The standalone build isn't smaller: in `apps/minimal` the script that boots the overlays shrinks, and the lazily loaded overlay chunk grows by the overlay stylesheet. The client inserts that CSS into `<head>` with `data-astro-transition-persist`, so an in-place refresh keeps it. If your project uses the React integration for Astro, the overlays then ship a second copy of React, and the integration logs a warning.
+
+With `experimental_refreshStrategy="in-place"`, the instant text step doesn't work in this mode. It reads the overlays' document state from `@sanity/visual-editing/optimistic`, and the standalone build keeps its own copy of that state without exporting it. With both options on, edits don't patch the page's text in place. The in-place morph and the default page reload still run.
+
 #### Customizing how the preview refreshes
 
 If you'd rather refresh another way, for example re-fetching data and swapping the DOM in place yourself, pass your own `refresh` function.
