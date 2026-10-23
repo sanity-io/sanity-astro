@@ -3,7 +3,24 @@ import {createServer} from 'node:net'
 import path from 'node:path'
 import {fileURLToPath} from 'node:url'
 
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..')
+export const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..')
+
+export function astroBin(appDirectory: string): string {
+  return path.join(path.resolve(repoRoot, appDirectory), 'node_modules', '.bin', 'astro')
+}
+
+/** Spawns an app's own `astro` binary with the env every integration test needs. */
+export function spawnAstro(
+  appDirectory: string,
+  args: string[],
+  env: Record<string, string> = {},
+): ChildProcessWithoutNullStreams {
+  return spawn(astroBin(appDirectory), args, {
+    cwd: path.resolve(repoRoot, appDirectory),
+    env: {...process.env, CI: 'true', NO_COLOR: '1', ...env},
+    stdio: ['ignore', 'pipe', 'pipe'],
+  })
+}
 
 export type DevServerHandle = {
   baseUrl: string
@@ -113,34 +130,32 @@ function waitForServerReady({
 
 export async function startAstroDevServer({
   appDirectory,
+  command = 'dev',
   timeoutMs = 180_000,
   disableModuleDedupe = false,
   env = {},
 }: {
   appDirectory: string
+  /** `preview` serves the app's built `dist/` instead of the dev server. */
+  command?: 'dev' | 'preview'
   timeoutMs?: number
   disableModuleDedupe?: boolean
   env?: Record<string, string>
 }): Promise<DevServerHandle> {
   const port = await getAvailablePort()
   const baseUrl = `http://127.0.0.1:${port}`
-  const appRoot = path.resolve(repoRoot, appDirectory)
-  const astroBin = path.join(appRoot, 'node_modules', '.bin', 'astro')
 
-  const childProcess = spawn(
-    astroBin,
-    ['dev', '--host', '127.0.0.1', '--port', String(port), '--force'],
-    {
-      cwd: appRoot,
-      env: {
-        ...process.env,
-        CI: 'true',
-        NO_COLOR: '1',
-        ...env,
-        ...(disableModuleDedupe ? {SANITY_ASTRO_DISABLE_MODULE_DEDUPE: '1'} : {}),
-      },
-      stdio: ['ignore', 'pipe', 'pipe'],
-    },
+  const childProcess = spawnAstro(
+    appDirectory,
+    [
+      command,
+      '--host',
+      '127.0.0.1',
+      '--port',
+      String(port),
+      ...(command === 'dev' ? ['--force'] : []),
+    ],
+    {...env, ...(disableModuleDedupe ? {SANITY_ASTRO_DISABLE_MODULE_DEDUPE: '1'} : {})},
   )
 
   await waitForServerReady({process: childProcess, baseUrl, timeoutMs})
@@ -170,8 +185,8 @@ export async function startAstroDevServer({
       })
 
       try {
-        const astroStop = spawn(astroBin, ['dev', 'stop'], {
-          cwd: appRoot,
+        const astroStop = spawn(astroBin(appDirectory), ['dev', 'stop'], {
+          cwd: path.resolve(repoRoot, appDirectory),
           stdio: 'ignore',
         })
         await new Promise<void>((resolve) => {

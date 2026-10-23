@@ -78,7 +78,7 @@
     "playwright": "^1.52.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
-    "sanity": "^5.31.2",
+    "sanity": "^6.2.0",
     "serialize-javascript": "^7.1.2",
     "type-fest": "^4.41.0",
     "typescript": "^5.9.3",
