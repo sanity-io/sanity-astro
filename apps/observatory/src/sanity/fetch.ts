@@ -1,4 +1,4 @@
-import {type ClientReturn} from '@sanity/client'
+import {type ClientParams, type ClientReturn} from '@sanity/client'
 
 import type {Audience} from '../lib/audience'
 import type {PreviewState} from '../lib/preview'
@@ -42,10 +42,11 @@ export function mergeTags(...results: SanityFetchResult<unknown>[]): string[] {
 export async function sanityFetch<const Q extends string>(
   query: Q,
   {audience, preview}: SanityFetchContext,
+  params?: ClientParams<Q>,
 ): Promise<SanityFetchResult<ClientReturn<Q>>> {
   const {result, syncTags = []} = await client.fetch(
     query,
-    {},
+    params ?? {},
     preview.enabled
       ? {
           filterResponse: false,

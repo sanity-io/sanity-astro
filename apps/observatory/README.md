@@ -117,6 +117,11 @@ Queries are `defineQuery` literals in [`src/sanity/queries.ts`](src/sanity/queri
 [`src/sanity/sanity.types.ts`](src/sanity/sanity.types.ts) (committed), so pages and components
 consume fully typed results.
 
+`sanityFetch` types its result with the client's `ClientReturn` and its optional params with
+`ClientParams`, so it also accepts a branded `.groq` file import from the experimental
+[`@sanity-labs/groq-content-mapper`](https://github.com/sanity-labs/groq-content-mapper) and
+infers its result and params with no generic.
+
 ### Performance posture
 
 Server-rendered pages with no framework runtime: client JS is three small islands (live toast,

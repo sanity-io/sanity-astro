@@ -9,6 +9,7 @@ This integration enables the [Sanity Client][sanity-client] in your [Astro][astr
   - [Setting up the Sanity client](#setting-up-the-sanity-client)
   - [Loading Sanity documents into content collections](#loading-sanity-documents-into-content-collections)
   - [Multiple clients](#multiple-clients)
+  - [Typing query results](#typing-query-results)
   - [Embedding Sanity Studio on a route](#embedding-sanity-studio-on-a-route)
 - [Rendering rich text and block content with Portable Text](#rendering-rich-text-and-block-content-with-portable-text)
 - [Presenting images](#presenting-images)
@@ -292,6 +293,106 @@ TypeGen only picks up queries tagged with `groq` or wrapped in `defineQuery`, an
 - With `typegen.resources`, `overloadClientMethods` defaults to `false`, so the flat `SanityQueries` registry from single-resource typegen is not written. Typed clients resolve results through `SanityQueriesByResource` only, a leftover flat registry has no effect on them.
 
 Without `typegen.resources`, every client is a regular `SanityClient`.
+
+### Typing query results
+
+`sanityClient` is a regular `SanityClient`, so `sanityClient.fetch` resolves the types [Sanity TypeGen][typegen] generates for `defineQuery` queries, and takes an explicit generic, `sanityClient.fetch<Post[]>(query)`, for everything else.
+
+With `@sanity/client` 7.28.0 or later on v7, or 8.11.0 or later on v8, it also infers the result and checks the params of a query you import from a `.groq` file through [`@sanity-labs/groq-content-mapper`][groq-content-mapper]. No generic, no generated registry. Both the mapper and the client's support for it are experimental, and the mapper needs TypeScript 7.1 (currently `typescript@beta`). Its README covers the [requirements][groq-content-mapper-readme].
+
+```bash
+npm install -D @sanity-labs/groq-content-mapper typescript@beta
+npx sanity schema extract --path ./schema.json # the default path
+```
+
+Astro builds with Vite, so the mapper's Vite plugin loads `.groq` files as strings:
+
+```js
+// astro.config.mjs
+import sanity from '@sanity/astro'
+import groqFiles from '@sanity-labs/groq-content-mapper/vite'
+import {defineConfig} from 'astro/config'
+
+export default defineConfig({
+  integrations: [sanity({projectId: '<YOUR-PROJECT-ID>', dataset: '<YOUR-DATASET-NAME>'})],
+  vite: {plugins: [groqFiles()]},
+})
+```
+
+The tsconfig points the mapper at the schema `sanity schema extract` writes:
+
+```jsonc
+// tsconfig.json
+{
+  "extends": "astro/tsconfigs/strict",
+  "contentMappers": [
+    {
+      "package": "@sanity-labs/groq-content-mapper",
+      "extensions": [".groq"],
+      "options": {
+        "schema": "./schema.json",
+        // Only when you query more than one project or dataset, one schema per folder:
+        // "schemas": [{"include": "src/queries/blog", "schema": "./schemas/blog.json"}],
+      },
+    },
+  ],
+}
+```
+
+Then write the query in its own file and import it:
+
+```groq
+// src/queries/postBySlug.groq
+*[_type == "post" && slug.current == $slug][0]{title, publishedAt}
+```
+
+```ts
+// src/lib/posts.ts
+import {sanityClient} from 'sanity:client'
+
+import postBySlug from '../queries/postBySlug.groq' with {type: 'text'}
+
+export async function getPost(slug: string) {
+  return sanityClient.fetch(postBySlug, {slug})
+  //     ^? Promise<{title: string | null; publishedAt: string | null} | null>, and `slug` is checked
+}
+```
+
+The types only exist when TypeScript runs the mapper, so type-check with `tsc --noEmit --runExternalCode`. `astro check` runs on TypeScript 5 or 6, which have no content mappers, so keep `.groq` imports in `.ts` modules like the one above rather than in a component's frontmatter.
+
+[`sanityLoader`](#loading-sanity-documents-into-content-collections) reads the same types. Pass a `.groq` import as its `query` and it checks `params` and types the `id` callback, no generic needed:
+
+```ts
+// src/content.config.ts
+import {sanityLoader} from '@sanity/astro/loader'
+import {defineCollection} from 'astro:content'
+import {sanityClient} from 'sanity:client'
+
+import moviesByGenre from './queries/moviesByGenre.groq' with {type: 'text'}
+
+const movies = defineCollection({
+  loader: sanityLoader({
+    client: sanityClient,
+    query: moviesByGenre,
+    params: {genre: 'drama'},
+    id: (movie) => movie.slug, // `movie` is typed from the query's projection
+  }),
+})
+```
+
+If you wrap `sanityClient.fetch` in a helper of your own, such as the `loadQuery` in [Enabling Visual Editing](#enabling-visual-editing), type it with the client's `ClientReturn` and `ClientParams` so the inferred types pass through. Plain strings, explicit generics and TypeGen queries keep resolving as before:
+
+```ts
+import type {ClientParams, ClientReturn} from '@sanity/client'
+import {sanityClient} from 'sanity:client'
+
+export async function sanityFetch<const Q extends string>(
+  query: Q,
+  params?: ClientParams<Q>,
+): Promise<ClientReturn<Q, unknown>> {
+  return sanityClient.fetch(query, params ?? {})
+}
+```
 
 ### Embedding Sanity Studio on a route
 
@@ -664,3 +765,6 @@ const {data: movies} = await loadQuery<Array<{title: string}>>({
 [overlays]: https://www.sanity.io/docs/visual-editing-overlays
 [stega]: https://www.sanity.io/docs/stega
 [studio-workspaces]: https://www.sanity.io/docs/studio/workspaces
+[typegen]: https://www.sanity.io/docs/sanity-typegen
+[groq-content-mapper]: https://github.com/sanity-labs/groq-content-mapper
+[groq-content-mapper-readme]: https://github.com/sanity-labs/groq-content-mapper/tree/main/packages/groq-content-mapper#readme

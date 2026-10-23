@@ -8,5 +8,9 @@ export default defineConfig({
     hookTimeout: 240_000,
     testTimeout: 240_000,
     exclude: ['dist/**', 'node_modules/**', 'src/integration/**'],
+    typecheck: {
+      enabled: true,
+      include: ['src/**/*.test-d.ts'],
+    },
   },
 })
