@@ -23,7 +23,7 @@
     "dev:movies": "pnpm --filter @sanity/astro build && turbo run dev --filter=movies",
     "dev:observatory": "turbo run dev --filter=observatory --filter=observatory-studio",
     "format": "oxfmt",
-    "lint": "turbo run lint",
+    "lint": "oxlint --ignore-pattern \"apps/example*/**\"",
     "release": "changeset publish",
     "seed:observatory": "pnpm --filter observatory-studio seed",
     "typegen:observatory": "pnpm --filter observatory-studio typegen && pnpm format"
@@ -33,9 +33,8 @@
     "@changesets/cli": "^3.0.1",
     "@sanity/blueprints": "^0.28.0",
     "@turbo/gen": "^1.13.4",
-    "eslint": "^8.57.1",
-    "eslint-config-custom": "*",
     "oxfmt": "^0.61.0",
+    "oxlint": "^1.81.0",
     "rimraf": "^5.0.7",
     "turbo": "^1.13.4"
   },
