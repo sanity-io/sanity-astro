@@ -1,4 +1,4 @@
-import {createRequire} from 'node:module'
+import {existsSync, realpathSync} from 'node:fs'
 import path from 'node:path'
 
 import type {PluginOption, UserConfig} from 'vite'
@@ -43,23 +43,71 @@ export const SANITY_OPTIMIZE_DEPS_CANDIDATES = [
   'styled-components',
 ] as const
 
-function canResolveDependency(projectRoot: string, dependency: string): boolean {
-  try {
-    const require = createRequire(path.join(projectRoot, 'package.json'))
-    require.resolve(dependency)
-    return true
-  } catch {
-    return false
+/**
+ * Splits a bare specifier into its package name and an optional subpath, respecting
+ * scoped package names (`@sanity/ui` is the package; `react-dom/client` has subpath
+ * `client`).
+ */
+function parseSpecifier(specifier: string): {packageName: string; subpath: string} {
+  const segments = specifier.split('/')
+  const packageName = specifier.startsWith('@') ? segments.slice(0, 2).join('/') : segments[0]
+  const subpath = specifier.slice(packageName.length).replace(/^\//, '')
+  return {packageName, subpath}
+}
+
+/**
+ * Walks `node_modules` directories upward from `baseDir` looking for `packageName`,
+ * the same way Node's CommonJS resolver (and Vite's own resolver) locate a package
+ * when `NODE_PATH` isn't involved.
+ *
+ * This deliberately never consults `NODE_PATH`. pnpm's bin shims export
+ * `NODE_PATH=.../.pnpm/node_modules` (its flat virtual-store hoist directory), which
+ * `require.resolve` honors but Vite's resolver never does. A package that only lives in
+ * that hoist directory (not reachable by walking node_modules from the project root)
+ * would resolve via `require.resolve` while still failing when Vite actually tries to
+ * pre-bundle it, producing a false "resolvable" result (see the #449 review discussion).
+ */
+function findPackageDir(baseDir: string, packageName: string): string | undefined {
+  let dir = baseDir
+  while (true) {
+    const candidate = path.join(dir, 'node_modules', packageName)
+    if (existsSync(path.join(candidate, 'package.json'))) {
+      try {
+        return realpathSync(candidate)
+      } catch {
+        return candidate
+      }
+    }
+
+    const parent = path.dirname(dir)
+    if (parent === dir) {
+      return undefined
+    }
+    dir = parent
   }
 }
 
-function resolvePackageRoot(projectRoot: string, packageName: string): string | undefined {
-  try {
-    const require = createRequire(path.join(projectRoot, 'package.json'))
-    return require.resolve(`${packageName}/package.json`).replace(/\/package\.json$/, '')
-  } catch {
-    return undefined
+function canResolveDependency(projectRoot: string, dependency: string): boolean {
+  const {packageName, subpath} = parseSpecifier(dependency)
+  const packageDir = findPackageDir(projectRoot, packageName)
+  if (!packageDir) {
+    return false
   }
+
+  if (!subpath) {
+    return true
+  }
+
+  // The known candidates with subpaths (e.g. `react-dom/client`) resolve to a flat
+  // file at the package root, so a file-existence check is enough without
+  // reimplementing package.json `exports` map resolution.
+  return (
+    existsSync(path.join(packageDir, subpath)) || existsSync(path.join(packageDir, `${subpath}.js`))
+  )
+}
+
+function resolvePackageRoot(projectRoot: string, packageName: string): string | undefined {
+  return findPackageDir(projectRoot, packageName)
 }
 
 export function resolveSanityOptimizeDeps(projectRoot: string): string[] {
