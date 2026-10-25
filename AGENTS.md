@@ -22,7 +22,7 @@ Describe the change for people who use `@sanity/astro`
 
 ## Cursor Cloud specific instructions
 
-This repo is the official **Sanity + Astro** integration ([`@sanity/astro`](./packages/sanity-astro)) — a pnpm + Turborepo monorepo containing the library plus four example Astro apps under `apps/`. There is **no local database**; content is served from **hosted Sanity Cloud**, so the dev servers need outbound network access to Sanity's API/CDN to render content.
+This repo is the official **Sanity + Astro** integration ([`@sanity/astro`](./packages/sanity-astro)) — a pnpm + Turborepo monorepo containing the library plus the example Astro apps under `apps/` (listed in the table below). There is **no local database**; content is served from **hosted Sanity Cloud**, so the dev servers need outbound network access to Sanity's API/CDN to render content.
 
 ### Services
 
