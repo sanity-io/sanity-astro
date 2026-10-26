@@ -32,7 +32,7 @@
     "@changesets/changelog-github": "^1.0.0",
     "@changesets/cli": "^3.0.1",
     "@sanity/blueprints": "^0.28.0",
-    "@turbo/gen": "^1.13.4",
+    "@turbo/gen": "^2.11.10",
     "eslint": "^8.57.1",
     "eslint-config-custom": "*",
     "oxfmt": "^0.61.0",
