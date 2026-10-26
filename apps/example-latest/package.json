@@ -19,7 +19,7 @@
     "@sanity/image-url": "^2.1.1",
     "@sanity/vision": "^6.2.0",
     "astro": "^7.0.3",
-    "astro-portabletext": "^0.13.0",
+    "astro-portabletext": "^1.0.1",
     "prismjs": "^1.30.0",
     "react": "^19.2.7",
     "react-compiler-runtime": "^1.0.0",
