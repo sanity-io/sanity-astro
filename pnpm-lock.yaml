@@ -573,7 +573,7 @@ importers:
         specifier: ^18.2.0 || ^19.0.0
         version: 19.2.7
       styled-components:
-        specifier: ^6.1.19
+        specifier: ^6.6.0
         version: 6.6.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
     devDependencies:
       '@sanity/client':
