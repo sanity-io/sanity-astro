@@ -17,7 +17,7 @@
     "@astrojs/vercel": "^8.2.11",
     "@sanity/astro": "workspace:^",
     "@sanity/client": "^8.11.0",
-    "@sanity/image-url": "^1.2.0",
+    "@sanity/image-url": "^2.1.1",
     "@sanity/vision": "^5.31.1",
     "astro": "5.4.1",
     "astro-portabletext": "^0.11.3",
