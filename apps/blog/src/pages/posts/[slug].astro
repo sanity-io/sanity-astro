@@ -8,6 +8,7 @@ import BlockA from "../../components/BlockA.astro";
 import BlockB from "../../components/BlockB.astro";
 import { formatDate } from "../../utils";
 import { CounterDemo } from "../../components/CounterDemo";
+import groq from 'groq'
 
 // n.b. for future static or hybrid use, with published-only
 // page query filtering, which can also be dynamic to keep
@@ -26,7 +27,8 @@ import { CounterDemo } from "../../components/CounterDemo";
 const { slug } = Astro.params
 
 const post = await sanityClient.fetch(
-  `*[_type == "post" && slug.current == $slug][0]  {
+  groq`// xgroq 
+   *[_type == "post" && slug.current == $slug][0]  {
     ...,
     "blocks": otherPosts[]->
   }`, {
