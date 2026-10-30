@@ -10,7 +10,7 @@
     "ailf:validate": "ailf validate tasks .ailf/tasks"
   },
   "devDependencies": {
-    "@sanity/ailf": "^7.36.0",
+    "@sanity/ailf": "^7.42.0",
     "@sanity/astro": "workspace:^"
   },
   "engines": {
