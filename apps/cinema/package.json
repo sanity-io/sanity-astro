@@ -11,19 +11,19 @@
     "preview": "astro preview --port 4327"
   },
   "dependencies": {
-    "@astrojs/react": "^6.0.0",
+    "@astrojs/react": "^6.0.6",
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",
     "@sanity/astro": "workspace:^",
-    "@sanity/client": "^8.11.0",
+    "@sanity/client": "^8.14.1",
     "@sanity/image-url": "^2.1.1",
     "@tailwindcss/vite": "^4.3.3",
-    "astro": "^7.0.3",
+    "astro": "^7.4.4",
     "astro-portabletext": "^0.13.0",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
-    "react-is": "^19.2.7",
-    "sanity": "^6.2.0",
-    "styled-components": "^6.4.3",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-is": "^19.3.1",
+    "sanity": "^6.21.0",
+    "styled-components": "^6.6.0",
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
