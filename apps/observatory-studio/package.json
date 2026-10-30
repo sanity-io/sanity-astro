@@ -11,12 +11,12 @@
     "typegen": "sanity schema extract --enforce-required-fields --force && sanity typegen generate"
   },
   "dependencies": {
-    "@sanity/icons": "^5.2.1",
-    "@sanity/vision": "^6.9.2",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "sanity": "^6.9.2",
-    "styled-components": "^6.5.2"
+    "@sanity/icons": "^5.2.3",
+    "@sanity/vision": "^6.21.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "sanity": "^6.21.0",
+    "styled-components": "^6.6.0"
   },
   "devDependencies": {
     "@sanity/client": "^8.11.0",

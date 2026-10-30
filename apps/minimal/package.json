@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@sanity/astro": "workspace:^",
-    "@sanity/client": "^8.11.0",
+    "@sanity/client": "^8.14.1",
     "astro": "^7.0.3"
   },
   "devDependencies": {
