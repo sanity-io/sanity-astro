@@ -66,7 +66,7 @@
     "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
-    "@sanity/visual-editing": "^6.1.1",
+    "@sanity/visual-editing": "^6.2.0",
     "history": "^5.3.0"
   },
   "devDependencies": {
