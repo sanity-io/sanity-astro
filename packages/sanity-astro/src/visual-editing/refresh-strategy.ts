@@ -1,8 +1,8 @@
 import type {HistoryRefresh} from '@sanity/visual-editing/react'
 
 import {
+  acknowledgeFollowUpReload,
   type FollowUpReloadHost,
-  markFollowUpReload,
   scheduleFollowUpReload,
 } from './follow-up-reload'
 
@@ -12,9 +12,9 @@ import {
  *
  * - `'reload'` (the default): a full `window.location.reload()`, exactly as before this option
  *   existed.
- * - `{type: 'reload', followUpDelayMs}`: the same reload, plus one more reload `followUpDelayMs`
- *   after a change-triggered one, so text typed in the Studio while the page was reloading
- *   still reaches the preview.
+ * - `{type: 'reload', followUpDelayMs}`: the same reload, plus a reconciled or fallback reload
+ *   `followUpDelayMs` later when a Studio `presentation/snapshot-event` arrives during the
+ *   reload window or its accompanying Comlink refresh is dropped.
  *
  * Only plain, JSON-serializable values, so the `.astro` component can pass it to the browser.
  */
@@ -25,11 +25,23 @@ export type ResolvedRefreshStrategy = {type: 'reload'; followUpDelayMs: number |
 
 /**
  * Expands the shorthand and drops values that would do nothing (a missing, zero, negative or
- * non-finite delay), so every caller sees the same normalized shape.
+ * non-finite delay), so every caller sees the same normalized shape. Also parses stringified
+ * strategy objects if passed via template literal attribute syntax in `.astro` templates.
  */
 export function resolveRefreshStrategy(
-  strategy: RefreshStrategy | undefined,
+  strategy: RefreshStrategy | string | undefined,
 ): ResolvedRefreshStrategy {
+  if (typeof strategy === 'string' && strategy !== 'reload') {
+    const match = strategy.match(/followUpDelayMs\s*:\s*([+-]?\d+(?:\.\d+)?)/)
+    if (strategy.includes('reload') && match) {
+      const parsedDelay = Number(match[1])
+      if (Number.isFinite(parsedDelay) && parsedDelay > 0) {
+        return {type: 'reload', followUpDelayMs: parsedDelay}
+      }
+    }
+    return {type: 'reload', followUpDelayMs: undefined}
+  }
+
   // So far, we only handle the 'reload' strategy type, or none provided
   if (!strategy || typeof strategy !== 'object' || strategy.type !== 'reload') {
     return {type: 'reload', followUpDelayMs: undefined}
@@ -44,10 +56,10 @@ export type DefaultRefreshHost = FollowUpReloadHost & {location: Pick<Location, 
 
 export interface DefaultRefresh {
   /** The `refresh` option for `VisualEditing`. */
-  refresh: (payload: HistoryRefresh) => Promise<void>
+  refresh: (payload: HistoryRefresh) => false | Promise<void>
   /**
-   * Call once when the page arrives. Starts the follow-up reload a change-triggered reload left
-   * behind, if the strategy asks for one, and returns a function that cancels it.
+   * Call once when the page arrives. Ensures the snapshot mutation observer is active and
+   * reconciles any unacknowledged `presentation/snapshot-event` flag left in `sessionStorage`.
    */
   arrive: () => (() => void) | undefined
 }
@@ -62,14 +74,22 @@ export function createDefaultRefresh(
   let cancelPending: (() => void) | undefined
   return {
     refresh: (payload) => {
-      // This reload supersedes the pending follow-up, and the page it lands on arms its own.
-      cancelPending?.()
-      cancelPending = undefined
-      if (followUpDelayMs !== undefined) {
-        markFollowUpReload(payload, host)
+      // Handle only 'mutation' and 'manual' refresh payloads, returning false otherwise.
+      if (payload.source === 'mutation' || payload.source === 'manual') {
+        // Clear FOLLOW_UP_RELOAD_KEY and any fallback/reconcile timer synchronously when
+        // Visual Editing accepts the refresh, BEFORE any trailing preview-snapshots message arrives.
+        cancelPending?.()
+        cancelPending = undefined
+        acknowledgeFollowUpReload(host)
+
+        // Defer window.location.reload() to the next macrotask so Promise.resolve() returns
+        // cleanly to the Comlink refresh handler before page teardown begins.
+        host.setTimeout(() => {
+          reload()
+        }, 0)
+        return Promise.resolve()
       }
-      reload()
-      return Promise.resolve()
+      return false
     },
     arrive: () => {
       if (followUpDelayMs === undefined) {

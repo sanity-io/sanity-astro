@@ -57,7 +57,10 @@ export function VisualEditingComponent(props: VisualEditingComponentProps) {
     [resolvedStrategy.type, resolvedStrategy.followUpDelayMs],
   )
 
-  React.useEffect(() => defaultRefresh.arrive(), [defaultRefresh])
+  // Reconcile any pending snapshot flag on component arrival if not already handled by window.load.
+  React.useEffect(() => {
+    defaultRefresh.arrive()
+  }, [defaultRefresh])
 
   const publishUrl = React.useCallback((url: string, force = false) => {
     const navigate = navigateRef.current
@@ -146,7 +149,7 @@ export function VisualEditingComponent(props: VisualEditingComponentProps) {
     return () => {
       window.removeEventListener('popstate', syncCurrentUrl)
       window.removeEventListener('hashchange', syncCurrentUrl)
-      document.removeEventListener('click', publishClickedLink, true)
+      document.addEventListener('click', publishClickedLink, true)
       window.history.pushState = nativePushState
       window.history.replaceState = nativeReplaceState
     }
