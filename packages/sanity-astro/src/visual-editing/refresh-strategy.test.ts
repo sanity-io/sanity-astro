@@ -5,9 +5,13 @@ import {FOLLOW_UP_RELOAD_KEY} from './follow-up-reload'
 import {
   createDefaultRefresh,
   type DefaultRefreshHost,
-  type RefreshStrategy,
   resolveRefreshStrategy,
 } from './refresh-strategy'
+
+const manualRefresh: HistoryRefresh = {
+  source: 'manual',
+  livePreviewEnabled: false,
+}
 
 const mutationRefresh: HistoryRefresh = {
   source: 'mutation',
@@ -43,15 +47,6 @@ function createHost() {
   return {host, store, timers, reload, fireTimers}
 }
 
-/** Runs one change-triggered refresh, then the arrival of the reloaded page. */
-async function refreshThenArrive(strategy: RefreshStrategy | undefined) {
-  const env = createHost()
-  await createDefaultRefresh(resolveRefreshStrategy(strategy), env.host).refresh(mutationRefresh)
-  const marked = env.store.has(FOLLOW_UP_RELOAD_KEY)
-  const cancel = createDefaultRefresh(resolveRefreshStrategy(strategy), env.host).arrive()
-  return {...env, marked, cancel}
-}
-
 describe('resolveRefreshStrategy', () => {
   it('defaults to a plain reload with no follow-up', () => {
     expect(resolveRefreshStrategy(undefined)).toEqual({type: 'reload', followUpDelayMs: undefined})
@@ -63,6 +58,13 @@ describe('resolveRefreshStrategy', () => {
 
   it('selects a reload with a follow-up reload', () => {
     expect(resolveRefreshStrategy({type: 'reload', followUpDelayMs: 1200})).toEqual({
+      type: 'reload',
+      followUpDelayMs: 1200,
+    })
+  })
+
+  it('parses a stringified strategy passed from an astro template', () => {
+    expect(resolveRefreshStrategy('{type: "reload", followUpDelayMs: 1200}')).toEqual({
       type: 'reload',
       followUpDelayMs: 1200,
     })
@@ -80,36 +82,61 @@ describe('resolveRefreshStrategy', () => {
 
 describe('createDefaultRefresh', () => {
   it.each([undefined, 'reload'] as const)(
-    'with %s, reloads once and leaves nothing behind',
+    'with %s, acknowledges any pending flag, reloads once, and arms nothing on arrival',
     async (strategy) => {
-      const {reload, marked, cancel, timers} = await refreshThenArrive(strategy)
+      const {host, store, reload, timers, fireTimers} = createHost()
+      store.set(FOLLOW_UP_RELOAD_KEY, 'true')
 
+      const resolved = resolveRefreshStrategy(strategy)
+      await createDefaultRefresh(resolved, host).refresh(mutationRefresh)
+
+      // Flag is cleared synchronously; reload is queued on a 0ms macrotask.
+      expect(store.has(FOLLOW_UP_RELOAD_KEY)).toBe(false)
+      expect([...timers.values()].map((t) => t.delayMs)).toEqual([0])
+      fireTimers()
       expect(reload).toHaveBeenCalledTimes(1)
-      expect(marked).toBe(false)
+
+      const cancel = createDefaultRefresh(resolved, host).arrive()
       expect(cancel).toBeUndefined()
       expect(timers.size).toBe(0)
     },
   )
 
-  it('with a follow-up delay, reloads once more after that delay on arrival', async () => {
-    const {reload, marked, cancel, timers, fireTimers} = await refreshThenArrive({
-      type: 'reload',
-      followUpDelayMs: 1200,
-    })
+  it('handles manual refreshes and rejects unknown refresh sources', async () => {
+    const {host, reload, timers, fireTimers} = createHost()
+    const defaultRefresh = createDefaultRefresh(resolveRefreshStrategy('reload'), host)
 
+    expect(
+      defaultRefresh.refresh({source: 'unknown'} as unknown as HistoryRefresh),
+    ).toBe(false)
+    expect(timers.size).toBe(0)
+
+    await defaultRefresh.refresh(manualRefresh)
+    expect([...timers.values()].map((t) => t.delayMs)).toEqual([0])
+    fireTimers()
     expect(reload).toHaveBeenCalledTimes(1)
-    expect(marked).toBe(true)
+  })
+
+  it('reconciles an unacknowledged snapshot flag on arrival after followUpDelayMs', () => {
+    const {host, store, reload, timers, fireTimers} = createHost()
+    const strategy = resolveRefreshStrategy({type: 'reload', followUpDelayMs: 1200})
+
+    // Simulate a trailing keystroke snapshot-event that arrived during the reload window.
+    store.set(FOLLOW_UP_RELOAD_KEY, 'true')
+
+    const cancel = createDefaultRefresh(strategy, host).arrive()
     expect(typeof cancel).toBe('function')
     expect([...timers.values()].map((timer) => timer.delayMs)).toEqual([1200])
 
     fireTimers()
-    expect(reload).toHaveBeenCalledTimes(2)
+    expect(reload).toHaveBeenCalledTimes(1)
+    expect(store.has(FOLLOW_UP_RELOAD_KEY)).toBe(false)
   })
 
-  it('keeps the follow-up reload across an effect remount on arrival', async () => {
+  it('keeps the follow-up reload across an effect remount on arrival', () => {
     const strategy = resolveRefreshStrategy({type: 'reload', followUpDelayMs: 1200})
-    const {host, reload, timers, fireTimers} = createHost()
-    await createDefaultRefresh(strategy, host).refresh(mutationRefresh)
+    const {host, store, reload, timers, fireTimers} = createHost()
+    store.set(FOLLOW_UP_RELOAD_KEY, 'true')
 
     // The component's `useEffect(() => defaultRefresh.arrive())` under Strict Mode:
     // mount, cleanup, mount again.
@@ -119,26 +146,25 @@ describe('createDefaultRefresh', () => {
 
     expect(timers.size).toBe(1)
     fireTimers()
-    expect(reload).toHaveBeenCalledTimes(2)
+    expect(reload).toHaveBeenCalledTimes(1)
+    expect(store.has(FOLLOW_UP_RELOAD_KEY)).toBe(false)
   })
 
-  it('cancels the pending follow-up when another change reloads the page first', async () => {
+  it('cancels the pending follow-up when a regular refresh arrives first', async () => {
     const strategy = resolveRefreshStrategy({type: 'reload', followUpDelayMs: 1200})
     const {host, store, reload, timers, fireTimers} = createHost()
-    await createDefaultRefresh(strategy, host).refresh(mutationRefresh)
+    store.set(FOLLOW_UP_RELOAD_KEY, 'true')
 
     const defaultRefresh = createDefaultRefresh(strategy, host)
     defaultRefresh.arrive()
+    expect(timers.size).toBe(1)
+
     await defaultRefresh.refresh(mutationRefresh)
 
-    expect(timers.size).toBe(0)
-    expect(reload).toHaveBeenCalledTimes(2)
-    expect(store.has(FOLLOW_UP_RELOAD_KEY)).toBe(true)
-
-    // The page that lands arms the follow-up for the newer change.
-    createDefaultRefresh(strategy, host).arrive()
-    expect(timers.size).toBe(1)
+    // The 1200ms arrival timer is cancelled and replaced by the 0ms immediate reload.
+    expect(store.has(FOLLOW_UP_RELOAD_KEY)).toBe(false)
+    expect([...timers.values()].map((t) => t.delayMs)).toEqual([0])
     fireTimers()
-    expect(reload).toHaveBeenCalledTimes(3)
+    expect(reload).toHaveBeenCalledTimes(1)
   })
 })

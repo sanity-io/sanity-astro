@@ -4,6 +4,7 @@ import React, {act} from 'react'
 import {createRoot, type Root} from 'react-dom/client'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
+import {FOLLOW_UP_RELOAD_KEY} from './follow-up-reload'
 import {
   VisualEditingComponent,
   type VisualEditingComponentProps,
@@ -53,6 +54,9 @@ let root: Root
 beforeEach(() => {
   post.mockReset()
   innerProps.length = 0
+  window.sessionStorage.clear()
+  delete (window as {__sanityFallbackTimer?: number | null}).__sanityFallbackTimer
+  delete (window as {__sanityFollowUpInstalled?: boolean}).__sanityFollowUpInstalled
   window.history.replaceState({}, '', initialUrl)
   document.title = 'Movie ABC'
   container = document.createElement('div')
@@ -63,6 +67,7 @@ beforeEach(() => {
 afterEach(async () => {
   await act(async () => root.unmount())
   container.remove()
+  vi.restoreAllMocks()
 })
 
 async function mount(element: React.ReactElement) {
@@ -122,9 +127,28 @@ describe('VisualEditingComponent default history adapter', () => {
       url: '/movies/def',
     })
   })
+
+  it('removes the exact capture click listener on unmount without adding another', async () => {
+    const addSpy = vi.spyOn(document, 'addEventListener')
+    const removeSpy = vi.spyOn(document, 'removeEventListener')
+
+    await mount(<VisualEditingComponent />)
+
+    const clickAddCall = addSpy.mock.calls.find(
+      ([type, , options]) => type === 'click' && options === true,
+    )
+    expect(clickAddCall).toBeDefined()
+    const registeredHandler = clickAddCall![1]
+
+    addSpy.mockClear()
+    await act(async () => root.unmount())
+
+    expect(addSpy).not.toHaveBeenCalledWith('click', expect.anything(), true)
+    expect(removeSpy).toHaveBeenCalledWith('click', registeredHandler, true)
+  })
 })
 
-describe('VisualEditingComponent prop forwarding', () => {
+describe('VisualEditingComponent prop forwarding and refresh lifecycle', () => {
   async function mountAndCapture(props: VisualEditingComponentProps = {}) {
     await mount(<VisualEditingComponent {...props} />)
     expect(innerProps.length).toBeGreaterThanOrEqual(1)
@@ -158,22 +182,47 @@ describe('VisualEditingComponent prop forwarding', () => {
     }
   })
 
-  it('keeps experimental_refreshStrategy to itself instead of forwarding it', async () => {
+  it('keeps experimental_refreshStrategy to itself and cancels a pending arrival timer on unmount', async () => {
+    // Simulate running inside the Presentation iframe so scheduleFollowUpReload is active.
+    vi.spyOn(window, 'top', 'get').mockReturnValue({} as Window)
+    window.sessionStorage.setItem(FOLLOW_UP_RELOAD_KEY, 'true')
+
     const inner = await mountAndCapture({
       experimental_refreshStrategy: {type: 'reload', followUpDelayMs: 1200},
     })
 
     expect('experimental_refreshStrategy' in inner).toBe(false)
     expect(inner.refresh).toEqual(expect.any(Function))
+    expect(
+      (window as {__sanityFallbackTimer?: number | null}).__sanityFallbackTimer,
+    ).toEqual(expect.any(Number))
+
+    await act(async () => root.unmount())
+    expect(
+      (window as {__sanityFallbackTimer?: number | null}).__sanityFallbackTimer,
+    ).toBeNull()
   })
 
-  it('lets a consumer refresh and history win over the defaults', async () => {
+  it('lets a consumer refresh and history win over the defaults and disables follow-up arrival', async () => {
+    vi.spyOn(window, 'top', 'get').mockReturnValue({} as Window)
+    window.sessionStorage.setItem(FOLLOW_UP_RELOAD_KEY, 'true')
+
     const refresh = vi.fn(() => false as const)
     const history = {subscribe: vi.fn(() => () => {}), update: vi.fn()}
-    const inner = await mountAndCapture({refresh, history})
+    const inner = await mountAndCapture({
+      refresh,
+      history,
+      experimental_refreshStrategy: {type: 'reload', followUpDelayMs: 1200},
+    })
 
     expect(inner.refresh).toBe(refresh)
     expect(inner.history).toBe(history)
     expect(inner.portal).toBe(true)
+    expect(
+      (window as {__sanityFallbackTimer?: number | null}).__sanityFallbackTimer,
+    ).toBeUndefined()
+    expect(
+      (window as {__sanityFollowUpInstalled?: boolean}).__sanityFollowUpInstalled,
+    ).toBeUndefined()
   })
 })

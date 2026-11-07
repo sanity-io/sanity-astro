@@ -102,7 +102,10 @@ export function scheduleFollowUpReload(
     host.__sanityFollowUpInstalled = true
 
     host.addEventListener('message', (e: MessageEvent) => {
-      if (e.data?.type === 'presentation/snapshot-event') {
+      if (
+        e.data?.type === 'presentation/snapshot-event' &&
+        e.data?.data?.event?.type === 'mutation'
+      ) {
         writeFlag(host)
 
         if (

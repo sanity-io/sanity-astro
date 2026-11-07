@@ -46,11 +46,12 @@ export function VisualEditingComponent(props: VisualEditingComponentProps) {
   const optimisticUntilRef = React.useRef(0)
   const clearNavigateTimeoutRef = React.useRef<number | undefined>()
   const hasCustomHistory = Boolean(props.history)
+  const hasCustomRefresh = Boolean(props.refresh)
 
   // A custom refreshStrategy replaces the inbuilt simple refresh,
   // when it is provided on a prop. At present, an experimental one.
   const resolvedStrategy = resolveRefreshStrategy(
-    experimental_refreshStrategy
+    hasCustomRefresh ? undefined : experimental_refreshStrategy,
   )
   const defaultRefresh = React.useMemo(
     () => createDefaultRefresh(resolvedStrategy, window),
@@ -59,9 +60,11 @@ export function VisualEditingComponent(props: VisualEditingComponentProps) {
 
   // Reconcile any pending snapshot flag on component arrival if not already handled by window.load.
   React.useEffect(() => {
-    defaultRefresh.arrive()
-  }, [defaultRefresh])
-
+    if (hasCustomRefresh) {
+      return undefined
+    }
+    return defaultRefresh.arrive()
+  }, [defaultRefresh, hasCustomRefresh])
   const publishUrl = React.useCallback((url: string, force = false) => {
     const navigate = navigateRef.current
     if (!navigate) {
@@ -149,7 +152,7 @@ export function VisualEditingComponent(props: VisualEditingComponentProps) {
     return () => {
       window.removeEventListener('popstate', syncCurrentUrl)
       window.removeEventListener('hashchange', syncCurrentUrl)
-      document.addEventListener('click', publishClickedLink, true)
+      document.removeEventListener('click', publishClickedLink, true)
       window.history.pushState = nativePushState
       window.history.replaceState = nativeReplaceState
     }

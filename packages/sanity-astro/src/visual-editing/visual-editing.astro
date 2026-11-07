@@ -50,11 +50,16 @@ const followUpDelayMs = resolvedStrategy.followUpDelayMs ?? 0
         // Ignoring 'presentation/preview-snapshots' prevents post-refresh and on-load
         // snapshot dumps from falsely re-arming flagKey after acknowledgeRefresh().
         window.addEventListener('message', function (e) {
-          if (e.data && e.data.type === 'presentation/snapshot-event') {
+          if (
+            e.data &&
+            e.data.type === 'presentation/snapshot-event' &&
+            e.data.data &&
+            e.data.data.event &&
+            e.data.data.event.type === 'mutation'
+          ) {
             try {
               sessionStorage.setItem(flagKey, 'true')
             } catch {}
-
             // Fallback if the page is already loaded and Comlink drops the accompanying refresh:
             // ensure a fallback reload still fires after followUpDelayMs.
             if (
