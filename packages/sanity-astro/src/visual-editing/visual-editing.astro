@@ -84,17 +84,14 @@ const followUpDelayMs = resolvedStrategy.followUpDelayMs ?? 0
             needsSync = sessionStorage.getItem(flagKey) === 'true'
           } catch {}
 
-          if (needsSync) {
-            try {
-              sessionStorage.removeItem(flagKey)
-            } catch {}
-
-            if (!window.__sanityFallbackTimer) {
-              window.__sanityFallbackTimer = setTimeout(function () {
-                window.__sanityFallbackTimer = null
-                window.location.reload()
-              }, followUpDelayMs)
-            }
+          if (needsSync && !window.__sanityFallbackTimer) {
+            window.__sanityFallbackTimer = setTimeout(function () {
+              window.__sanityFallbackTimer = null
+              try {
+                sessionStorage.removeItem(flagKey)
+              } catch {}
+              window.location.reload()
+            }, followUpDelayMs)
           }
         })
       })()

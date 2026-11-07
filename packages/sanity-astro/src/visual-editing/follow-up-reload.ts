@@ -134,20 +134,22 @@ export function scheduleFollowUpReload(
     })
   }
 
-  // Reconcile immediately if the flag is still set when the React island arrives.
+// Reconcile immediately if the flag is still set when the React island arrives.
   if (readFlag(host)) {
-    clearFlag(host)
-    if (!host.__sanityFallbackTimer) {
-      const id = host.setTimeout(() => {
+    if (host.__sanityFallbackTimer) {
+      host.clearTimeout(host.__sanityFallbackTimer)
+      host.__sanityFallbackTimer = null
+    }
+    const id = host.setTimeout(() => {
+      host.__sanityFallbackTimer = null
+      clearFlag(host) // Clear ONLY when the timer actually executes
+      reload()
+    }, delayMs)
+    host.__sanityFallbackTimer = id
+    return () => {
+      host.clearTimeout(id)
+      if (host.__sanityFallbackTimer === id) {
         host.__sanityFallbackTimer = null
-        reload()
-      }, delayMs)
-      host.__sanityFallbackTimer = id
-      return () => {
-        host.clearTimeout(id)
-        if (host.__sanityFallbackTimer === id) {
-          host.__sanityFallbackTimer = null
-        }
       }
     }
   }
