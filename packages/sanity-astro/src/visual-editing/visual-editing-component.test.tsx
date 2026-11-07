@@ -57,6 +57,7 @@ beforeEach(() => {
   window.sessionStorage.clear()
   delete (window as {__sanityFallbackTimer?: number | null}).__sanityFallbackTimer
   delete (window as {__sanityFollowUpInstalled?: boolean}).__sanityFollowUpInstalled
+  delete (window as {__sanityPendingFollowUpUrl?: string | null}).__sanityPendingFollowUpUrl
   window.history.replaceState({}, '', initialUrl)
   document.title = 'Movie ABC'
   container = document.createElement('div')
@@ -182,10 +183,10 @@ describe('VisualEditingComponent prop forwarding and refresh lifecycle', () => {
     }
   })
 
-  it('keeps experimental_refreshStrategy to itself and cancels a pending arrival timer on unmount', async () => {
+  it('keeps experimental_refreshStrategy to itself, consumes the flag on arrival, and cancels the timer on unmount', async () => {
     // Simulate running inside the Presentation iframe so scheduleFollowUpReload is active.
     vi.spyOn(window, 'top', 'get').mockReturnValue({} as Window)
-    window.sessionStorage.setItem(FOLLOW_UP_RELOAD_KEY, 'true')
+    window.sessionStorage.setItem(FOLLOW_UP_RELOAD_KEY, window.location.href)
 
     const inner = await mountAndCapture({
       experimental_refreshStrategy: {type: 'reload', followUpDelayMs: 1200},
@@ -193,6 +194,7 @@ describe('VisualEditingComponent prop forwarding and refresh lifecycle', () => {
 
     expect('experimental_refreshStrategy' in inner).toBe(false)
     expect(inner.refresh).toEqual(expect.any(Function))
+    expect(window.sessionStorage.getItem(FOLLOW_UP_RELOAD_KEY)).toBeNull()
     expect(
       (window as {__sanityFallbackTimer?: number | null}).__sanityFallbackTimer,
     ).toEqual(expect.any(Number))
@@ -205,7 +207,7 @@ describe('VisualEditingComponent prop forwarding and refresh lifecycle', () => {
 
   it('lets a consumer refresh and history win over the defaults and disables follow-up arrival', async () => {
     vi.spyOn(window, 'top', 'get').mockReturnValue({} as Window)
-    window.sessionStorage.setItem(FOLLOW_UP_RELOAD_KEY, 'true')
+    window.sessionStorage.setItem(FOLLOW_UP_RELOAD_KEY, window.location.href)
 
     const refresh = vi.fn(() => false as const)
     const history = {subscribe: vi.fn(() => () => {}), update: vi.fn()}

@@ -3,15 +3,17 @@ import type {HistoryRefresh} from '@sanity/visual-editing/react'
 /**
  * Coordinates typing-loss prevention across iframe reloads in Sanity Presentation.
  *
- * 1. OBSERVE: When a live Studio edit emits `presentation/snapshot-event`, `FOLLOW_UP_RELOAD_KEY`
- *    is set to `'true'` in `sessionStorage`. If `document.readyState === 'complete'`, a fallback
- *    timer is armed for `delayMs` in case Comlink drops the accompanying `presentation/refresh`.
+ * 1. OBSERVE: When a live Studio edit emits a `mutation` `presentation/snapshot-event`,
+ *    `FOLLOW_UP_RELOAD_KEY` is set to `location.href` in `sessionStorage`. If
+ *    `document.readyState === 'complete'`, a fallback timer is armed for `delayMs` in case
+ *    Comlink drops the accompanying `presentation/refresh`.
  * 2. ACKNOWLEDGE: When `refresh()` accepts a `'mutation'` or `'manual'` payload, it synchronously
  *    clears `FOLLOW_UP_RELOAD_KEY` and cancels any active fallback or arrival timer before reloading.
  * 3. RECONCILE: If a trailing keystroke emitted `presentation/snapshot-event` after
  *    acknowledgement (during the reload blanking interval or before Comlink handshakes on arrival),
- *    `FOLLOW_UP_RELOAD_KEY` remains `'true'` on arrival; the new page consumes the flag and
- *    schedules one reload after `delayMs`.
+ *    `FOLLOW_UP_RELOAD_KEY` still holds `location.href` on arrival; the new page immediately
+ *    consumes the `sessionStorage` flag (discarding it if the URL changed) and schedules one
+ *    reload after `delayMs`.
  */
 export const FOLLOW_UP_RELOAD_KEY = '@sanity/astro:follow-up-reload'
 
@@ -26,22 +28,36 @@ export type FollowUpReloadHost = {
   addEventListener?: Window['addEventListener']
   __sanityFallbackTimer?: number | null
   __sanityFollowUpInstalled?: boolean
+  __sanityPendingFollowUpUrl?: string | null
   __sanityVEConfig?: {
     acknowledgeRefresh?: () => void
   }
 }
 
-function readFlag(host: Pick<FollowUpReloadHost, 'sessionStorage'>): boolean {
+/**
+ * Reads and immediately removes `FOLLOW_UP_RELOAD_KEY` from `sessionStorage`,
+ * returning `true` only when the stored marker matches the current `location.href`.
+ */
+function consumeFlag(
+  host: Pick<FollowUpReloadHost, 'sessionStorage' | 'location'>,
+): boolean {
   try {
-    return host.sessionStorage.getItem(FOLLOW_UP_RELOAD_KEY) === 'true'
+    const storedHref = host.sessionStorage.getItem(FOLLOW_UP_RELOAD_KEY)
+    if (storedHref === null) {
+      return false
+    }
+    host.sessionStorage.removeItem(FOLLOW_UP_RELOAD_KEY)
+    return storedHref === host.location.href
   } catch {
     return false
   }
 }
 
-function writeFlag(host: Pick<FollowUpReloadHost, 'sessionStorage'>): void {
+function writeFlag(
+  host: Pick<FollowUpReloadHost, 'sessionStorage' | 'location'>,
+): void {
   try {
-    host.sessionStorage.setItem(FOLLOW_UP_RELOAD_KEY, 'true')
+    host.sessionStorage.setItem(FOLLOW_UP_RELOAD_KEY, host.location.href)
   } catch {
     // Storage can be unavailable (e.g. a sandboxed iframe); skip the follow-up.
   }
@@ -61,6 +77,7 @@ function clearFlag(host: Pick<FollowUpReloadHost, 'sessionStorage'>): void {
  */
 export function acknowledgeFollowUpReload(host: FollowUpReloadHost): void {
   clearFlag(host)
+  host.__sanityPendingFollowUpUrl = null
   host.__sanityVEConfig?.acknowledgeRefresh?.()
   if (host.__sanityFallbackTimer) {
     host.clearTimeout(host.__sanityFallbackTimer)
@@ -114,6 +131,7 @@ export function scheduleFollowUpReload(
         ) {
           host.__sanityFallbackTimer = host.setTimeout(() => {
             host.__sanityFallbackTimer = null
+            host.__sanityPendingFollowUpUrl = null
             clearFlag(host)
             reload()
           }, delayMs)
@@ -122,11 +140,12 @@ export function scheduleFollowUpReload(
     })
 
     host.addEventListener('load', () => {
-      if (readFlag(host)) {
-        clearFlag(host)
+      if (consumeFlag(host)) {
+        host.__sanityPendingFollowUpUrl = host.location.href
         if (!host.__sanityFallbackTimer) {
           host.__sanityFallbackTimer = host.setTimeout(() => {
             host.__sanityFallbackTimer = null
+            host.__sanityPendingFollowUpUrl = null
             reload()
           }, delayMs)
         }
@@ -134,15 +153,21 @@ export function scheduleFollowUpReload(
     })
   }
 
-// Reconcile immediately if the flag is still set when the React island arrives.
-  if (readFlag(host)) {
+  // Reconcile immediately if the flag for this URL was in sessionStorage or was
+  // handed off in-memory on this window (by window.load or a StrictMode remount).
+  const hasStoredFlag = consumeFlag(host)
+  const hasPendingUrl = host.__sanityPendingFollowUpUrl === host.location.href
+  host.__sanityPendingFollowUpUrl = null
+
+  if (hasStoredFlag || hasPendingUrl) {
     if (host.__sanityFallbackTimer) {
       host.clearTimeout(host.__sanityFallbackTimer)
       host.__sanityFallbackTimer = null
     }
+    const targetHref = host.location.href
     const id = host.setTimeout(() => {
       host.__sanityFallbackTimer = null
-      clearFlag(host) // Clear ONLY when the timer actually executes
+      host.__sanityPendingFollowUpUrl = null
       reload()
     }, delayMs)
     host.__sanityFallbackTimer = id
@@ -150,6 +175,7 @@ export function scheduleFollowUpReload(
       host.clearTimeout(id)
       if (host.__sanityFallbackTimer === id) {
         host.__sanityFallbackTimer = null
+        host.__sanityPendingFollowUpUrl = targetHref
       }
     }
   }

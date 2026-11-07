@@ -85,7 +85,7 @@ describe('createDefaultRefresh', () => {
     'with %s, acknowledges any pending flag, reloads once, and arms nothing on arrival',
     async (strategy) => {
       const {host, store, reload, timers, fireTimers} = createHost()
-      store.set(FOLLOW_UP_RELOAD_KEY, 'true')
+      store.set(FOLLOW_UP_RELOAD_KEY, host.location.href)
 
       const resolved = resolveRefreshStrategy(strategy)
       await createDefaultRefresh(resolved, host).refresh(mutationRefresh)
@@ -122,41 +122,42 @@ describe('createDefaultRefresh', () => {
     const strategy = resolveRefreshStrategy({type: 'reload', followUpDelayMs: 1200})
 
     // Simulate a trailing keystroke snapshot-event that arrived during the reload window.
-    store.set(FOLLOW_UP_RELOAD_KEY, 'true')
+    store.set(FOLLOW_UP_RELOAD_KEY, host.location.href)
 
     const cancel = createDefaultRefresh(strategy, host).arrive()
     expect(typeof cancel).toBe('function')
+    expect(store.has(FOLLOW_UP_RELOAD_KEY)).toBe(false)
     expect([...timers.values()].map((timer) => timer.delayMs)).toEqual([1200])
 
     fireTimers()
     expect(reload).toHaveBeenCalledTimes(1)
-    expect(store.has(FOLLOW_UP_RELOAD_KEY)).toBe(false)
   })
 
   it('keeps the follow-up reload across an effect remount on arrival', () => {
     const strategy = resolveRefreshStrategy({type: 'reload', followUpDelayMs: 1200})
     const {host, store, reload, timers, fireTimers} = createHost()
-    store.set(FOLLOW_UP_RELOAD_KEY, 'true')
+    store.set(FOLLOW_UP_RELOAD_KEY, host.location.href)
 
     // The component's `useEffect(() => defaultRefresh.arrive())` under Strict Mode:
     // mount, cleanup, mount again.
     const defaultRefresh = createDefaultRefresh(strategy, host)
     defaultRefresh.arrive()?.()
+    expect(store.has(FOLLOW_UP_RELOAD_KEY)).toBe(false)
     defaultRefresh.arrive()
 
     expect(timers.size).toBe(1)
     fireTimers()
     expect(reload).toHaveBeenCalledTimes(1)
-    expect(store.has(FOLLOW_UP_RELOAD_KEY)).toBe(false)
   })
 
   it('cancels the pending follow-up when a regular refresh arrives first', async () => {
     const strategy = resolveRefreshStrategy({type: 'reload', followUpDelayMs: 1200})
     const {host, store, reload, timers, fireTimers} = createHost()
-    store.set(FOLLOW_UP_RELOAD_KEY, 'true')
+    store.set(FOLLOW_UP_RELOAD_KEY, host.location.href)
 
     const defaultRefresh = createDefaultRefresh(strategy, host)
     defaultRefresh.arrive()
+    expect(store.has(FOLLOW_UP_RELOAD_KEY)).toBe(false)
     expect(timers.size).toBe(1)
 
     await defaultRefresh.refresh(mutationRefresh)

@@ -33,6 +33,7 @@ const followUpDelayMs = resolvedStrategy.followUpDelayMs ?? 0
             try {
               sessionStorage.removeItem(flagKey)
             } catch {}
+            window.__sanityPendingFollowUpUrl = null
             if (window.__sanityFallbackTimer) {
               clearTimeout(window.__sanityFallbackTimer)
               window.__sanityFallbackTimer = null
@@ -58,7 +59,7 @@ const followUpDelayMs = resolvedStrategy.followUpDelayMs ?? 0
             e.data.data.event.type === 'mutation'
           ) {
             try {
-              sessionStorage.setItem(flagKey, 'true')
+              sessionStorage.setItem(flagKey, window.location.href)
             } catch {}
             // Fallback if the page is already loaded and Comlink drops the accompanying refresh:
             // ensure a fallback reload still fires after followUpDelayMs.
@@ -68,6 +69,7 @@ const followUpDelayMs = resolvedStrategy.followUpDelayMs ?? 0
             ) {
               window.__sanityFallbackTimer = setTimeout(function () {
                 window.__sanityFallbackTimer = null
+                window.__sanityPendingFollowUpUrl = null
                 try {
                   sessionStorage.removeItem(flagKey)
                 } catch {}
@@ -77,21 +79,25 @@ const followUpDelayMs = resolvedStrategy.followUpDelayMs ?? 0
           }
         })
 
-        // 2. RECONCILE: Check for missed updates on page arrival.
+        // 2. RECONCILE: Check for missed updates on page arrival and consume sessionStorage immediately.
         window.addEventListener('load', function () {
-          var needsSync = false
+          var storedHref = null
           try {
-            needsSync = sessionStorage.getItem(flagKey) === 'true'
+            storedHref = sessionStorage.getItem(flagKey)
+            if (storedHref !== null) {
+              sessionStorage.removeItem(flagKey)
+            }
           } catch {}
 
-          if (needsSync && !window.__sanityFallbackTimer) {
-            window.__sanityFallbackTimer = setTimeout(function () {
-              window.__sanityFallbackTimer = null
-              try {
-                sessionStorage.removeItem(flagKey)
-              } catch {}
-              window.location.reload()
-            }, followUpDelayMs)
+          if (storedHref === window.location.href) {
+            window.__sanityPendingFollowUpUrl = window.location.href
+            if (!window.__sanityFallbackTimer) {
+              window.__sanityFallbackTimer = setTimeout(function () {
+                window.__sanityFallbackTimer = null
+                window.__sanityPendingFollowUpUrl = null
+                window.location.reload()
+              }, followUpDelayMs)
+            }
           }
         })
       })()
