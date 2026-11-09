@@ -59,7 +59,8 @@ function resolvePackageRoot(projectRoot: string, packageName: string): string | 
     return require // assure Windows as well as linux paths are properly handled
       .resolve(`${packageName}/package.json`)
       .replace(/[\\/]package\.json$/, '')
-      .replace(/\\/g, '/')  } catch {
+      .replace(/\\/g, '/')
+  } catch {
     return undefined
   }
 }

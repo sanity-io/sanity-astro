@@ -195,14 +195,12 @@ describe('VisualEditingComponent prop forwarding and refresh lifecycle', () => {
     expect('experimental_refreshStrategy' in inner).toBe(false)
     expect(inner.refresh).toEqual(expect.any(Function))
     expect(window.sessionStorage.getItem(FOLLOW_UP_RELOAD_KEY)).toBeNull()
-    expect(
-      (window as {__sanityFallbackTimer?: number | null}).__sanityFallbackTimer,
-    ).toEqual(expect.any(Number))
+    expect((window as {__sanityFallbackTimer?: number | null}).__sanityFallbackTimer).toEqual(
+      expect.any(Number),
+    )
 
     await act(async () => root.unmount())
-    expect(
-      (window as {__sanityFallbackTimer?: number | null}).__sanityFallbackTimer,
-    ).toBeNull()
+    expect((window as {__sanityFallbackTimer?: number | null}).__sanityFallbackTimer).toBeNull()
   })
 
   it('lets a consumer refresh and history win over the defaults and disables follow-up arrival', async () => {
