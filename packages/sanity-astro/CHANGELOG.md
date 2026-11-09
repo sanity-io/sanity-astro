@@ -1,5 +1,11 @@
 # @sanity/astro
 
+## 3.6.1
+
+### Patch Changes
+
+- [#523](https://github.com/sanity-io/sanity-astro/pull/523) [`9808d22`](https://github.com/sanity-io/sanity-astro/commit/9808d22613d7cebbd6aa9606c47eb22e23f0f851) Thanks [@stipsan](https://github.com/stipsan)! - The default preview refresh works again with `experimental_refreshStrategy` set to `'reload'` or `{type: 'reload', followUpDelayMs}`. A Studio mutation or a manual refresh reloads on the next turn, so Presentation can finish its refresh message before the page goes away, and the follow-up reload only runs for a mutation that landed during that reload. An Astro attribute string such as `{type: 'reload', followUpDelayMs: 1200}` is accepted. In `astro dev` on Windows, the Studio module-dedupe aliases resolve package roots that use Windows paths. Thanks [@narration-sd](https://github.com/narration-sd) ([#521](https://github.com/sanity-io/sanity-astro/pull/521)).
+
 ## 3.6.0
 
 ### Minor Changes
