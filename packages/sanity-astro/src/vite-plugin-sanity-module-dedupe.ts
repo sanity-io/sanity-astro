@@ -56,8 +56,10 @@ function canResolveDependency(projectRoot: string, dependency: string): boolean 
 function resolvePackageRoot(projectRoot: string, packageName: string): string | undefined {
   try {
     const require = createRequire(path.join(projectRoot, 'package.json'))
-    return require.resolve(`${packageName}/package.json`).replace(/\/package\.json$/, '')
-  } catch {
+    return require // assure Windows as well as linux paths are properly handled
+      .resolve(`${packageName}/package.json`)
+      .replace(/[\\/]package\.json$/, '')
+      .replace(/\\/g, '/')  } catch {
     return undefined
   }
 }

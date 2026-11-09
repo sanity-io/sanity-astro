@@ -1,13 +1,19 @@
 import type {HistoryRefresh} from '@sanity/visual-editing/react'
 
 /**
- * After a change-triggered (`source: 'mutation'`) refresh, `@sanity/visual-editing`
- * schedules a second `refresh()` one second later to account for Content Lake
- * eventual consistency, so edits typed while the first refresh was in flight are
- * not left out of the preview. The default refresh here is a full
- * `window.location.reload()`, which discards that pending timer along with the
- * rest of the page. These helpers carry the "follow-up pending" state across the
- * reload so the next page can perform that one extra reload itself.
+ * Coordinates typing-loss prevention across iframe reloads in Sanity Presentation.
+ *
+ * 1. OBSERVE: When a live Studio edit emits a `mutation` `presentation/snapshot-event`,
+ *    `FOLLOW_UP_RELOAD_KEY` is set to `location.href` in `sessionStorage`. If
+ *    `document.readyState === 'complete'`, a fallback timer is armed for `delayMs` in case
+ *    Comlink drops the accompanying `presentation/refresh`.
+ * 2. ACKNOWLEDGE: When `refresh()` accepts a `'mutation'` or `'manual'` payload, it synchronously
+ *    clears `FOLLOW_UP_RELOAD_KEY` and cancels any active fallback or arrival timer before reloading.
+ * 3. RECONCILE: If a trailing keystroke emitted `presentation/snapshot-event` after
+ *    acknowledgement (during the reload blanking interval or before Comlink handshakes on arrival),
+ *    `FOLLOW_UP_RELOAD_KEY` still holds `location.href` on arrival; the new page immediately
+ *    consumes the `sessionStorage` flag (discarding it if the URL changed) and schedules one
+ *    reload after `delayMs`.
  */
 export const FOLLOW_UP_RELOAD_KEY = '@sanity/astro:follow-up-reload'
 
@@ -16,101 +22,163 @@ export type FollowUpReloadHost = {
   location: Pick<Location, 'href'>
   setTimeout: (callback: () => void, delayMs: number) => number
   clearTimeout: (id: number) => void
-}
-
-type Marker = {href: string; id: string}
-
-function parseMarker(value: string): Marker | undefined {
-  try {
-    const parsed: unknown = JSON.parse(value)
-    if (
-      typeof parsed === 'object' &&
-      parsed !== null &&
-      'href' in parsed &&
-      typeof parsed.href === 'string' &&
-      'id' in parsed &&
-      typeof parsed.id === 'string'
-    ) {
-      return {href: parsed.href, id: parsed.id}
-    }
-  } catch {
-    // Not written by `markFollowUpReload`; treated like a marker for another URL.
+  self?: Window
+  top?: Window | null
+  document?: Pick<Document, 'readyState'>
+  addEventListener?: Window['addEventListener']
+  __sanityFallbackTimer?: number | null
+  __sanityFollowUpInstalled?: boolean
+  __sanityPendingFollowUpUrl?: string | null
+  __sanityVEConfig?: {
+    acknowledgeRefresh?: () => void
   }
-  return undefined
 }
 
 /**
- * Call right before the page reloads in response to `payload`. The marker
- * records the URL being reloaded so a navigation that wins the race against
- * the reload (e.g. Presentation switching documents) is not mistaken for it,
- * and an id unique to this reload so a follow-up timer armed for an earlier
- * reload of the same URL cannot consume it.
+ * Reads and immediately removes `FOLLOW_UP_RELOAD_KEY` from `sessionStorage`,
+ * returning `true` only when the stored marker matches the current `location.href`.
  */
-export function markFollowUpReload(
-  payload: HistoryRefresh,
+function consumeFlag(
+  host: Pick<FollowUpReloadHost, 'sessionStorage' | 'location'>,
+): boolean {
+  try {
+    const storedHref = host.sessionStorage.getItem(FOLLOW_UP_RELOAD_KEY)
+    if (storedHref === null) {
+      return false
+    }
+    host.sessionStorage.removeItem(FOLLOW_UP_RELOAD_KEY)
+    return storedHref === host.location.href
+  } catch {
+    return false
+  }
+}
+
+function writeFlag(
   host: Pick<FollowUpReloadHost, 'sessionStorage' | 'location'>,
 ): void {
-  if (payload.source !== 'mutation') {
-    return
-  }
-  const marker: Marker = {
-    href: host.location.href,
-    id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`,
-  }
   try {
-    host.sessionStorage.setItem(FOLLOW_UP_RELOAD_KEY, JSON.stringify(marker))
+    host.sessionStorage.setItem(FOLLOW_UP_RELOAD_KEY, host.location.href)
   } catch {
     // Storage can be unavailable (e.g. a sandboxed iframe); skip the follow-up.
   }
 }
 
-function readMarker(host: Pick<FollowUpReloadHost, 'sessionStorage'>): string | null {
-  try {
-    return host.sessionStorage.getItem(FOLLOW_UP_RELOAD_KEY)
-  } catch {
-    return null
-  }
-}
-
-function clearMarker(host: Pick<FollowUpReloadHost, 'sessionStorage'>): void {
+function clearFlag(host: Pick<FollowUpReloadHost, 'sessionStorage'>): void {
   try {
     host.sessionStorage.removeItem(FOLLOW_UP_RELOAD_KEY)
   } catch {
-    // Unavailable storage never held a marker to begin with.
+    // Unavailable storage never held a flag to begin with.
   }
 }
 
 /**
- * Call on page arrival. If `markFollowUpReload` left a marker for this URL,
- * schedules exactly one `reload` after `delayMs` and returns a function that
- * cancels it; otherwise returns `undefined`. A marker for another URL is
- * discarded.
- *
- * The marker is consumed when the reload fires, not when it is scheduled, so
- * cancelling leaves it in place: an island that unmounts and mounts again on
- * the same page (React Strict Mode, an island remount) arms the follow-up anew
- * instead of losing it. The timer only consumes the marker it was armed for, so
- * a newer change-triggered reload that marked the page in the meantime keeps
- * its own follow-up.
+ * Synchronously clears `FOLLOW_UP_RELOAD_KEY` and disarms any pending fallback or
+ * arrival reload timer when Visual Editing accepts a refresh.
+ */
+export function acknowledgeFollowUpReload(host: FollowUpReloadHost): void {
+  clearFlag(host)
+  host.__sanityPendingFollowUpUrl = null
+  host.__sanityVEConfig?.acknowledgeRefresh?.()
+  if (host.__sanityFallbackTimer) {
+    host.clearTimeout(host.__sanityFallbackTimer)
+    host.__sanityFallbackTimer = null
+  }
+}
+
+/**
+ * Retained for backwards signature compatibility; acknowledges and disarms any pending
+ * follow-up state rather than arming an unconditional reload marker on refresh.
+ */
+export function markFollowUpReload(
+  _payload: HistoryRefresh,
+  host: FollowUpReloadHost,
+): void {
+  acknowledgeFollowUpReload(host)
+}
+
+/**
+ * Attaches the `presentation/snapshot-event` observer if the inline `.astro` script
+ * has not already installed it on `window`, and reconciles any unacknowledged mutation
+ * flag present in `sessionStorage` upon page arrival.
  */
 export function scheduleFollowUpReload(
   host: FollowUpReloadHost,
   reload: () => void,
   delayMs: number,
 ): (() => void) | undefined {
-  const value = readMarker(host)
-  if (value === null) {
+  if (host.self && host.top && host.self === host.top) {
     return undefined
   }
-  if (parseMarker(value)?.href !== host.location.href) {
-    clearMarker(host)
+  if (delayMs <= 0) {
     return undefined
   }
-  const id = host.setTimeout(() => {
-    if (readMarker(host) === value) {
-      clearMarker(host)
+
+  // Install the message and load listeners if `VisualEditingComponent` was mounted
+  // without the inline script in `visual-editing.astro`.
+  if (!host.__sanityFollowUpInstalled && typeof host.addEventListener === 'function') {
+    host.__sanityFollowUpInstalled = true
+
+    host.addEventListener('message', (e: MessageEvent) => {
+      if (
+        e.data?.type === 'presentation/snapshot-event' &&
+        e.data?.data?.event?.type === 'mutation'
+      ) {
+        writeFlag(host)
+
+        if (
+          host.document?.readyState === 'complete' &&
+          !host.__sanityFallbackTimer
+        ) {
+          host.__sanityFallbackTimer = host.setTimeout(() => {
+            host.__sanityFallbackTimer = null
+            host.__sanityPendingFollowUpUrl = null
+            clearFlag(host)
+            reload()
+          }, delayMs)
+        }
+      }
+    })
+
+    host.addEventListener('load', () => {
+      if (consumeFlag(host)) {
+        host.__sanityPendingFollowUpUrl = host.location.href
+        if (!host.__sanityFallbackTimer) {
+          host.__sanityFallbackTimer = host.setTimeout(() => {
+            host.__sanityFallbackTimer = null
+            host.__sanityPendingFollowUpUrl = null
+            reload()
+          }, delayMs)
+        }
+      }
+    })
+  }
+
+  // Reconcile immediately if the flag for this URL was in sessionStorage or was
+  // handed off in-memory on this window (by window.load or a StrictMode remount).
+  const hasStoredFlag = consumeFlag(host)
+  const hasPendingUrl = host.__sanityPendingFollowUpUrl === host.location.href
+  host.__sanityPendingFollowUpUrl = null
+
+  if (hasStoredFlag || hasPendingUrl) {
+    if (host.__sanityFallbackTimer) {
+      host.clearTimeout(host.__sanityFallbackTimer)
+      host.__sanityFallbackTimer = null
     }
-    reload()
-  }, delayMs)
-  return () => host.clearTimeout(id)
+    const targetHref = host.location.href
+    const id = host.setTimeout(() => {
+      host.__sanityFallbackTimer = null
+      host.__sanityPendingFollowUpUrl = null
+      reload()
+    }, delayMs)
+    host.__sanityFallbackTimer = id
+    return () => {
+      host.clearTimeout(id)
+      if (host.__sanityFallbackTimer === id) {
+        host.__sanityFallbackTimer = null
+        host.__sanityPendingFollowUpUrl = targetHref
+      }
+    }
+  }
+
+  return undefined
 }
