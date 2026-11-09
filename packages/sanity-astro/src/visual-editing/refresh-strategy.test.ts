@@ -106,9 +106,7 @@ describe('createDefaultRefresh', () => {
     const {host, reload, timers, fireTimers} = createHost()
     const defaultRefresh = createDefaultRefresh(resolveRefreshStrategy('reload'), host)
 
-    expect(
-      defaultRefresh.refresh({source: 'unknown'} as unknown as HistoryRefresh),
-    ).toBe(false)
+    expect(defaultRefresh.refresh({source: 'unknown'} as unknown as HistoryRefresh)).toBe(false)
     expect(timers.size).toBe(0)
 
     await defaultRefresh.refresh(manualRefresh)

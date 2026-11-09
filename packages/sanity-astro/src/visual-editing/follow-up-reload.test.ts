@@ -95,8 +95,7 @@ describe('visual editing follow-up reload', () => {
   })
 
   it('reconciles on window load and immediately consumes the flag when a mutation arrived while loading', () => {
-    const {host, store, timers, fireTimers, dispatchMessage, dispatchLoad} =
-      createHost('loading')
+    const {host, store, timers, fireTimers, dispatchMessage, dispatchLoad} = createHost('loading')
     const reload = vi.fn()
 
     scheduleFollowUpReload(host, reload, DELAY)

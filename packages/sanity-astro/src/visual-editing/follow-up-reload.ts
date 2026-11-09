@@ -38,9 +38,7 @@ export type FollowUpReloadHost = {
  * Reads and immediately removes `FOLLOW_UP_RELOAD_KEY` from `sessionStorage`,
  * returning `true` only when the stored marker matches the current `location.href`.
  */
-function consumeFlag(
-  host: Pick<FollowUpReloadHost, 'sessionStorage' | 'location'>,
-): boolean {
+function consumeFlag(host: Pick<FollowUpReloadHost, 'sessionStorage' | 'location'>): boolean {
   try {
     const storedHref = host.sessionStorage.getItem(FOLLOW_UP_RELOAD_KEY)
     if (storedHref === null) {
@@ -53,9 +51,7 @@ function consumeFlag(
   }
 }
 
-function writeFlag(
-  host: Pick<FollowUpReloadHost, 'sessionStorage' | 'location'>,
-): void {
+function writeFlag(host: Pick<FollowUpReloadHost, 'sessionStorage' | 'location'>): void {
   try {
     host.sessionStorage.setItem(FOLLOW_UP_RELOAD_KEY, host.location.href)
   } catch {
@@ -89,10 +85,7 @@ export function acknowledgeFollowUpReload(host: FollowUpReloadHost): void {
  * Retained for backwards signature compatibility; acknowledges and disarms any pending
  * follow-up state rather than arming an unconditional reload marker on refresh.
  */
-export function markFollowUpReload(
-  _payload: HistoryRefresh,
-  host: FollowUpReloadHost,
-): void {
+export function markFollowUpReload(_payload: HistoryRefresh, host: FollowUpReloadHost): void {
   acknowledgeFollowUpReload(host)
 }
 
@@ -125,10 +118,7 @@ export function scheduleFollowUpReload(
       ) {
         writeFlag(host)
 
-        if (
-          host.document?.readyState === 'complete' &&
-          !host.__sanityFallbackTimer
-        ) {
+        if (host.document?.readyState === 'complete' && !host.__sanityFallbackTimer) {
           host.__sanityFallbackTimer = host.setTimeout(() => {
             host.__sanityFallbackTimer = null
             host.__sanityPendingFollowUpUrl = null
