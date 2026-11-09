@@ -186,6 +186,10 @@ describe('VisualEditingComponent prop forwarding and refresh lifecycle', () => {
   it('keeps experimental_refreshStrategy to itself, consumes the flag on arrival, and cancels the timer on unmount', async () => {
     // Simulate running inside the Presentation iframe so scheduleFollowUpReload is active.
     vi.spyOn(window, 'top', 'get').mockReturnValue({} as Window)
+    // Vitest's jsdom environment keeps Node's setTimeout on `window`, which returns a
+    // Timeout object. Browsers return a number. Store and cancel whichever handle came back.
+    const setTimeoutSpy = vi.spyOn(window, 'setTimeout')
+    const clearTimeoutSpy = vi.spyOn(window, 'clearTimeout')
     window.sessionStorage.setItem(FOLLOW_UP_RELOAD_KEY, window.location.href)
 
     const inner = await mountAndCapture({
@@ -195,12 +199,15 @@ describe('VisualEditingComponent prop forwarding and refresh lifecycle', () => {
     expect('experimental_refreshStrategy' in inner).toBe(false)
     expect(inner.refresh).toEqual(expect.any(Function))
     expect(window.sessionStorage.getItem(FOLLOW_UP_RELOAD_KEY)).toBeNull()
-    expect((window as {__sanityFallbackTimer?: number | null}).__sanityFallbackTimer).toEqual(
-      expect.any(Number),
-    )
+    const followUpIndex = setTimeoutSpy.mock.calls.findIndex((call) => call[1] === 1200)
+    expect(followUpIndex).toBeGreaterThanOrEqual(0)
+    const timer = setTimeoutSpy.mock.results[followUpIndex]?.value
+    expect(timer).toBeDefined()
+    expect((window as {__sanityFallbackTimer?: unknown}).__sanityFallbackTimer).toBe(timer)
 
     await act(async () => root.unmount())
-    expect((window as {__sanityFallbackTimer?: number | null}).__sanityFallbackTimer).toBeNull()
+    expect(clearTimeoutSpy).toHaveBeenCalledWith(timer)
+    expect((window as {__sanityFallbackTimer?: unknown}).__sanityFallbackTimer).toBeNull()
   })
 
   it('lets a consumer refresh and history win over the defaults and disables follow-up arrival', async () => {
