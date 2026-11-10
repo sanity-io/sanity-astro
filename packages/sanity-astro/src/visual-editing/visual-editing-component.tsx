@@ -50,12 +50,12 @@ export function VisualEditingComponent(props: VisualEditingComponentProps) {
 
   // A custom refreshStrategy replaces the inbuilt simple refresh,
   // when it is provided on a prop. At present, an experimental one.
-  const resolvedStrategy = resolveRefreshStrategy(
+  const {type: strategyType, followUpDelayMs} = resolveRefreshStrategy(
     hasCustomRefresh ? undefined : experimental_refreshStrategy,
   )
   const defaultRefresh = React.useMemo(
-    () => createDefaultRefresh(resolvedStrategy, window),
-    [resolvedStrategy.type, resolvedStrategy.followUpDelayMs],
+    () => createDefaultRefresh({type: strategyType, followUpDelayMs}, window),
+    [strategyType, followUpDelayMs],
   )
 
   // Reconcile any pending snapshot flag on component arrival if not already handled by window.load.
