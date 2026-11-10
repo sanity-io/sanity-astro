@@ -1,0 +1,241 @@
+---
+import "@sanity/visual-editing-standalone/styles.css";
+
+export interface Props {
+  enabled?: boolean;
+  zIndex?: number;
+}
+
+// The environmental below allows adjusting optimal timing for visible
+// studio updates, while a 0 or a negative value in .env disables
+// typing loss prevention.
+//
+// The purpose of the timeout is two-fold. Primarily, it arranges the
+// interval after a typing pause for a second invisible refresh be
+// requested, which picks up any further typing while the first refresh
+// has made a blind interval to being informed about it. This correcis
+// for the non-closed protocol sanity-astro uses for visual editing.
+//
+// The second effect of the interval is to accommodate the full delay
+// sequence for the keystrokes to viewing screen update. This includes
+// the studio data send to the Content Lake, the Lake's resolution time,
+// then the latency from the iframed browser request to pick up
+// the changes which are to be made visible, once signaled.
+
+// That last signaling is done by the refresh call via the new
+// visual-editing-standalone hook, which we implement here.
+
+// The setting can be long to work with a very uneven connection such as
+// a pad or laptop operating over a poor cellular internet access. What
+// the content editor would see is increased delay until their iframed
+// browser updates, but with reliability that it always delivers the
+// typing complete, even with natural pauses in keying text.
+
+// The default value set here is thought to fit fairly ordinary situations,
+// but you should feel free to increase it until visual editing operates
+// with regularity that is comfortable to content editors, our purpose here.
+
+// Our overall operation in this component is to implement the new
+// visual-edeting-standalone hook, as must be used above recent upgrades
+// to Sanity Studio. There are relatively instant requests from even a
+// tiny pause in typing are smoothed by our non-loss actions, so it should
+// be expected as normal that a word could arrive in two segments, if typing
+// is the slightest bit uneven. For the reliability, 'it's a feature'.
+
+const rawInterval = import.meta.env.PUBLIC_SANITY_ASSURE_TYPING_INTERVAL;
+const assureTypingInterval: number =
+  rawInterval !== undefined && rawInterval !== "" ? Number(rawInterval) : 1200;
+
+const defaultEnabled =
+  import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED === "true";
+
+const { enabled = defaultEnabled, zIndex } = Astro.props;
+---
+
+{enabled && (
+  <>
+    <script define:vars={{ assureTypingInterval, zIndex }}>
+      (function () {
+        const FLAG = "sanity_sync_needed";
+        let lastSnapshotTime = 0;
+
+        // Host-isolated cookie name matching middleware.ts
+        const cookieName = `sanity-perspective-${window.location.host.replace(/[:.]/g, "-")}`;
+
+        function getCookiePerspective() {
+          const match = document.cookie.match(
+            new RegExp(`(?:^|;\\s*)${cookieName}=([^;]*)`),
+          );
+          return match ? decodeURIComponent(match[1]) : "";
+        }
+
+        function setCookiePerspective(val) {
+          const attributes =
+            window.location.protocol === "https:"
+              ? "path=/; SameSite=None; Secure; Partitioned"
+              : "path=/; SameSite=Lax";
+          document.cookie = `${cookieName}=${encodeURIComponent(val)}; ${attributes}`;
+        }
+
+        function stripUrlPerspectiveParams() {
+          const url = new URL(window.location.href);
+          if (
+            url.searchParams.has("sanity-preview-perspective") ||
+            url.searchParams.has("perspective")
+          ) {
+            url.searchParams.delete("sanity-preview-perspective");
+            url.searchParams.delete("perspective");
+            window.history.replaceState(
+              {},
+              "",
+              url.pathname + url.search + url.hash,
+            );
+          }
+        }
+
+        function syncPerspective(incomingPerspective) {
+          if (window.self === window.top || !incomingPerspective) return;
+
+          const incoming = Array.isArray(incomingPerspective)
+            ? incomingPerspective.join(",")
+            : String(incomingPerspective);
+
+          const currentCookie = getCookiePerspective() || "published";
+
+          if (incoming !== currentCookie) {
+            setCookiePerspective(incoming);
+            stripUrlPerspectiveParams();
+            window.location.reload();
+          }
+        }
+
+        function clearPendingTimer() {
+          if (window.__sanityFallbackTimer) {
+            clearTimeout(window.__sanityFallbackTimer);
+            window.__sanityFallbackTimer = null;
+          }
+        }
+
+        // Single unified reload scheduler shared by snapshot-event, Comlink refresh, and window.load
+        function scheduleMutationReload(delayMs) {
+          clearPendingTimer();
+          window.__sanityFallbackTimer = setTimeout(() => {
+            window.__sanityFallbackTimer = null;
+            sessionStorage.removeItem(FLAG);
+            window.location.reload();
+          }, delayMs);
+        }
+
+        // Expose config, acknowledgement hook, and perspective sync to the module script
+        window.__sanityVEConfig = {
+          enabled: true,
+          zIndex,
+          assureTypingInterval,
+          syncPerspective,
+          triggerImmediateReload: () => {
+            clearPendingTimer();
+            sessionStorage.removeItem(FLAG);
+            window.location.reload();
+          },
+          onMutationRefresh: () => {
+            if (assureTypingInterval <= 0) {
+              window.location.reload();
+              return;
+            }
+            // Ensure at least assureTypingInterval has elapsed since the latest optimistic keystroke
+            // so the Content Lake has committed the trailing character before Astro SSR fetches.
+            const elapsed = lastSnapshotTime
+              ? Date.now() - lastSnapshotTime
+              : 0;
+            const remaining = lastSnapshotTime
+              ? Math.max(300, assureTypingInterval - elapsed)
+              : 300;
+            scheduleMutationReload(remaining);
+          },
+        };
+
+        if (window.self === window.top) return;
+
+        // 1. INITIAL SYNC: Persist URL perspective param (if passed by Studio) or initialize default,
+        // then strip the query param in-place so reloads strictly read the updated cookie.
+        const params = new URLSearchParams(window.location.search);
+        const urlPerspective =
+          params.get("sanity-preview-perspective") || params.get("perspective");
+        const initialCookie = getCookiePerspective();
+        const targetPerspective =
+          urlPerspective || initialCookie || "published";
+
+        if (targetPerspective !== initialCookie) {
+          setCookiePerspective(targetPerspective);
+        }
+        stripUrlPerspectiveParams();
+
+        // 2. OBSERVE: Listen for Studio perspective toggles and mutation events
+        window.addEventListener("message", (e) => {
+          // A. Fallback listener for direct postMessage perspective switches
+          if (e.data?.type === "presentation/perspective") {
+            const rawPerspective =
+              e.data?.data?.perspective ?? e.data?.perspective;
+            if (rawPerspective) {
+              syncPerspective(rawPerspective);
+            }
+            return;
+          }
+
+          // B. Optimistic keystroke / mutation events ('presentation/snapshot-event' only)
+          if (
+            assureTypingInterval > 0 &&
+            e.data?.type === "presentation/snapshot-event"
+          ) {
+            lastSnapshotTime = Date.now();
+            sessionStorage.setItem(FLAG, "true");
+
+            // Push back any pending reload so continuous typing coalesces into one reload
+            if (document.readyState === "complete") {
+              scheduleMutationReload(assureTypingInterval);
+            }
+          }
+        });
+
+        // 3. RECONCILE: Catch any keystroke that arrived while the previous reload HTTP request was in flight
+        if (assureTypingInterval > 0) {
+          window.addEventListener("load", () => {
+            if (sessionStorage.getItem(FLAG) === "true") {
+              scheduleMutationReload(assureTypingInterval);
+            }
+          });
+        }
+      })();
+    </script>
+
+    <script>
+      import { enableVisualEditing } from "@sanity/visual-editing-standalone";
+
+      const config = (window as any).__sanityVEConfig;
+
+      if (config?.enabled) {
+        const cleanup = enableVisualEditing({
+          zIndex: config.zIndex,
+          onPerspectiveChange: (perspective) => {
+            config.syncPerspective?.(perspective);
+          },
+          refresh: (payload) => {
+            if (payload.source === "manual") {
+              config.triggerImmediateReload?.();
+              return Promise.resolve();
+            }
+            if (payload.source === "mutation") {
+              config.onMutationRefresh?.();
+              return Promise.resolve();
+            }
+            return false;
+          },
+        });
+
+        // Tear down Comlink only when the document actually unloads, keeping the channel open
+        // for snapshot-event messages while Astro SSR is fetching the next page over the network.
+        window.addEventListener("pagehide", () => cleanup(), { once: true });
+      }
+    </script>
+  </>
+)}

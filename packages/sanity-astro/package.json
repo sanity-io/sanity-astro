@@ -1,6 +1,6 @@
 {
   "name": "@sanity/astro",
-  "version": "3.6.1",
+  "version": "3.6.0-standalone.base",
   "description": "Official Sanity Astro integration",
   "keywords": [
     "astro-integration",
@@ -44,12 +44,14 @@
       "default": "./src/studio/studio-component.tsx"
     },
     "./visual-editing": {
+      "types": "./dist/visual-editing/index.ts",
       "import": "./dist/visual-editing/index.ts",
       "default": "./dist/visual-editing/index.ts"
     },
-    "./visual-editing/component": {
-      "types": "./src/visual-editing/visual-editing-component.tsx",
-      "default": "./src/visual-editing/visual-editing-component.tsx"
+    "./middleware": {
+      "types": "./dist/visual-editing/middleware.ts",
+      "import": "./dist/visual-editing/middleware.ts",
+      "default": "./dist/visual-editing/middleware.ts"
     }
   },
   "publishConfig": {
