@@ -1,5 +1,11 @@
 # @sanity/astro
 
+## 3.6.2
+
+### Patch Changes
+
+- [#502](https://github.com/sanity-io/sanity-astro/pull/502) [`e345d8a`](https://github.com/sanity-io/sanity-astro/commit/e345d8ad65e86dd66203ab730c49a6f32a8779c1) Thanks [@stipsan](https://github.com/stipsan)! - Type the Visual Editing component's refs so they check under `@types/react` 19. No runtime change.
+
 ## 3.6.1
 
 ### Patch Changes
