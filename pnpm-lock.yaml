@@ -262,8 +262,8 @@ importers:
         specifier: ^8.11.0
         version: 8.11.0(vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@22.13.4)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.1(@types/node@22.13.4)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.39.0)(tsx@4.22.4)(yaml@2.9.0)))
       '@sanity/image-url':
-        specifier: ^1.2.0
-        version: 1.2.0
+        specifier: ^2.1.1
+        version: 2.1.1
       '@sanity/vision':
         specifier: ^6.20.0
         version: 6.20.0(f8a1cae046d09968b653e87936943b3a)
@@ -365,8 +365,8 @@ importers:
         specifier: ^8.11.0
         version: 8.11.0(vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@22.13.4)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.3.5(@types/node@22.13.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.39.0)(tsx@4.22.4)(yaml@2.9.0)))
       '@sanity/image-url':
-        specifier: ^1.2.0
-        version: 1.2.0
+        specifier: ^2.1.1
+        version: 2.1.1
       '@sanity/vision':
         specifier: ^6.20.0
         version: 6.20.0(d5d520a8721af09fd5b4a6f7c88ac364)
@@ -5335,10 +5335,6 @@ packages:
   '@sanity/id-utils@1.1.0':
     resolution: {integrity: sha512-A+DujVHCO3/+0DuzinmfCRQacIWVIherK0AHqFDoDOSgxx+Bur1kLhzX8fn7PdB2uZilxu2zWOr+UaGcj5zGbA==}
     engines: {node: '>=18'}
-
-  '@sanity/image-url@1.2.0':
-    resolution: {integrity: sha512-pYRhti+lDi22it+npWXkEGuYyzbXJLF+d0TYLiyWbKu46JHhYhTDKkp6zmGu4YKF5cXUjT6pnUjFsaf2vlB9nQ==}
-    engines: {node: '>=10.0.0'}
 
   '@sanity/image-url@2.1.1':
     resolution: {integrity: sha512-qVXsF1teWR6FO3ZFAz46HDcRU+E6EQkpyncPnkGOzeJ1PgnaOiWMVbiSrZtX10s3txzzu/tAjKwbxbGHfDWgGw==}
@@ -19245,8 +19241,6 @@ snapshots:
     dependencies:
       '@sanity/uuid': 3.0.3
       ts-brand: 0.2.0
-
-  '@sanity/image-url@1.2.0': {}
 
   '@sanity/image-url@2.1.1':
     dependencies:
