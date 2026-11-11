@@ -47,11 +47,6 @@
       "types": "./dist/visual-editing/index.ts",
       "import": "./dist/visual-editing/index.ts",
       "default": "./dist/visual-editing/index.ts"
-    },
-    "./middleware": {
-      "types": "./dist/visual-editing/middleware.ts",
-      "import": "./dist/visual-editing/middleware.ts",
-      "default": "./dist/visual-editing/middleware.ts"
     }
   },
   "publishConfig": {
@@ -68,7 +63,7 @@
     "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
-    "@sanity/visual-editing": "^6.1.1",
+    "@sanity/visual-editing-standalone": "^2.0.3",
     "history": "^5.3.0"
   },
   "devDependencies": {

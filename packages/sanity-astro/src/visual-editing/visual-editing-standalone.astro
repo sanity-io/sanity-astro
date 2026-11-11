@@ -133,13 +133,11 @@ const { enabled = defaultEnabled, zIndex } = Astro.props;
           assureTypingInterval,
           syncPerspective,
           triggerImmediateReload: () => {
-            clearPendingTimer();
-            sessionStorage.removeItem(FLAG);
-            window.location.reload();
+            scheduleMutationReload(0);
           },
           onMutationRefresh: () => {
             if (assureTypingInterval <= 0) {
-              window.location.reload();
+              scheduleMutationReload(0);
               return;
             }
             // Ensure at least assureTypingInterval has elapsed since the latest optimistic keystroke
@@ -182,13 +180,16 @@ const { enabled = defaultEnabled, zIndex } = Astro.props;
             return;
           }
 
-          // B. Optimistic keystroke / mutation events ('presentation/snapshot-event' only)
+          // B. Optimistic keystroke / mutation events ('presentation/snapshot-event' mutations only)
+          const snapshotEventType =
+            e.data?.data?.event?.type ?? e.data?.event?.type;
           if (
             assureTypingInterval > 0 &&
-            e.data?.type === "presentation/snapshot-event"
+            e.data?.type === "presentation/snapshot-event" &&
+            snapshotEventType === "mutation"
           ) {
             lastSnapshotTime = Date.now();
-            sessionStorage.setItem(FLAG, "true");
+            sessionStorage.setItem(FLAG, window.location.href);
 
             // Push back any pending reload so continuous typing coalesces into one reload
             if (document.readyState === "complete") {
@@ -200,8 +201,12 @@ const { enabled = defaultEnabled, zIndex } = Astro.props;
         // 3. RECONCILE: Catch any keystroke that arrived while the previous reload HTTP request was in flight
         if (assureTypingInterval > 0) {
           window.addEventListener("load", () => {
-            if (sessionStorage.getItem(FLAG) === "true") {
-              scheduleMutationReload(assureTypingInterval);
+            const pendingUrl = sessionStorage.getItem(FLAG);
+            if (pendingUrl !== null) {
+              sessionStorage.removeItem(FLAG);
+              if (pendingUrl === window.location.href) {
+                scheduleMutationReload(assureTypingInterval);
+              }
             }
           });
         }
@@ -209,13 +214,135 @@ const { enabled = defaultEnabled, zIndex } = Astro.props;
     </script>
 
     <script>
-      import { enableVisualEditing } from "@sanity/visual-editing-standalone";
+      import {
+        enableVisualEditing,
+        type HistoryUpdate,
+      } from "@sanity/visual-editing-standalone";
+
+      function getPresentationUrl(location: {
+        pathname: string;
+        search: string;
+        hash: string;
+      }): string {
+        return `${location.pathname}${location.search}${location.hash}`;
+      }
+
+      function shouldPublishUrl(nextUrl: string, previousUrl: string): boolean {
+        return nextUrl !== previousUrl;
+      }
+
+      function applyPresentationHistoryUpdate(
+        update: Pick<HistoryUpdate, "type" | "url">,
+        currentHref: string,
+        navigate: {
+          assign: (url: string) => void;
+          replace: (url: string) => void;
+          back: () => void;
+        },
+      ): void {
+        switch (update.type) {
+          case "push": {
+            if (currentHref !== update.url) {
+              navigate.assign(update.url);
+            }
+            return;
+          }
+          case "replace": {
+            if (currentHref !== update.url) {
+              navigate.replace(update.url);
+            }
+            return;
+          }
+          case "pop": {
+            navigate.back();
+            return;
+          }
+          default: {
+            throw new Error(
+              `Unknown history update type: ${(update as { type?: string }).type ?? "unknown"}`,
+            );
+          }
+        }
+      }
 
       const config = (window as any).__sanityVEConfig;
 
       if (config?.enabled) {
         const cleanup = enableVisualEditing({
           zIndex: config.zIndex,
+          history: {
+            subscribe: (navigate) => {
+              let lastUrl = "";
+
+              const publishUrl = (nextUrl: string) => {
+                if (!shouldPublishUrl(nextUrl, lastUrl)) {
+                  return;
+                }
+                lastUrl = nextUrl;
+                navigate({
+                  type: "push",
+                  title: document.title,
+                  url: nextUrl,
+                });
+              };
+
+              const publishCurrentUrl = () => {
+                publishUrl(getPresentationUrl(window.location));
+              };
+
+              const onClick = (event: MouseEvent) => {
+                if (event.defaultPrevented || event.button !== 0) return;
+                if (
+                  event.metaKey ||
+                  event.ctrlKey ||
+                  event.altKey ||
+                  event.shiftKey
+                ) {
+                  return;
+                }
+                const target = event.target;
+                if (!(target instanceof Element)) return;
+                const anchor = target.closest("a[href]");
+                if (!(anchor instanceof HTMLAnchorElement)) return;
+                if (anchor.target && anchor.target !== "_self") return;
+                if (anchor.hasAttribute("download")) return;
+
+                let targetUrl: URL;
+                try {
+                  targetUrl = new URL(anchor.href, window.location.href);
+                } catch {
+                  return;
+                }
+                if (targetUrl.origin !== window.location.origin) return;
+
+                publishUrl(getPresentationUrl(targetUrl));
+              };
+
+              publishCurrentUrl();
+
+              window.addEventListener("popstate", publishCurrentUrl);
+              window.addEventListener("hashchange", publishCurrentUrl);
+              document.addEventListener("click", onClick, true);
+              document.addEventListener("astro:page-load", publishCurrentUrl);
+
+              return () => {
+                window.removeEventListener("popstate", publishCurrentUrl);
+                window.removeEventListener("hashchange", publishCurrentUrl);
+                document.removeEventListener("click", onClick, true);
+                document.removeEventListener(
+                  "astro:page-load",
+                  publishCurrentUrl,
+                );
+              };
+            },
+            update: (update) => {
+              applyPresentationHistoryUpdate(update, window.location.href, {
+                assign: (url) => window.location.assign(url),
+                replace: (url) => window.location.replace(url),
+                back: () => window.history.back(),
+              });
+            },
+          },
           onPerspectiveChange: (perspective) => {
             config.syncPerspective?.(perspective);
           },
