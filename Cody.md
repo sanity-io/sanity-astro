@@ -6,9 +6,11 @@
 - a current PR contaning both is on hold, to be updated with latest of these elements.
 
 ## Up-front notice
-Because it usese the 3.6.0 codebase, for testing it's required to use the complex experimental strategy prop for VisualEditing in Layout.astro of the testing app.
+Because it uses the 3.6.0 codebase, for testing it's required to use the complex experimental strategy prop for VisualEditing in Layout.astro of the testing app.
 
-Our standalone-based segmentation doesn't need any extra props like this, so it is a simple (P)npm install version) drop-in for legacy app code.
+Our standalone-based segmentation presented separately doesn't need any extra props like this, so it is a simple (P)npm install version drop-in for the legacy app code. When combined as intended with this upgrade, there's just the small tweak to loadQuery added, as detailed below. 
+
+It's worth mentioning here that the way middleware is used internally is assured by Astro's implementation not to interfere whatsoever with any middleware that the app may want to add. That will simply run after what's internal here, as a stack, and what we do in ours is a closed box, thus shouldnt interfere with anyone.
 
 ## building local tgz for file-based local nstall
 
