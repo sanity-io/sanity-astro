@@ -1,14 +1,10 @@
-import {existsSync, readFileSync} from 'node:fs'
-import path from 'node:path'
-import {fileURLToPath} from 'node:url'
-
-import {chromium, type ConsoleMessage, type Page} from 'playwright'
+import {chromium, type Page} from 'playwright'
 import {beforeAll, describe, expect, it} from 'vitest'
 
+import {assertSanityAstroIsBuilt} from './built'
+import {trackConsoleErrors} from './console-errors'
 import {startAstroDevServer} from './dev-server'
 import {collectDuplicateModuleErrors} from './duplicate-module-errors'
-
-const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 
 type Fixture = {
   appDirectory: string
@@ -51,34 +47,6 @@ const fixtures: Fixture[] = [
     loadStudio: false,
   },
 ]
-
-function assertSanityAstroIsBuilt() {
-  const packageJson = JSON.parse(readFileSync(path.join(packageRoot, 'package.json'), 'utf8')) as {
-    exports: {'.': {default: string}}
-  }
-  const distEntry = path.join(packageRoot, packageJson.exports['.'].default)
-  if (!existsSync(distEntry)) {
-    throw new Error(
-      'Missing @sanity/astro build output. Run `pnpm --filter @sanity/astro build` before integration tests.',
-    )
-  }
-}
-
-function trackConsoleErrors(page: Page) {
-  const errors: string[] = []
-
-  page.on('console', (message: ConsoleMessage) => {
-    if (message.type() === 'error') {
-      errors.push(message.text())
-    }
-  })
-
-  page.on('pageerror', (error) => {
-    errors.push(error.message)
-  })
-
-  return errors
-}
 
 function assertNoDuplicateModuleErrors(consoleErrors: string[]) {
   expect(collectDuplicateModuleErrors(consoleErrors)).toEqual([])

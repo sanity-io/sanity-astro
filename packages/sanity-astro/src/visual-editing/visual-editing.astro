@@ -1,113 +1,107 @@
 ---
+import type {VisualEditingConfig} from './client'
 import {FOLLOW_UP_RELOAD_KEY} from './follow-up-reload'
 import {resolveRefreshStrategy} from './refresh-strategy'
-import {VisualEditingComponent, type VisualEditingComponentProps} from './visual-editing-component'
 
-export interface Props
-  extends Pick<
-    VisualEditingComponentProps,
-    'zIndex' | 'keepStegaOnCopy' | 'experimental_refreshStrategy'
-  > {
+export interface Props extends VisualEditingConfig {
   enabled?: boolean
 }
 
 const {enabled, zIndex, keepStegaOnCopy, experimental_refreshStrategy} = Astro.props
-
-// Normalize strategy at build/SSR time so the inline script receives a numeric delay.
+const config: VisualEditingConfig = {zIndex, keepStegaOnCopy, experimental_refreshStrategy}
 const resolvedStrategy = resolveRefreshStrategy(experimental_refreshStrategy)
-const followUpDelayMs = resolvedStrategy.followUpDelayMs ?? 0
+const followUpDelayMs =
+  resolvedStrategy.type === 'reload' ? (resolvedStrategy.followUpDelayMs ?? 0) : 0
 ---
 
 {
   enabled ? (
-  <>
-    <script
+    <>
+      <script
         is:inline
         define:vars={{followUpDelayMs, flagKey: FOLLOW_UP_RELOAD_KEY}}
-    >
-      (function () {
-        // Expose synchronous refresh acknowledgement hook and shared timer state on window
-        // before deferred React island bundles download and hydrate.
-        window.__sanityVEConfig = {
-          acknowledgeRefresh: function () {
-            try {
-              sessionStorage.removeItem(flagKey)
-            } catch {}
-            window.__sanityPendingFollowUpUrl = null
-            if (window.__sanityFallbackTimer) {
-              clearTimeout(window.__sanityFallbackTimer)
-              window.__sanityFallbackTimer = null
-            }
-          },
-        }
+      >
+        (function () {
+          // Expose synchronous refresh acknowledgement hook and shared timer state on window
+          // before the client module downloads.
+          window.__sanityVEConfig = {
+            acknowledgeRefresh: function () {
+              try {
+                sessionStorage.removeItem(flagKey)
+              } catch {}
+              window.__sanityPendingFollowUpUrl = null
+              if (window.__sanityFallbackTimer) {
+                clearTimeout(window.__sanityFallbackTimer)
+                window.__sanityFallbackTimer = null
+              }
+            },
+          }
 
-        if (window.self === window.top) return
-        if (!followUpDelayMs || followUpDelayMs <= 0) return
+          if (window.self === window.top) return
+          if (!followUpDelayMs || followUpDelayMs <= 0) return
 
-        // Mark that the inline observer is active so the React island does not attach duplicate listeners.
-        window.__sanityFollowUpInstalled = true
+          // Mark that the inline observer is active so the client does not attach duplicate listeners.
+          window.__sanityFollowUpInstalled = true
 
-        // 1. OBSERVE: Monitor ONLY actual mutation events ('presentation/snapshot-event').
-        // Ignoring 'presentation/preview-snapshots' prevents post-refresh and on-load
-        // snapshot dumps from falsely re-arming flagKey after acknowledgeRefresh().
-        window.addEventListener('message', function (e) {
-          if (
-            e.data &&
-            e.data.type === 'presentation/snapshot-event' &&
-            e.data.data &&
-            e.data.data.event &&
-            e.data.data.event.type === 'mutation'
-          ) {
-            try {
-              sessionStorage.setItem(flagKey, window.location.href)
-            } catch {}
-            // Fallback if the page is already loaded and Comlink drops the accompanying refresh:
-            // ensure a fallback reload still fires after followUpDelayMs.
+          // 1. OBSERVE: Monitor ONLY actual mutation events ('presentation/snapshot-event').
+          // Ignoring 'presentation/preview-snapshots' prevents post-refresh and on-load
+          // snapshot dumps from falsely re-arming flagKey after acknowledgeRefresh().
+          window.addEventListener('message', function (e) {
             if (
-              document.readyState === 'complete' &&
-              !window.__sanityFallbackTimer
+              e.data &&
+              e.data.type === 'presentation/snapshot-event' &&
+              e.data.data &&
+              e.data.data.event &&
+              e.data.data.event.type === 'mutation'
             ) {
-              window.__sanityFallbackTimer = setTimeout(function () {
-                window.__sanityFallbackTimer = null
-                window.__sanityPendingFollowUpUrl = null
-                try {
-                  sessionStorage.removeItem(flagKey)
-                } catch {}
-                window.location.reload()
-              }, followUpDelayMs)
+              try {
+                sessionStorage.setItem(flagKey, window.location.href)
+              } catch {}
+              // Fallback if the page is already loaded and Comlink drops the accompanying refresh:
+              // ensure a fallback reload still fires after followUpDelayMs.
+              if (document.readyState === 'complete' && !window.__sanityFallbackTimer) {
+                window.__sanityFallbackTimer = setTimeout(function () {
+                  window.__sanityFallbackTimer = null
+                  window.__sanityPendingFollowUpUrl = null
+                  try {
+                    sessionStorage.removeItem(flagKey)
+                  } catch {}
+                  window.location.reload()
+                }, followUpDelayMs)
+              }
             }
-          }
-        })
+          })
 
-        // 2. RECONCILE: Check for missed updates on page arrival and consume sessionStorage immediately.
-        window.addEventListener('load', function () {
-          var storedHref = null
-          try {
-            storedHref = sessionStorage.getItem(flagKey)
-            if (storedHref !== null) {
-              sessionStorage.removeItem(flagKey)
-            }
-          } catch {}
+          // 2. RECONCILE: Check for missed updates on page arrival and consume sessionStorage immediately.
+          window.addEventListener('load', function () {
+            var storedHref = null
+            try {
+              storedHref = sessionStorage.getItem(flagKey)
+              if (storedHref !== null) {
+                sessionStorage.removeItem(flagKey)
+              }
+            } catch {}
 
-          if (storedHref === window.location.href) {
-            window.__sanityPendingFollowUpUrl = window.location.href
-            if (!window.__sanityFallbackTimer) {
-              window.__sanityFallbackTimer = setTimeout(function () {
-                window.__sanityFallbackTimer = null
-                window.__sanityPendingFollowUpUrl = null
-                window.location.reload()
-              }, followUpDelayMs)
+            if (storedHref === window.location.href) {
+              window.__sanityPendingFollowUpUrl = window.location.href
+              if (!window.__sanityFallbackTimer) {
+                window.__sanityFallbackTimer = setTimeout(function () {
+                  window.__sanityFallbackTimer = null
+                  window.__sanityPendingFollowUpUrl = null
+                  window.location.reload()
+                }, followUpDelayMs)
+              }
             }
-          }
-        })
-      })()
-    </script>
-    <VisualEditingComponent
-        client:only="react"
-        zIndex={zIndex}
-        keepStegaOnCopy={keepStegaOnCopy}
-        experimental_refreshStrategy={experimental_refreshStrategy}
-    />
-  </>
-    ) : null
-  }
+          })
+        })()
+      </script>
+      <sanity-astro-visual-editing hidden data-config={JSON.stringify(config)}
+      ></sanity-astro-visual-editing>
+    </>
+  ) : null
+}
+<script>
+  import {install} from './bootstrap'
+
+  install()
+</script>

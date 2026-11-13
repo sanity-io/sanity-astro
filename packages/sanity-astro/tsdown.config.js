@@ -6,7 +6,15 @@ export default defineConfig((inlineConfig) => ({
   platform: 'node',
   dts: {
     // Type tests augment the global `SanityQueries` registry, which must not ship
-    tsconfigRaw: {exclude: ['node_modules/*', 'dist', 'src/**/*.test-d.ts']},
+    tsconfigRaw: {
+      exclude: [
+        'node_modules/*',
+        'dist',
+        'src/**/*.test-d.ts',
+        'src/**/*.test.ts',
+        'src/**/*.test.tsx',
+      ],
+    },
   },
   // Builds start from an empty dist so stale files never ship. Watch rebuilds keep the existing
   // files to avoid transient package entry resolution failures in consuming apps.
