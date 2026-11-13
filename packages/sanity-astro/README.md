@@ -122,7 +122,7 @@ export default defineConfig({
   output: 'server',
   integrations: [
     sanity({
-      // Build-time values, used wherever the runtime values can't reach
+      // Build-time values, for browser code and when a variable is unset
       projectId: '<YOUR-PROJECT-ID>',
       dataset: 'production',
       // Read on the server when it runs
@@ -142,6 +142,8 @@ The runtime values apply to:
 
 - `sanityClient` (the default client) in server code: pages, endpoints and middleware rendered on demand
 - the embedded Studio with `browser` history, which receives them from the server when the route is rendered. It supports a single workspace config, not an array of workspaces.
+
+Everything else keeps the build-time values: `sanityClient` in browser code, other named clients, and the Studio with `hash` history. Prerendered pages and `sanityLoader` run during the build, so they get the variables only if they are set then. The Studio falls back to the `projectId` and `dataset` in `sanity.config.ts`, and the values it receives are rendered into the page.
 
 ### Loading Sanity documents into content collections
 

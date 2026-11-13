@@ -54,8 +54,9 @@ export type IntegrationOptions = ClientConfig & {
   /**
    * Reads `projectId` and/or `dataset` from these environment variables when the server runs,
    * through `astro:env`, so one build can serve several datasets. Applies to the default client
-   * in server code and to the Studio route with `browser` history; browser code, prerendered
-   * pages and `hash` history keep the build-time values, which stay required. Requires Astro 5.
+   * in server code and to the Studio route with `browser` history; browser code, named clients
+   * and `hash` history keep the build-time values, which stay required. Prerendered pages read
+   * the variables during the build. Requires Astro 5.
    */
   env?: RuntimeEnvOption
 }
