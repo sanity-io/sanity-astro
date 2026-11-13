@@ -1,4 +1,6 @@
 ---
+import {runtimeConfig} from 'sanity:studio'
+
 import {StudioComponent} from './studio-component'
 
 // This route needs to run in "SPA" mode, so we need to set `prerender` to `false`
@@ -26,6 +28,6 @@ export const prerender = false
     </style>
   </head>
   <body>
-    <StudioComponent client:only="react" />
+    <StudioComponent client:only="react" runtimeConfig={runtimeConfig} />
   </body>
 </html>

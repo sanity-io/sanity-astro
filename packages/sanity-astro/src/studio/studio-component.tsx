@@ -10,7 +10,18 @@ if (!config) {
   )
 }
 
-export function StudioComponent(props: {history?: 'browser' | 'hash'}) {
+type RuntimeConfig = {projectId?: string; dataset?: string}
+
+export function StudioComponent(props: {
+  history?: 'browser' | 'hash'
+  /** Values the server read through the integration's `env` option. */
+  runtimeConfig?: RuntimeConfig
+}) {
+  const {runtimeConfig} = props
+  const resolvedConfig = React.useMemo(
+    () => applyRuntimeConfig(config, runtimeConfig),
+    [runtimeConfig],
+  )
   const history = React.useMemo(
     () => (props.history === 'hash' ? createHashHistoryForStudio() : undefined),
     [props.history],
@@ -101,13 +112,24 @@ export function StudioComponent(props: {history?: 'browser' | 'hash'}) {
         overflow: 'auto',
       }}
     >
-      <Studio config={config} unstable_history={history} />
+      <Studio config={resolvedConfig} unstable_history={history} />
     </div>
   )
 }
 
 export function StudioComponentHash() {
   return <StudioComponent history="hash" />
+}
+
+function applyRuntimeConfig<T>(studioConfig: T, runtimeConfig: RuntimeConfig | undefined): T {
+  if (!runtimeConfig) {
+    return studioConfig
+  }
+  return (
+    Array.isArray(studioConfig)
+      ? studioConfig.map((workspace) => ({...workspace, ...runtimeConfig}))
+      : {...studioConfig, ...runtimeConfig}
+  ) as T
 }
 
 function getFirstWorkspaceBasePath(studioConfig: unknown): string {

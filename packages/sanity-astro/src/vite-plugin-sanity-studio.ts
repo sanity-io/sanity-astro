@@ -1,11 +1,13 @@
 import type {PartialDeep} from 'type-fest'
 import type {PluginOption} from 'vite'
 
+import {type RuntimeEnvOption, runtimeEnvModuleCode} from './runtime-env'
 import {normalizeStudioBasePath} from './studio-base-path'
 
 export function vitePluginSanityStudio(resolvedOptions: {
   studioBasePath?: string
   studioRouterHistory?: 'browser' | 'hash'
+  env?: RuntimeEnvOption
 }) {
   const virtualModuleId = 'sanity:studio'
   const resolvedVirtualModuleId = virtualModuleId
@@ -18,7 +20,7 @@ export function vitePluginSanityStudio(resolvedOptions: {
       }
       return null
     },
-    async load(id: string) {
+    async load(id: string, loadOptions?: {ssr?: boolean}) {
       if (id === virtualModuleId) {
         const studioConfig = await this.resolve('/sanity.config')
         if (!studioConfig) {
@@ -39,11 +41,18 @@ export function vitePluginSanityStudio(resolvedOptions: {
         }
         const studioRouterHistory =
           resolvedOptions.studioRouterHistory === 'hash' ? 'hash' : 'browser'
+        const env = resolvedOptions.env
+        const runtimeEnvCode =
+          env && loadOptions?.ssr === true
+            ? runtimeEnvModuleCode(env)
+            : 'const runtimeEnv = undefined;'
         return `
         import studioConfig from "${studioConfig.id}";
+        ${runtimeEnvCode}
 
         const embeddedStudioBasePath = "${studioBasePath}";
         const historyMode = "${studioRouterHistory}";
+        const usesRuntimeEnv = ${env !== undefined};
         const hashWorkspaceRootPath = "/";
         const browserWorkspaceRootPath = embeddedStudioBasePath;
 
@@ -88,6 +97,14 @@ export function vitePluginSanityStudio(resolvedOptions: {
             warnAboutBasePathOverride();
           }
         }
+
+        if (usesRuntimeEnv && Array.isArray(studioConfig) && studioConfig.length > 1) {
+          throw new Error(
+            "[@sanity/astro]: The \`env\` option supports a Studio with a single workspace. Remove \`env\` or configure one workspace in sanity.config.ts|js.",
+          );
+        }
+
+        export const runtimeConfig = runtimeEnv;
 
         export const config = Array.isArray(studioConfig)
           ? studioConfig.map((workspace, index, allWorkspaces) => ({

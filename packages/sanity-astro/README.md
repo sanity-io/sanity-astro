@@ -112,6 +112,37 @@ To log server-side requests made with `sanity:client`, set `logClientRequests` i
 
 If omitted, request logging is disabled.
 
+### Reading `projectId` and `dataset` at runtime
+
+`projectId` and `dataset` are written into the build. To build once and choose the dataset when the server starts, for example when the same Docker image runs in several environments, name the environment variables in `env`:
+
+```javascript
+// astro.config.mjs
+export default defineConfig({
+  output: 'server',
+  integrations: [
+    sanity({
+      // Build-time values, used wherever the runtime values can't reach
+      projectId: '<YOUR-PROJECT-ID>',
+      dataset: 'production',
+      // Read on the server when it runs
+      env: {
+        projectId: 'SANITY_PROJECT_ID',
+        dataset: 'SANITY_DATASET',
+      },
+      studioBasePath: '/admin',
+    }),
+  ],
+})
+```
+
+The integration declares the variables in [`astro:env`](https://docs.astro.build/en/guides/environment-variables/#type-safe-environment-variables) as optional `context: 'server', access: 'secret'` strings, the only kind Astro reads when the server runs. Requires Astro 5 or later.
+
+The runtime values apply to:
+
+- `sanityClient` (the default client) in server code: pages, endpoints and middleware rendered on demand
+- the embedded Studio with `browser` history, which receives them from the server when the route is rendered. Only a Studio with a single workspace is supported.
+
 ### Loading Sanity documents into content collections
 
 On Astro 5 and later, `sanityLoader` feeds a GROQ query into the [Content Layer][content-layer], so `getCollection()` and `getEntry()` work the same way for Sanity documents as for local Markdown. The loader is **experimental**: it is opt-in through its own `@sanity/astro/loader` entrypoint and its options may change in a minor release. Pass the client from `sanity:client` so the loader reuses your integration config:

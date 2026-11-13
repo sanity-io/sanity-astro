@@ -352,3 +352,79 @@ describe('sanity integration studio router history defaults', () => {
     )
   })
 })
+
+async function setupWithEnv(
+  options: IntegrationOptions,
+  astroConfig: {output?: string; env?: {schema?: Record<string, unknown>}} = {
+    output: 'server',
+    env: {schema: {}},
+  },
+) {
+  const updateConfig = vi.fn()
+  await sanityIntegration(options).hooks['astro:config:setup']?.({
+    config: astroConfig,
+    injectRoute: vi.fn(),
+    injectScript: vi.fn(),
+    updateConfig,
+  } as never)
+  return updateConfig.mock.calls[0][0]
+}
+
+describe('sanity integration env option', () => {
+  const baseOptions = {projectId: 'project-id', dataset: 'dataset-name', studioBasePath: '/admin'}
+
+  it('declares the variables as optional server secrets so Astro reads them at runtime', async () => {
+    const config = await setupWithEnv({
+      ...baseOptions,
+      env: {projectId: 'SANITY_PROJECT_ID', dataset: 'SANITY_DATASET'},
+    })
+
+    expect(config.env.schema).toEqual({
+      SANITY_PROJECT_ID: {type: 'string', context: 'server', access: 'secret', optional: true},
+      SANITY_DATASET: {type: 'string', context: 'server', access: 'secret', optional: true},
+    })
+  })
+
+  it('keeps a matching declaration from the project', async () => {
+    const config = await setupWithEnv(
+      {...baseOptions, env: {dataset: 'SANITY_DATASET'}},
+      {
+        output: 'server',
+        env: {schema: {SANITY_DATASET: {type: 'string', context: 'server', access: 'secret'}}},
+      },
+    )
+
+    expect(config.env.schema).toEqual({})
+  })
+
+  it('rejects a declaration Astro would inline at build time', async () => {
+    await expect(
+      setupWithEnv(
+        {...baseOptions, env: {dataset: 'PUBLIC_SANITY_DATASET'}},
+        {
+          output: 'server',
+          env: {
+            schema: {PUBLIC_SANITY_DATASET: {type: 'string', context: 'server', access: 'public'}},
+          },
+        },
+      ),
+    ).rejects.toThrow(/needs it as `envField.string\(\{context: 'server', access: 'secret'\}\)`/)
+  })
+
+  it('requires astro:env (Astro 5)', async () => {
+    await expect(
+      setupWithEnv({...baseOptions, env: {dataset: 'SANITY_DATASET'}}, {output: 'server'}),
+    ).rejects.toThrow(/through `astro:env`, which this Astro version does not have/)
+  })
+
+  it('leaves env.schema alone without the option', async () => {
+    expect(await setupWithEnv(baseOptions)).not.toHaveProperty('env')
+  })
+
+  it.each([
+    [{dataset: 'SANITY-DATASET'}, /`env.dataset` must be the name of an environment variable/],
+    [{projectId: 'sanity_project_id'}, /`env.projectId` must be the name/],
+  ])('rejects env: %j', (env, message) => {
+    expect(() => sanityIntegration({...baseOptions, env: env as never})).toThrow(message)
+  })
+})

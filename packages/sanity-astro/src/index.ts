@@ -3,6 +3,7 @@ import type {AstroIntegration, AstroUserConfig} from 'astro'
 
 import {CLIENT_TYPES_FILENAME, generateClientTypes} from './client-types'
 import {type NamedClientConfig, resolveClientConfigs} from './resolve-clients'
+import {resolveRuntimeEnv, type RuntimeEnvOption, runtimeEnvSchema} from './runtime-env'
 import {normalizeStudioBasePath, studioRoutePattern} from './studio-base-path'
 import {vitePluginSanityClient} from './vite-plugin-sanity-client'
 import {vitePluginSanityModuleDedupe} from './vite-plugin-sanity-module-dedupe'
@@ -15,7 +16,7 @@ import {vitePluginSanityStudioHashRouter} from './vite-plugin-sanity-studio-hash
 // crashes TypeScript 5.9 while it reports the mismatch, so it is typed as Astro's own option.
 type AstroVitePlugins = NonNullable<NonNullable<AstroUserConfig['vite']>['plugins']>
 
-export type {NamedClientConfig}
+export type {NamedClientConfig, RuntimeEnvOption}
 
 export type StudioRouterHistory = 'browser' | 'hash'
 export type LogClientRequests = 'dev' | 'build' | 'always'
@@ -49,6 +50,13 @@ export type IntegrationOptions = ClientConfig & {
    * Top-level client options can be used instead of `clients.default`, but not together with it.
    */
   clients?: Record<string, NamedClientConfig>
+  /**
+   * Reads `projectId` and/or `dataset` from these environment variables when the server runs,
+   * through `astro:env`, so one build can serve several datasets. Applies to the default client
+   * in server code and to the Studio route with `browser` history; browser code, prerendered
+   * pages and `hash` history keep the build-time values, which stay required. Requires Astro 5.
+   */
+  env?: RuntimeEnvOption
 }
 
 const defaultClientConfig: ClientConfig = {
@@ -84,8 +92,10 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
     logClientRequests,
     injectTypes: shouldInjectTypes = false,
     clients,
+    env: envOption,
     ...clientConfig
   } = options
+  const env = resolveRuntimeEnv(envOption)
   const normalizedStudioBasePath = normalizeStudioBasePath(studioBasePath)
 
   if (!!studioBasePath && studioBasePath.match(/https?:\/\//)) {
@@ -108,20 +118,28 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
           requestedStudioRouterHistory,
           config?.output,
         )
+        if (env && !config?.env) {
+          throw new Error(
+            '[@sanity/astro]: The `env` option reads its variables through `astro:env`, which this Astro version does not have. Upgrade to Astro 5 or later, or remove `env`',
+          )
+        }
         const vitePlugins = [
           ...(process.env.SANITY_ASTRO_DISABLE_MODULE_DEDUPE
             ? []
             : [vitePluginSanityModuleDedupe()]),
-          vitePluginSanityClient(resolvedClients, {logClientRequests}),
+          vitePluginSanityClient(resolvedClients, {logClientRequests, env}),
           vitePluginSanityStudio({
             studioBasePath: normalizedStudioBasePath,
             studioRouterHistory,
+            // The hash-history route is prerendered, so it can only use build-time values.
+            env: studioRouterHistory === 'browser' ? env : undefined,
           }),
           vitePluginSanityStudioHashRouter(),
           vitePluginSanityStudioChunkWarning(),
         ]
 
         updateConfig({
+          ...(env && {env: {schema: runtimeEnvSchema(env, config.env?.schema)}}),
           vite: {
             plugins: vitePlugins as AstroVitePlugins,
           },
