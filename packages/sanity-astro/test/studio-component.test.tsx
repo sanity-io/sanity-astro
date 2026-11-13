@@ -76,15 +76,12 @@ describe('StudioComponent', () => {
       ...workspace,
       dataset: 'runtime',
     })
-    expect((await renderStudio([workspace], 'browser', {dataset: 'runtime'})).config).toEqual([
-      {...workspace, dataset: 'runtime'},
-    ])
   })
 
-  it('rejects the runtime config for a Studio with several workspaces', async () => {
+  it('rejects the runtime config for an array of workspaces', async () => {
     await expect(
-      renderStudio([{name: 'a'}, {name: 'b'}], 'browser', {dataset: 'runtime'}),
-    ).rejects.toThrow(/supports a Studio with a single workspace/)
+      renderStudio([{name: 'default'}], 'browser', {dataset: 'runtime'}),
+    ).rejects.toThrow(/not an array of workspaces/)
   })
 
   it('hands Studio a hash history that reports plain locations to listeners', async () => {

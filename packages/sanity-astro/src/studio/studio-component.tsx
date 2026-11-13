@@ -18,13 +18,13 @@ export function StudioComponent(props: {
   runtimeConfig?: RuntimeConfig
 }) {
   const {runtimeConfig} = props
-  if (runtimeConfig && Array.isArray(config) && config.length > 1) {
+  if (runtimeConfig && Array.isArray(config)) {
     throw new Error(
-      '[@sanity/astro]: The `env` option supports a Studio with a single workspace. Remove `env` or configure one workspace in sanity.config.ts|js.',
+      '[@sanity/astro]: The `env` option supports a Studio with a single workspace, not an array of workspaces. Remove `env` or export a single workspace from sanity.config.ts|js.',
     )
   }
   const resolvedConfig = React.useMemo(
-    () => applyRuntimeConfig(config, runtimeConfig),
+    () => (runtimeConfig ? {...config, ...runtimeConfig} : config),
     [runtimeConfig],
   )
   const history = React.useMemo(
@@ -124,17 +124,6 @@ export function StudioComponent(props: {
 
 export function StudioComponentHash() {
   return <StudioComponent history="hash" />
-}
-
-function applyRuntimeConfig<T>(studioConfig: T, runtimeConfig: RuntimeConfig | undefined): T {
-  if (!runtimeConfig) {
-    return studioConfig
-  }
-  return (
-    Array.isArray(studioConfig)
-      ? studioConfig.map((workspace) => ({...workspace, ...runtimeConfig}))
-      : {...studioConfig, ...runtimeConfig}
-  ) as T
 }
 
 function getFirstWorkspaceBasePath(studioConfig: unknown): string {

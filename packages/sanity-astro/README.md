@@ -141,7 +141,7 @@ The integration reads the variables with [`getSecret`](https://docs.astro.build/
 The runtime values apply to:
 
 - `sanityClient` (the default client) in server code: pages, endpoints and middleware rendered on demand
-- the embedded Studio with `browser` history, which receives them from the server when the route is rendered. Only a Studio with a single workspace is supported.
+- the embedded Studio with `browser` history, which receives them from the server when the route is rendered. It supports a single workspace config, not an array of workspaces.
 
 ### Loading Sanity documents into content collections
 
