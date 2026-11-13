@@ -69,7 +69,7 @@
     "astro": "7.4.2",
     "groq": "^6.9.2",
     "jsdom": "^29.1.1",
-    "playwright": "^1.52.0",
+    "playwright": "^1.65.0",
     "publint": "^0.3.24",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
