@@ -35,7 +35,7 @@ function evaluateVirtualClientModule({
   ssr?: boolean
   /** The integration's `env` option */
   runtimeEnv?: RuntimeEnvOption
-  /** Values `astro:env/server` exports when the server runs */
+  /** Values `getSecret` from `astro:env/server` returns when the server runs */
   astroEnv?: Record<string, string | undefined>
 }): VirtualClientModule {
   const plugin = vitePluginSanityClient(resolvedClients, {logClientRequests, env: runtimeEnv})
@@ -56,7 +56,10 @@ function evaluateVirtualClientModule({
 
   const executableSource = source
     .replace('import { createClient } from "@sanity/client";', 'const {createClient} = __deps;')
-    .replace(/import \{([^}]*)\} from "astro:env\/server";/, 'const {$1} = __deps.astroEnv;')
+    .replace(
+      'import { getSecret } from "astro:env/server";',
+      'const getSecret = (name) => __deps.astroEnv[name];',
+    )
     .replace(/import\.meta\.env\.DEV/g, '__deps.importMeta.env.DEV')
     .replace(/import\.meta\.env\.PROD/g, '__deps.importMeta.env.PROD')
     .replace(
@@ -353,16 +356,6 @@ describe('vitePluginSanityClient env option', () => {
     })
 
     expect(defaultConfig).toEqual(twoClients.clients.default)
-  })
-
-  it('imports a variable used for both values once', () => {
-    const [defaultConfig] = createdConfigs({
-      ssr: true,
-      runtimeEnv: {projectId: 'SANITY_VALUE', dataset: 'SANITY_VALUE'},
-      astroEnv: {SANITY_VALUE: 'same'},
-    })
-
-    expect(defaultConfig).toEqual({projectId: 'same', dataset: 'same'})
   })
 
   it('leaves astro:env out of the browser module', () => {

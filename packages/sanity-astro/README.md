@@ -136,7 +136,7 @@ export default defineConfig({
 })
 ```
 
-The integration declares the variables in [`astro:env`](https://docs.astro.build/en/guides/environment-variables/#type-safe-environment-variables) as optional `context: 'server', access: 'secret'` strings, the only kind Astro reads when the server runs. Requires Astro 5 or later.
+The integration reads the variables with [`getSecret`](https://docs.astro.build/en/reference/modules/astro-env/#getsecret) from `astro:env/server`, which reads them when the server runs. They don't need to be declared in `env.schema`. Requires Astro 5 or later.
 
 The runtime values apply to:
 

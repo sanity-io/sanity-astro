@@ -3,7 +3,7 @@ import type {AstroIntegration, AstroUserConfig} from 'astro'
 
 import {CLIENT_TYPES_FILENAME, generateClientTypes} from './client-types'
 import {type NamedClientConfig, resolveClientConfigs} from './resolve-clients'
-import {resolveRuntimeEnv, type RuntimeEnvOption, runtimeEnvSchema} from './runtime-env'
+import type {RuntimeEnvOption} from './runtime-env'
 import {normalizeStudioBasePath, studioRoutePattern} from './studio-base-path'
 import {vitePluginSanityClient} from './vite-plugin-sanity-client'
 import {vitePluginSanityModuleDedupe} from './vite-plugin-sanity-module-dedupe'
@@ -93,10 +93,9 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
     logClientRequests,
     injectTypes: shouldInjectTypes = false,
     clients,
-    env: envOption,
+    env,
     ...clientConfig
   } = options
-  const env = resolveRuntimeEnv(envOption)
   const normalizedStudioBasePath = normalizeStudioBasePath(studioBasePath)
 
   if (!!studioBasePath && studioBasePath.match(/https?:\/\//)) {
@@ -140,7 +139,6 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
         ]
 
         updateConfig({
-          ...(env && {env: {schema: runtimeEnvSchema(env, config.env?.schema)}}),
           vite: {
             plugins: vitePlugins as AstroVitePlugins,
           },

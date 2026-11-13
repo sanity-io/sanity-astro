@@ -15,7 +15,10 @@ function loadModule(env: Parameters<typeof vitePluginSanityStudioRuntimeEnv>[0],
 
 function evaluate(code: string, astroEnv: Record<string, string>) {
   const executable = code
-    .replace(/import \{([^}]*)\} from "astro:env\/server";/, 'const {$1} = __astroEnv;')
+    .replace(
+      'import { getSecret } from "astro:env/server";',
+      'const getSecret = (name) => __astroEnv[name];',
+    )
     .replace('export default', 'return')
   return new Function('__astroEnv', executable)(astroEnv)
 }
