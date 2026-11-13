@@ -81,6 +81,12 @@ describe('StudioComponent', () => {
     ])
   })
 
+  it('rejects the runtime config for a Studio with several workspaces', async () => {
+    await expect(
+      renderStudio([{name: 'a'}, {name: 'b'}], 'browser', {dataset: 'runtime'}),
+    ).rejects.toThrow(/supports a Studio with a single workspace/)
+  })
+
   it('hands Studio a hash history that reports plain locations to listeners', async () => {
     const props = await renderStudio({name: 'default', basePath: '/'}, 'hash')
     const listener = vi.fn()

@@ -11,7 +11,6 @@ type StudioPluginOptions = Parameters<typeof vitePluginSanityStudio>[0]
 type LoadHook = (
   this: {resolve: (id: string) => Promise<{id: string} | null>},
   id: string,
-  options?: {ssr?: boolean},
 ) => unknown
 
 const tempDirs: string[] = []
@@ -24,7 +23,6 @@ afterEach(async () => {
 async function generateStudioModule(
   options: StudioPluginOptions,
   studioConfigSource: string | null,
-  ssr?: boolean,
 ) {
   const plugin = vitePluginSanityStudio(options)
   const load = plugin.load as unknown as LoadHook
@@ -41,30 +39,16 @@ async function generateStudioModule(
         studioConfigSource === null ? null : {id: pathToFileURL(configPath).href},
     },
     'sanity:studio',
-    {ssr},
   ) as Promise<string>
 }
 
-async function importStudioModule(
-  options: StudioPluginOptions,
-  studioConfigSource: string,
-  {ssr, astroEnv = {}}: {ssr?: boolean; astroEnv?: Record<string, string>} = {},
-) {
-  const code = (await generateStudioModule(options, studioConfigSource, ssr)).replace(
-    /import \{([^}]*)\} from "astro:env\/server";/,
-    `const {$1} = ${JSON.stringify(astroEnv)};`,
-  )
+async function evaluateStudioModule(options: StudioPluginOptions, studioConfigSource: string) {
+  const code = await generateStudioModule(options, studioConfigSource)
   const dir = tempDirs[tempDirs.length - 1]
   const modulePath = path.join(dir, `studio-${Math.random().toString(36).slice(2)}.mjs`)
   await writeFile(modulePath, code)
-  return (await import(pathToFileURL(modulePath).href)) as {
-    config: unknown
-    runtimeConfig: unknown
-  }
-}
-
-async function evaluateStudioModule(options: StudioPluginOptions, studioConfigSource: string) {
-  return (await importStudioModule(options, studioConfigSource)).config
+  const studioModule = (await import(pathToFileURL(modulePath).href)) as {config: unknown}
+  return studioModule.config
 }
 
 describe('vitePluginSanityStudio', () => {
@@ -155,36 +139,5 @@ describe('vitePluginSanityStudio', () => {
     )
 
     expect(warn).not.toHaveBeenCalled()
-  })
-
-  describe('env option', () => {
-    const options: StudioPluginOptions = {
-      studioBasePath: '/admin',
-      studioRouterHistory: 'browser',
-      env: {dataset: 'SANITY_DATASET'},
-    }
-
-    it('exports the runtime values on the server', async () => {
-      const studioModule = await importStudioModule(options, 'export default {dataset: "build"}', {
-        ssr: true,
-        astroEnv: {SANITY_DATASET: 'runtime'},
-      })
-
-      expect(studioModule.runtimeConfig).toEqual({dataset: 'runtime'})
-      expect(studioModule.config).toEqual({dataset: 'build', basePath: '/admin'})
-    })
-
-    it('exports no runtime values to the browser', async () => {
-      const source = 'export default {dataset: "build"}'
-
-      expect(await generateStudioModule(options, source, false)).not.toContain('from "astro:env')
-      expect((await importStudioModule(options, source)).runtimeConfig).toBeUndefined()
-    })
-
-    it('rejects a Studio with several workspaces', async () => {
-      await expect(
-        importStudioModule(options, 'export default [{name: "a"}, {name: "b"}]', {ssr: true}),
-      ).rejects.toThrow(/supports a Studio with a single workspace/)
-    })
   })
 })

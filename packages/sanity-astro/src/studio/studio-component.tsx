@@ -18,6 +18,11 @@ export function StudioComponent(props: {
   runtimeConfig?: RuntimeConfig
 }) {
   const {runtimeConfig} = props
+  if (runtimeConfig && Array.isArray(config) && config.length > 1) {
+    throw new Error(
+      '[@sanity/astro]: The `env` option supports a Studio with a single workspace. Remove `env` or configure one workspace in sanity.config.ts|js.',
+    )
+  }
   const resolvedConfig = React.useMemo(
     () => applyRuntimeConfig(config, runtimeConfig),
     [runtimeConfig],

@@ -131,11 +131,6 @@ declare module 'sanity:client' {
 
 declare module 'sanity:studio' {
   export const config: import('sanity').Config
-  /**
-   * The values the server read through the integration's `env` option, for the Studio route.
-   * `undefined` in browser code and without the option.
-   */
-  export const runtimeConfig: {projectId?: string; dataset?: string} | undefined
 }
 
 declare module '*.astro' {
