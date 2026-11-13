@@ -2,8 +2,8 @@ import type {ClientConfig} from '@sanity/client'
 import {describe, expect, it, vi} from 'vitest'
 
 import type {ResolvedClients} from './resolve-clients'
-import type {RuntimeEnvOption} from './runtime-env'
 import {vitePluginSanityClient} from './vite-plugin-sanity-client'
+import type {RuntimeEnvOption} from './vite-plugin-sanity-studio-runtime-env'
 
 type LogMode = 'dev' | 'build' | 'always' | undefined
 type FakeClient = Record<string, unknown>

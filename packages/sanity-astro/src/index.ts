@@ -3,14 +3,16 @@ import type {AstroIntegration, AstroUserConfig} from 'astro'
 
 import {CLIENT_TYPES_FILENAME, generateClientTypes} from './client-types'
 import {type NamedClientConfig, resolveClientConfigs} from './resolve-clients'
-import type {RuntimeEnvOption} from './runtime-env'
 import {normalizeStudioBasePath, studioRoutePattern} from './studio-base-path'
 import {vitePluginSanityClient} from './vite-plugin-sanity-client'
 import {vitePluginSanityModuleDedupe} from './vite-plugin-sanity-module-dedupe'
 import {vitePluginSanityStudio} from './vite-plugin-sanity-studio'
 import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-chunk-warning'
 import {vitePluginSanityStudioHashRouter} from './vite-plugin-sanity-studio-hash-router'
-import {vitePluginSanityStudioRuntimeEnv} from './vite-plugin-sanity-studio-runtime-env'
+import {
+  type RuntimeEnvOption,
+  vitePluginSanityStudioRuntimeEnv,
+} from './vite-plugin-sanity-studio-runtime-env'
 
 // The plugin factories return Vite's `PluginOption` from this package's copy of Vite, which can
 // differ from the copy Astro's config types reference. Passing the array to `updateConfig` as is

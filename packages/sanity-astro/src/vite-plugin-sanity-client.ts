@@ -3,7 +3,7 @@ import type {PartialDeep} from 'type-fest'
 import type {PluginOption} from 'vite'
 
 import {DEFAULT_CLIENT_NAME, type ResolvedClients} from './resolve-clients'
-import {type RuntimeEnvOption, runtimeEnvModuleCode} from './runtime-env'
+import {type RuntimeEnvOption, runtimeEnvCode} from './vite-plugin-sanity-studio-runtime-env'
 
 const virtualModuleId = 'sanity:client'
 const resolvedVirtualModuleId = '\0' + virtualModuleId
@@ -58,7 +58,7 @@ export function vitePluginSanityClient(
         const serializedClients = serializeClients(isServerBuild)
         return `
           import { createClient } from "@sanity/client";
-          ${isServerBuild && env ? runtimeEnvModuleCode(env) : ''}
+          ${runtimeEnvCode(env, isServerBuild)}
 
           const logClientRequests = ${serialize(logClientRequests)};
           const shouldLogInCurrentMode =

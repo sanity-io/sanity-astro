@@ -1,37 +1,43 @@
 import {describe, expect, it} from 'vitest'
 
-import {vitePluginSanityStudioRuntimeEnv} from './vite-plugin-sanity-studio-runtime-env'
+import {
+  runtimeEnvCode,
+  vitePluginSanityStudioRuntimeEnv,
+} from './vite-plugin-sanity-studio-runtime-env'
 
-function loadModule(env: Parameters<typeof vitePluginSanityStudioRuntimeEnv>[0], ssr: boolean) {
-  const plugin = vitePluginSanityStudioRuntimeEnv(env)
-  const resolveId = plugin.resolveId as (id: string) => string | null
-  const load = plugin.load as (id: string, options: {ssr: boolean}) => string
-  const resolvedId = resolveId('sanity:studio-runtime-env')
-  if (!resolvedId) {
-    throw new Error('Expected sanity:studio-runtime-env to resolve')
-  }
-  return load(resolvedId, {ssr})
-}
-
-function evaluate(code: string, astroEnv: Record<string, string>) {
+function evaluate(code: string, astroEnv: Record<string, string> = {}) {
   const executable = code
     .replace(
       'import { getSecret } from "astro:env/server";',
       'const getSecret = (name) => __astroEnv[name];',
     )
-    .replace('export default', 'return')
-  return new Function('__astroEnv', executable)(astroEnv)
+    .replace('export default runtimeEnv;', '')
+  return new Function('__astroEnv', `${executable}\nreturn runtimeEnv;`)(astroEnv)
 }
 
-describe('vitePluginSanityStudioRuntimeEnv', () => {
-  it('exports the runtime values on the server', () => {
-    const code = loadModule({dataset: 'SANITY_DATASET'}, true)
+describe('runtimeEnvCode', () => {
+  it('reads the variables on the server and leaves out unset or empty ones', () => {
+    const code = runtimeEnvCode({projectId: 'SANITY_PROJECT_ID', dataset: 'SANITY_DATASET'}, true)
 
-    expect(evaluate(code, {SANITY_DATASET: 'runtime'})).toEqual({dataset: 'runtime'})
+    expect(evaluate(code, {SANITY_DATASET: 'runtime', SANITY_PROJECT_ID: ''})).toEqual({
+      dataset: 'runtime',
+    })
   })
 
-  it('exports nothing in the browser or without the option', () => {
-    expect(loadModule({dataset: 'SANITY_DATASET'}, false)).toBe('export default undefined;')
-    expect(loadModule(undefined, true)).toBe('export default undefined;')
+  it('declares undefined in the browser or without the option', () => {
+    expect(evaluate(runtimeEnvCode({dataset: 'SANITY_DATASET'}, false))).toBeUndefined()
+    expect(evaluate(runtimeEnvCode(undefined, true))).toBeUndefined()
+  })
+})
+
+describe('vitePluginSanityStudioRuntimeEnv', () => {
+  it('exports runtimeEnv from sanity:studio-runtime-env', () => {
+    const plugin = vitePluginSanityStudioRuntimeEnv({dataset: 'SANITY_DATASET'})
+    const resolveId = plugin.resolveId as (id: string) => string | null
+    const load = plugin.load as (id: string, options: {ssr: boolean}) => string
+    const code = load(resolveId('sanity:studio-runtime-env') ?? '', {ssr: true})
+
+    expect(code).toContain('export default runtimeEnv;')
+    expect(evaluate(code, {SANITY_DATASET: 'runtime'})).toEqual({dataset: 'runtime'})
   })
 })
