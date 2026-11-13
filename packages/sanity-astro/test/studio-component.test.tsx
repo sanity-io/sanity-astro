@@ -28,13 +28,13 @@ vi.mock('sanity', () => ({
 async function renderStudio(
   studioConfig: unknown,
   history?: 'browser' | 'hash',
-  runtimeConfig?: {projectId?: string; dataset?: string},
+  runtimeEnv?: {projectId?: string; dataset?: string},
 ) {
   studio.config = studioConfig
   vi.resetModules()
   const {StudioComponent} = await import('../src/studio/studio-component')
 
-  await renderInAct(React.createElement(StudioComponent, {history, runtimeConfig}))
+  await renderInAct(React.createElement(StudioComponent, {history, runtimeEnv}))
   return studioRenders[studioRenders.length - 1]
 }
 

@@ -136,12 +136,12 @@ export default defineConfig({
 })
 ```
 
-The integration reads the variables with [`getSecret`](https://docs.astro.build/en/reference/modules/astro-env/#getsecret) from `astro:env/server`, which reads them when the server runs. They don't need to be declared in `env.schema`. Requires Astro 5 or later.
+The integration reads the variables at runtime with [`getSecret`](https://docs.astro.build/en/reference/modules/astro-env/#getsecret) from `astro:env/server`, so they don't need to be declared in `env.schema`. Requires Astro 5 or later.
 
 The runtime values apply to:
 
 - `sanityClient` (the default client) in server code: pages, endpoints and middleware rendered on demand
-- the embedded Studio with `browser` history, which receives them from the server when the route is rendered. It supports a single workspace config, not an array of workspaces.
+- the embedded Studio with `browser` history, which receives them from the server when the route is rendered. It supports a single workspace config; an array of workspaces throws.
 
 Everything else keeps the build-time values: `sanityClient` in browser code, other named clients, and the Studio with `hash` history. Prerendered pages and `sanityLoader` run during the build, so they get the variables only if they are set then. The Studio falls back to the `projectId` and `dataset` in `sanity.config.ts`, and the values it receives are rendered into the page.
 

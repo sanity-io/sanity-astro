@@ -54,11 +54,8 @@ export type IntegrationOptions = ClientConfig & {
    */
   clients?: Record<string, NamedClientConfig>
   /**
-   * Reads `projectId` and/or `dataset` from these environment variables when the server runs,
-   * through `astro:env`, so one build can serve several datasets. Applies to the default client
-   * in server code and to the Studio route with `browser` history; browser code, named clients
-   * and `hash` history keep the build-time values, which stay required. Prerendered pages read
-   * the variables during the build. Requires Astro 5.
+   * Names of environment variables for `projectId` and `dataset`, read when the server runs.
+   * Applies to `sanityClient` in server code and the Studio with `browser` history. Requires Astro 5.
    */
   env?: RuntimeEnvOption
 }
@@ -136,8 +133,7 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
             studioRouterHistory,
           }),
           vitePluginSanityStudioHashRouter(),
-          // The hash-history route is prerendered, so it can only use build-time values.
-          vitePluginSanityStudioRuntimeEnv(studioRouterHistory === 'browser' ? env : undefined),
+          vitePluginSanityStudioRuntimeEnv(env),
           vitePluginSanityStudioChunkWarning(),
         ]
 

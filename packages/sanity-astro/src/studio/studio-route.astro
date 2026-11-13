@@ -1,6 +1,6 @@
 ---
 // @ts-ignore -- internal virtual module, not declared in module.d.ts
-import runtimeConfig from 'sanity:studio-runtime-env'
+import runtimeEnv from 'sanity:studio-runtime-env'
 
 import {StudioComponent} from './studio-component'
 
@@ -29,6 +29,6 @@ export const prerender = false
     </style>
   </head>
   <body>
-    <StudioComponent client:only="react" runtimeConfig={runtimeConfig} />
+    <StudioComponent client:only="react" runtimeEnv={runtimeEnv} />
   </body>
 </html>

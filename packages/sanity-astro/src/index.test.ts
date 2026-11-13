@@ -7,7 +7,12 @@ import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-ch
 type SetupOptions = Pick<
   IntegrationOptions,
   'studioBasePath' | 'studioRouterHistory' | 'logClientRequests'
-> & {output?: 'static' | 'server'; options?: IntegrationOptions}
+> & {
+  output?: 'static' | 'server'
+  options?: IntegrationOptions
+  /** Astro 5 and later always set `config.env`, older versions don't */
+  astroEnv?: object
+}
 
 async function runSetup({
   output = 'static',
@@ -15,6 +20,7 @@ async function runSetup({
   studioBasePath = '/admin',
   logClientRequests,
   options,
+  astroEnv,
 }: SetupOptions = {}) {
   const integration = sanityIntegration(
     options ?? {
@@ -30,13 +36,15 @@ async function runSetup({
   const updateConfig = vi.fn()
   const injectScript = vi.fn()
 
-  await setup({config: {output}, injectRoute, updateConfig, injectScript} as never)
+  await setup({config: {output, env: astroEnv}, injectRoute, updateConfig, injectScript} as never)
 
   const vitePlugins: Array<{name?: string; load?: (id: string) => unknown}> =
     updateConfig.mock.calls[0][0].vite.plugins
 
   return {integration, injectRoute, updateConfig, injectScript, vitePlugins}
 }
+
+type LoadWithSsr = (id: string, options: {ssr: boolean}) => string
 
 function loadVirtualClientModule(updateConfig: ReturnType<typeof vi.fn>): string {
   const viteConfig = updateConfig.mock.calls[0][0].vite
@@ -354,6 +362,21 @@ describe('sanity integration studio router history defaults', () => {
 })
 
 describe('sanity integration env option', () => {
+  it('reads the variables in the server modules for the client and the Studio', async () => {
+    const {vitePlugins} = await runSetup({
+      output: 'server',
+      astroEnv: {schema: {}},
+      options: {projectId: 'project-id', dataset: 'dataset-name', env: {dataset: 'SANITY_DATASET'}},
+    })
+    const load = (name: string) => {
+      const plugin = vitePlugins.find((candidate) => candidate.name === name) as {load: LoadWithSsr}
+      return plugin.load(`\0${name}`, {ssr: true})
+    }
+
+    expect(load('sanity:client')).toContain('{"dataset":"SANITY_DATASET"}')
+    expect(load('sanity:studio-runtime-env')).toContain('{"dataset":"SANITY_DATASET"}')
+  })
+
   it('requires astro:env (Astro 5)', async () => {
     await expect(
       runSetup({
