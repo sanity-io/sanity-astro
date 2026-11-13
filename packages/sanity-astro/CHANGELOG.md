@@ -1,5 +1,11 @@
 # @sanity/astro
 
+## 4.0.0
+
+### Major Changes
+
+- [#503](https://github.com/sanity-io/sanity-astro/pull/503) [`8b96f03`](https://github.com/sanity-io/sanity-astro/commit/8b96f039c09d4c857a1de7a6cb796a80930ad7f9) Thanks [@stipsan](https://github.com/stipsan)! - Publish an ESM-only build. The UMD bundle and the `module` export condition are removed, subpath exports point at `dist/`, and `src/` is no longer included in the package.
+
 ## 3.6.2
 
 ### Patch Changes
