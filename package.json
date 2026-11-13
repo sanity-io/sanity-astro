@@ -13,6 +13,7 @@
     "build:observatory": "turbo run build --filter=observatory... --filter=observatory-studio...",
     "changeset": "changeset",
     "check": "turbo run check",
+    "check:package": "pnpm --filter @sanity/astro check:package",
     "clean": "turbo run clean && rimraf .turbo && rimraf node_modules",
     "dev": "pnpm --filter @sanity/astro build && turbo run dev",
     "dev:cinema": "pnpm --filter @sanity/astro build && turbo run dev --filter=cinema",
@@ -23,20 +24,23 @@
     "dev:movies": "pnpm --filter @sanity/astro build && turbo run dev --filter=movies",
     "dev:observatory": "turbo run dev --filter=observatory --filter=observatory-studio",
     "format": "oxfmt",
+    "format:check": "oxfmt --check",
     "lint": "oxlint --ignore-pattern \"apps/example*/**\"",
     "release": "changeset publish",
     "seed:observatory": "pnpm --filter observatory-studio seed",
+    "test": "turbo run test",
+    "test:integration": "turbo run test:integration",
+    "typecheck": "turbo run typecheck",
     "typegen:observatory": "pnpm --filter observatory-studio typegen && pnpm format"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^1.0.0",
     "@changesets/cli": "^3.0.1",
     "@sanity/blueprints": "^0.28.0",
-    "@turbo/gen": "^1.13.4",
     "oxfmt": "^0.61.0",
     "oxlint": "^1.81.0",
     "rimraf": "^5.0.7",
-    "turbo": "^1.13.4"
+    "turbo": "^2.10.12"
   },
   "packageManager": "pnpm@12.15.0"
 }

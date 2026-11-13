@@ -13,8 +13,9 @@ This integration enables the [Sanity Client][sanity-client] in your [Astro][astr
   - [Embedding Sanity Studio on a route](#embedding-sanity-studio-on-a-route)
 - [Rendering rich text and block content with Portable Text](#rendering-rich-text-and-block-content-with-portable-text)
 - [Presenting images](#presenting-images)
-  - [Resources](#resources)
 - [Enabling Visual Editing](#enabling-visual-editing)
+- [Examples](#examples)
+  - [Resources](#resources)
 
 ## Installation
 
@@ -101,7 +102,7 @@ const posts = await sanityClient.fetch(`*[_type == "post" && defined(slug)] | or
 </ul>
 ```
 
-[Check out this guide][guide] for a more elaborate introduction to how to integrate content from Sanity into Astro. You can also look in the `examples` folder in this repository for complete implementation examples.
+[Check out this guide][guide] for a more elaborate introduction to how to integrate content from Sanity into Astro. You can also look in the `apps` folder in this repository for complete implementation examples.
 
 To log server-side requests made with `sanity:client`, set `logClientRequests` in your integration config:
 
@@ -398,7 +399,7 @@ export async function sanityFetch<const Q extends string>(
 
 Sanity Studio is a customizable content workspace where you can edit your content. It‘s a Single Page Application that you can keep in its own repository, together with your Astro project as a monorepo, or embedded in your website.
 
-To initialize a Studio in a dedicated folder, you can run `npm create sanity@latest` and follow the instructions.
+To initialize a Studio in a dedicated folder, you can run `npm create sanity@latest` and follow the instructions.
 
 This integration lets you embed a Sanity Studio on a route in your Astro project. To enable it:
 
@@ -764,6 +765,20 @@ const {data: movies} = await loadQuery<Array<{title: string}>>({
   query: `*[_type == 'movie']`,
 })
 ```
+
+## Examples
+
+The `apps` folder holds runnable examples. Each one reads published content from a hosted Sanity dataset, so it runs without an API token unless noted.
+
+| App                                                                                              | Shows                                                                                                                                                                                                                                                                                                                                                                                                                   | Run from the repo root    |
+| ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| [`apps/minimal`](https://github.com/sanity-io/sanity-astro/tree/main/apps/minimal)               | The smallest setup: one page that fetches with `sanity:client`. No Studio, no React                                                                                                                                                                                                                                                                                                                                     | `pnpm dev:minimal`        |
+| [`apps/example`](https://github.com/sanity-io/sanity-astro/tree/main/apps/example)               | Blog with Portable Text, images and an embedded Studio, on Astro 5                                                                                                                                                                                                                                                                                                                                                      | `pnpm dev:example`        |
+| [`apps/example-latest`](https://github.com/sanity-io/sanity-astro/tree/main/apps/example-latest) | The same blog on the newest Astro and Sanity releases                                                                                                                                                                                                                                                                                                                                                                   | `pnpm dev:example-latest` |
+| [`apps/example-ssr`](https://github.com/sanity-io/sanity-astro/tree/main/apps/example-ssr)       | The blog rendered on the server with the Vercel adapter                                                                                                                                                                                                                                                                                                                                                                 | `pnpm dev:example-ssr`    |
+| [`apps/cinema`](https://github.com/sanity-io/sanity-astro/tree/main/apps/cinema)                 | A static site on Astro 7 with content collections loaded through `sanityLoader`, an embedded Studio and Tailwind CSS                                                                                                                                                                                                                                                                                                    | `pnpm dev:cinema`         |
+| [`apps/movies`](https://github.com/sanity-io/sanity-astro/tree/main/apps/movies)                 | Server rendering, Visual Editing and the Presentation tool. Needs `SANITY_API_READ_TOKEN`; see the app README                                                                                                                                                                                                                                                                                                           | `pnpm dev:movies`         |
+| [`apps/observatory`](https://github.com/sanity-io/sanity-astro/tree/main/apps/observatory)       | A reference implementation of advanced Sanity features (sync tag caching, draft preview, Visual Editing) on Astro 7, built without `@sanity/astro`. Its Studio is [`apps/observatory-studio`](https://github.com/sanity-io/sanity-astro/tree/main/apps/observatory-studio) and its Sanity Function is in [`apps/observatory-functions`](https://github.com/sanity-io/sanity-astro/tree/main/apps/observatory-functions) | `pnpm dev:observatory`    |
 
 ### Resources
 

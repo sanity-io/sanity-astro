@@ -1,5 +1,6 @@
 ---
 import type {VisualEditingConfig} from './client'
+import {FOLLOW_UP_RELOAD_KEY} from './follow-up-reload'
 import {resolveRefreshStrategy} from './refresh-strategy'
 
 export interface Props extends VisualEditingConfig {
@@ -18,64 +19,80 @@ const followUpDelayMs =
     <>
       <script
         is:inline
-        define:vars={{
-          followUpDelayMs,
-        }}
+        define:vars={{followUpDelayMs, flagKey: FOLLOW_UP_RELOAD_KEY}}
       >
-        ;(() => {
-          if (!followUpDelayMs || followUpDelayMs <= 0) return
-          const KEY = '@sanity/astro:follow-up-reload'
-          const w = window
-          if (w.self === w.top || w.__sanityFollowUpInstalled) return
-          w.__sanityFollowUpInstalled = true
-          w.__sanityVEConfig = {
-            acknowledgeRefresh() {
-              w.__sanityPendingFollowUpUrl = null
-              if (w.__sanityFallbackTimer) {
-                clearTimeout(w.__sanityFallbackTimer)
-                w.__sanityFallbackTimer = null
+        (function () {
+          // Expose synchronous refresh acknowledgement hook and shared timer state on window
+          // before the client module downloads.
+          window.__sanityVEConfig = {
+            acknowledgeRefresh: function () {
+              try {
+                sessionStorage.removeItem(flagKey)
+              } catch {}
+              window.__sanityPendingFollowUpUrl = null
+              if (window.__sanityFallbackTimer) {
+                clearTimeout(window.__sanityFallbackTimer)
+                window.__sanityFallbackTimer = null
               }
             },
           }
-          const reconcile = () => {
-            let stored = null
-            try {
-              stored = sessionStorage.getItem(KEY)
-              if (stored !== null) sessionStorage.removeItem(KEY)
-            } catch {}
-            if (stored === location.href) {
-              w.__sanityPendingFollowUpUrl = location.href
-              if (!w.__sanityFallbackTimer) {
-                w.__sanityFallbackTimer = setTimeout(() => {
-                  w.__sanityFallbackTimer = null
-                  w.__sanityPendingFollowUpUrl = null
-                  location.reload()
-                }, followUpDelayMs)
-              }
-            }
-          }
-          window.addEventListener('message', (e) => {
+
+          if (window.self === window.top) return
+          if (!followUpDelayMs || followUpDelayMs <= 0) return
+
+          // Mark that the inline observer is active so the client does not attach duplicate listeners.
+          window.__sanityFollowUpInstalled = true
+
+          // 1. OBSERVE: Monitor ONLY actual mutation events ('presentation/snapshot-event').
+          // Ignoring 'presentation/preview-snapshots' prevents post-refresh and on-load
+          // snapshot dumps from falsely re-arming flagKey after acknowledgeRefresh().
+          window.addEventListener('message', function (e) {
             if (
-              e.data?.type === 'presentation/snapshot-event' &&
-              e.data?.data?.event?.type === 'mutation'
+              e.data &&
+              e.data.type === 'presentation/snapshot-event' &&
+              e.data.data &&
+              e.data.data.event &&
+              e.data.data.event.type === 'mutation'
             ) {
               try {
-                sessionStorage.setItem(KEY, location.href)
+                sessionStorage.setItem(flagKey, window.location.href)
               } catch {}
-              if (document.readyState === 'complete' && !w.__sanityFallbackTimer) {
-                w.__sanityFallbackTimer = setTimeout(() => {
-                  w.__sanityFallbackTimer = null
-                  w.__sanityPendingFollowUpUrl = null
+              // Fallback if the page is already loaded and Comlink drops the accompanying refresh:
+              // ensure a fallback reload still fires after followUpDelayMs.
+              if (document.readyState === 'complete' && !window.__sanityFallbackTimer) {
+                window.__sanityFallbackTimer = setTimeout(function () {
+                  window.__sanityFallbackTimer = null
+                  window.__sanityPendingFollowUpUrl = null
                   try {
-                    sessionStorage.removeItem(KEY)
+                    sessionStorage.removeItem(flagKey)
                   } catch {}
-                  location.reload()
+                  window.location.reload()
                 }, followUpDelayMs)
               }
             }
           })
-          if (document.readyState === 'complete') reconcile()
-          else window.addEventListener('load', reconcile)
+
+          // 2. RECONCILE: Check for missed updates on page arrival and consume sessionStorage immediately.
+          window.addEventListener('load', function () {
+            var storedHref = null
+            try {
+              storedHref = sessionStorage.getItem(flagKey)
+              if (storedHref !== null) {
+                sessionStorage.removeItem(flagKey)
+              }
+            } catch {}
+
+            if (storedHref === window.location.href) {
+              window.__sanityPendingFollowUpUrl = window.location.href
+              if (!window.__sanityFallbackTimer) {
+                window.__sanityFallbackTimer = setTimeout(function () {
+                  window.__sanityFallbackTimer = null
+                  window.__sanityPendingFollowUpUrl = null
+                  window.location.reload()
+                }, followUpDelayMs)
+              }
+            }
+          })
         })()
       </script>
       <sanity-astro-visual-editing hidden data-config={JSON.stringify(config)}
