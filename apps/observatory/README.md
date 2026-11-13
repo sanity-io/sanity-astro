@@ -78,7 +78,7 @@ so a top-level visit to this origin can read the same session. Perspective and v
 endpoints, which would otherwise 403; fetches under `/preview` switch to the selected perspective
 with stega encoding.
 [`src/components/VisualEditing.astro`](src/components/VisualEditing.astro) runs
-`@sanity/visual-editing-standalone` for click-to-edit overlays and reloads the page when the editor
+`@sanity/visual-editing` for click-to-edit overlays and reloads the page when the editor
 switches perspective or variant.
 
 Preview pages render without Astro's `ClientRouter`. The router replaces `<body>` on soft

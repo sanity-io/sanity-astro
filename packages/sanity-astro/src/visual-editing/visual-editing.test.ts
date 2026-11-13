@@ -7,7 +7,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 const astroFilePath = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
-  './visual-editing-standalone.astro',
+  './visual-editing.astro',
 )
 const astroSource = readFileSync(astroFilePath, 'utf8')
 
@@ -16,7 +16,7 @@ function extractScripts(source: string): {inlineScript: string; moduleScript: st
   const moduleMatch = source.match(/<script>([\s\S]*?)<\/script>/)
 
   if (!inlineMatch?.[1] || !moduleMatch?.[1]) {
-    throw new Error('Expected both inline and module <script> blocks in visual-editing-standalone.astro')
+    throw new Error('Expected both inline and module <script> blocks in visual-editing.astro')
   }
 
   return {
@@ -198,7 +198,7 @@ async function runModuleBridge(
   runner(env.windowObj, env.documentObj, {enableVisualEditing: enableVisualEditingMock})
 }
 
-describe('visual-editing-standalone inline observer', () => {
+describe('visual-editing inline observer', () => {
   beforeEach(() => {
     vi.useFakeTimers()
   })
@@ -335,7 +335,7 @@ describe('visual-editing-standalone inline observer', () => {
   })
 })
 
-describe('visual-editing-standalone module bridge', () => {
+describe('visual-editing module bridge', () => {
   beforeEach(() => {
     vi.useFakeTimers()
   })

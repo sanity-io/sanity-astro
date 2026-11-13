@@ -1,6 +1,6 @@
 {
   "name": "@sanity/astro",
-  "version": "3.6.0-standalone.base",
+  "version": "3.6.0-upg-sa-pt-unified",
   "description": "Official Sanity Astro integration",
   "keywords": [
     "astro-integration",
@@ -47,6 +47,11 @@
       "types": "./dist/visual-editing/index.ts",
       "import": "./dist/visual-editing/index.ts",
       "default": "./dist/visual-editing/index.ts"
+    },
+   "./middleware": {
+      "types": "./dist/visual-editing/middleware.ts",
+      "import": "./dist/visual-editing/middleware.ts",
+      "default": "./dist/visual-editing/middleware.ts"
     }
   },
   "publishConfig": {

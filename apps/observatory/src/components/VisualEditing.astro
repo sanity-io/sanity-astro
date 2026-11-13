@@ -1,6 +1,6 @@
 ---
 // Rendered only in draft preview, so published pages ship none of this.
-import visualEditingStyles from '@sanity/visual-editing-standalone/styles.css?url'
+import visualEditingStyles from '@sanity/visual-editing/styles.css?url'
 
 const {perspective, variant} = Astro.locals.preview
 ---
@@ -13,7 +13,7 @@ const {perspective, variant} = Astro.locals.preview
   set:html={JSON.stringify({perspective: perspective ?? 'drafts', variant: variant ?? null})}
 />
 <script>
-  import {enableVisualEditing} from '@sanity/visual-editing-standalone'
+  import {enableVisualEditing} from '@sanity/visual-editing'
 
   const state: {perspective: string; variant: string | null} = JSON.parse(
     document.getElementById('preview-state')?.textContent ?? '{"perspective":"drafts","variant":null}',

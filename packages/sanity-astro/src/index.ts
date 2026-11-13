@@ -103,7 +103,7 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
   return {
     name: '@sanity/astro',
     hooks: {
-      'astro:config:setup': ({config, injectScript, injectRoute, updateConfig}) => {
+      'astro:config:setup': ({config, addMiddleware, injectScript, injectRoute, updateConfig}) => {
         const studioRouterHistory = resolveStudioRouterHistory(
           requestedStudioRouterHistory,
           config?.output,
@@ -120,6 +120,13 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
           vitePluginSanityStudioHashRouter(),
           vitePluginSanityStudioChunkWarning(),
         ]
+
+        if (typeof addMiddleware === "function") {
+          addMiddleware({
+            order: "pre",
+            entrypoint: "@sanity/astro/middleware",
+          });
+        }
 
         updateConfig({
           vite: {
