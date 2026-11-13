@@ -83,6 +83,7 @@ describe('createSanityLiveLoader', () => {
   it('loads a single entry with the filter as params', async () => {
     const {loader: movies, fetch} = loader({
       result: {_id: 'a', _updatedAt: '2024-01-02T03:04:05Z', title: 'Alien'},
+      syncTags: ['s1:abc'],
     })
 
     const entry = await movies.loadEntry({collection: 'movies', filter: {id: 'a', lang: 'en'}})
@@ -92,7 +93,7 @@ describe('createSanityLiveLoader', () => {
       id: 'a',
       data: {_id: 'a', _updatedAt: '2024-01-02T03:04:05Z', title: 'Alien'},
       cacheHint: {
-        tags: ['sanity:movie', 'sanity:movie:a'],
+        tags: ['sanity:movie', 'sanity:movie:a', 's1:abc'],
         lastModified: new Date('2024-01-02T03:04:05Z'),
       },
     })

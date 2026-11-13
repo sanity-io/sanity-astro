@@ -45,6 +45,7 @@ function lastModified(value: unknown): Date | undefined {
 function toEntry<TData extends Record<string, unknown>>(
   name: string,
   document: TData,
+  syncTags?: readonly string[] | null,
 ): SanityLiveEntry<TData> | undefined {
   const id = document._id
   if (typeof id !== 'string') {
@@ -55,7 +56,7 @@ function toEntry<TData extends Record<string, unknown>>(
     id,
     data: document,
     cacheHint: {
-      tags: [`sanity:${name}`, `sanity:${name}:${id}`],
+      tags: [`sanity:${name}`, `sanity:${name}:${id}`, ...(syncTags ?? [])],
       ...(modified ? {lastModified: modified} : {}),
     },
   }
@@ -97,10 +98,12 @@ export function createSanityLiveLoader<TData extends Record<string, unknown>>(
     },
     async loadEntry({filter}) {
       try {
-        const {result} = await client.fetch<TData | null>(entryQuery, filter, {
+        const {result, syncTags} = await client.fetch<TData | null>(entryQuery, filter, {
           filterResponse: false,
         })
-        return result === null ? undefined : toEntry(name, result)
+        // Same Content Lake sync tags as loadCollection so tag-based revalidation
+        // refreshes getLiveEntry pages, not only collection listings.
+        return result === null ? undefined : toEntry(name, result, syncTags)
       } catch (cause) {
         return loadError(name, 'entry', cause)
       }
