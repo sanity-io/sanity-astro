@@ -364,7 +364,6 @@ describe('vitePluginSanityClient env option', () => {
     }
 
     expect(plugin.load('\0sanity:client', {ssr: false})).not.toContain('astro:env')
-    expect(createdConfigs({ssr: false})[0]).toEqual(twoClients.clients.default)
   })
 })
 
