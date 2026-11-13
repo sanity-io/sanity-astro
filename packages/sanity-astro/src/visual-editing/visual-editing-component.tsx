@@ -6,12 +6,12 @@ import {
 } from '@sanity/visual-editing/react'
 import React from 'react'
 
-import {applyPresentationHistoryUpdate, getPresentationUrl, shouldPublishUrl} from './history'
+import {applyPresentationHistoryUpdate, getPresentationUrl, shouldPublishUrl} from './history.js'
 import {
   createDefaultRefresh,
   type RefreshStrategy,
   resolveRefreshStrategy,
-} from './refresh-strategy'
+} from './refresh-strategy.js'
 
 // `@sanity/visual-editing` is a dependency rather than a peer, so consumers cannot import these
 // from it directly under a non-hoisted layout; re-export what typed callbacks need.
