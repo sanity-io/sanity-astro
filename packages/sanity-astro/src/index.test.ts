@@ -6,14 +6,20 @@ import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-ch
 
 type SetupOptions = Pick<
   IntegrationOptions,
-  'studioBasePath' | 'studioRouterHistory' | 'logClientRequests'
-> & {output?: 'static' | 'server'; options?: IntegrationOptions}
+  'studioBasePath' | 'studioRouterHistory' | 'logClientRequests' | 'visualEditingStandalone'
+> & {
+  output?: 'static' | 'server'
+  integrations?: Array<{name: string}>
+  options?: IntegrationOptions
+}
 
 async function runSetup({
   output = 'static',
   studioRouterHistory,
   studioBasePath = '/admin',
   logClientRequests,
+  visualEditingStandalone,
+  integrations = [],
   options,
 }: SetupOptions = {}) {
   const integration = sanityIntegration(
@@ -23,19 +29,27 @@ async function runSetup({
       studioBasePath,
       studioRouterHistory,
       logClientRequests,
+      visualEditingStandalone,
     },
   )
   const setup = integration.hooks['astro:config:setup']
   const injectRoute = vi.fn()
   const updateConfig = vi.fn()
   const injectScript = vi.fn()
+  const logger = {warn: vi.fn()}
 
-  await setup({config: {output}, injectRoute, updateConfig, injectScript} as never)
+  await setup({
+    config: {output, integrations},
+    injectRoute,
+    updateConfig,
+    injectScript,
+    logger,
+  } as never)
 
   const vitePlugins: Array<{name?: string; load?: (id: string) => unknown}> =
     updateConfig.mock.calls[0][0].vite.plugins
 
-  return {integration, injectRoute, updateConfig, injectScript, vitePlugins}
+  return {integration, injectRoute, updateConfig, injectScript, logger, vitePlugins}
 }
 
 function loadVirtualClientModule(updateConfig: ReturnType<typeof vi.fn>): string {
@@ -233,6 +247,31 @@ describe('sanity integration vite config', () => {
     expect(chunkWarningPlugin).toBeDefined()
     expect(chunkWarningPlugin?.apply).toBe('build')
     expect((vitePluginSanityStudioChunkWarning() as {apply?: string}).apply).toBe('build')
+  })
+
+  it('registers the visual editing standalone plugin only when opted in', async () => {
+    const off = await runSetup()
+    expect(off.vitePlugins.map((plugin) => plugin.name)).not.toContain(
+      'sanity:visual-editing-standalone',
+    )
+
+    const {vitePlugins} = await runSetup({visualEditingStandalone: true})
+    expect(vitePlugins.map((plugin) => plugin.name)).toContain('sanity:visual-editing-standalone')
+  })
+
+  it('warns when visualEditingStandalone is combined with @astrojs/react', async () => {
+    const {logger} = await runSetup({
+      visualEditingStandalone: true,
+      integrations: [{name: '@astrojs/react'}],
+    })
+
+    expect(logger.warn).toHaveBeenCalledOnce()
+  })
+
+  it('does not warn about @astrojs/react unless visualEditingStandalone is on', async () => {
+    const {logger} = await runSetup({integrations: [{name: '@astrojs/react'}]})
+
+    expect(logger.warn).not.toHaveBeenCalled()
   })
 })
 
