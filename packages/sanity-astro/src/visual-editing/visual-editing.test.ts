@@ -162,7 +162,15 @@ function createBrowserEnv({
 
 function runInlineObserver(
   env: ReturnType<typeof createBrowserEnv>,
-  {assureTypingInterval = 1200, zIndex = 9999}: {assureTypingInterval?: number; zIndex?: number} = {},
+  {
+    assureTypingInterval = 1200,
+    zIndex = 9999,
+    keepStegaOnCopy,
+  }: {
+    assureTypingInterval?: number
+    zIndex?: number | string
+    keepStegaOnCopy?: boolean
+  } = {},
 ) {
   const runner = new Function(
     'window',
@@ -170,6 +178,7 @@ function runInlineObserver(
     'sessionStorage',
     'assureTypingInterval',
     'zIndex',
+    'keepStegaOnCopy',
     inlineScript,
   )
   runner(
@@ -178,6 +187,7 @@ function runInlineObserver(
     env.sessionStorage,
     assureTypingInterval,
     zIndex,
+    keepStegaOnCopy,
   )
 }
 
@@ -346,7 +356,7 @@ describe('visual-editing module bridge', () => {
 
   it('wires enableVisualEditing refresh, history adapter, and pagehide cleanup', async () => {
     const env = createBrowserEnv({href: 'http://localhost:4321/movies/alien?draft=1#cast'})
-    runInlineObserver(env, {assureTypingInterval: 1200, zIndex: 42})
+    runInlineObserver(env, {assureTypingInterval: 1200, zIndex: 42, keepStegaOnCopy: true})
 
     const cleanupSpy = vi.fn()
     const enableVisualEditingMock = vi.fn(() => cleanupSpy)
@@ -356,6 +366,7 @@ describe('visual-editing module bridge', () => {
     expect(enableVisualEditingMock).toHaveBeenCalledTimes(1)
     const options = enableVisualEditingMock.mock.calls[0][0]
     expect(options.zIndex).toBe(42)
+    expect(options.keepStegaOnCopy).toBe(true)
 
     // 1. Refresh callback contract
     await expect(options.refresh({source: 'manual'})).resolves.toBeUndefined()
@@ -408,5 +419,17 @@ describe('visual-editing module bridge', () => {
     // 3. Pagehide tears down enableVisualEditing
     env.windowObj.dispatchWindowEvent('pagehide')
     expect(cleanupSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('forwards string zIndex and leaves keepStegaOnCopy undefined when omitted', async () => {
+    const env = createBrowserEnv()
+    runInlineObserver(env, {zIndex: 'var(--overlay-z)'})
+
+    const enableVisualEditingMock = vi.fn(() => vi.fn())
+    await runModuleBridge(env, enableVisualEditingMock)
+
+    const options = enableVisualEditingMock.mock.calls[0][0]
+    expect(options.zIndex).toBe('var(--overlay-z)')
+    expect(options.keepStegaOnCopy).toBeUndefined()
   })
 })

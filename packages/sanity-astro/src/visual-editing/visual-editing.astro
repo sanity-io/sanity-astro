@@ -1,9 +1,13 @@
 ---
+import type { enableVisualEditing } from "@sanity/visual-editing-standalone";
 import "@sanity/visual-editing-standalone/styles.css";
 
-export interface Props {
+export interface Props
+  extends Pick<
+    NonNullable<Parameters<typeof enableVisualEditing>[0]>,
+    "zIndex" | "keepStegaOnCopy"
+  > {
   enabled?: boolean;
-  zIndex?: number;
 }
 
 // The environmental below allows adjusting optimal timing for visible
@@ -49,320 +53,322 @@ const assureTypingInterval: number =
 const defaultEnabled =
   import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED === "true";
 
-const { enabled = defaultEnabled, zIndex } = Astro.props;
+const { enabled = defaultEnabled, zIndex, keepStegaOnCopy } = Astro.props;
 ---
 
 {enabled && (
-  <>
-    <script define:vars={{ assureTypingInterval, zIndex }}>
-      (function () {
-        const FLAG = "sanity_sync_needed";
-        let lastSnapshotTime = 0;
+<>
+  <script define:vars={{ assureTypingInterval, zIndex, keepStegaOnCopy }}>
+    (function () {
+      const FLAG = "sanity_sync_needed";
+      let lastSnapshotTime = 0;
 
-        // Host-isolated cookie name matching middleware.ts
-        const cookieName = `sanity-perspective-${window.location.host.replace(/[:.]/g, "-")}`;
+      // Host-isolated cookie name matching middleware.ts
+      const cookieName = `sanity-perspective-${window.location.host.replace(/[:.]/g, "-")}`;
 
-        function getCookiePerspective() {
-          const match = document.cookie.match(
-            new RegExp(`(?:^|;\\s*)${cookieName}=([^;]*)`),
+      function getCookiePerspective() {
+        const match = document.cookie.match(
+          new RegExp(`(?:^|;\\s*)${cookieName}=([^;]*)`),
+        );
+        return match ? decodeURIComponent(match[1]) : "";
+      }
+
+      function setCookiePerspective(val) {
+        const attributes =
+          window.location.protocol === "https:"
+            ? "path=/; SameSite=None; Secure; Partitioned"
+            : "path=/; SameSite=Lax";
+        document.cookie = `${cookieName}=${encodeURIComponent(val)}; ${attributes}`;
+      }
+
+      function stripUrlPerspectiveParams() {
+        const url = new URL(window.location.href);
+        if (
+          url.searchParams.has("sanity-preview-perspective") ||
+          url.searchParams.has("perspective")
+        ) {
+          url.searchParams.delete("sanity-preview-perspective");
+          url.searchParams.delete("perspective");
+          window.history.replaceState(
+            {},
+            "",
+            url.pathname + url.search + url.hash,
           );
-          return match ? decodeURIComponent(match[1]) : "";
         }
+      }
 
-        function setCookiePerspective(val) {
-          const attributes =
-            window.location.protocol === "https:"
-              ? "path=/; SameSite=None; Secure; Partitioned"
-              : "path=/; SameSite=Lax";
-          document.cookie = `${cookieName}=${encodeURIComponent(val)}; ${attributes}`;
+      function syncPerspective(incomingPerspective) {
+        if (window.self === window.top || !incomingPerspective) return;
+
+        const incoming = Array.isArray(incomingPerspective)
+          ? incomingPerspective.join(",")
+          : String(incomingPerspective);
+
+        const currentCookie = getCookiePerspective() || "published";
+
+        if (incoming !== currentCookie) {
+          setCookiePerspective(incoming);
+          stripUrlPerspectiveParams();
+          window.location.reload();
         }
+      }
 
-        function stripUrlPerspectiveParams() {
-          const url = new URL(window.location.href);
-          if (
-            url.searchParams.has("sanity-preview-perspective") ||
-            url.searchParams.has("perspective")
-          ) {
-            url.searchParams.delete("sanity-preview-perspective");
-            url.searchParams.delete("perspective");
-            window.history.replaceState(
-              {},
-              "",
-              url.pathname + url.search + url.hash,
-            );
-          }
+      function clearPendingTimer() {
+        if (window.__sanityFallbackTimer) {
+          clearTimeout(window.__sanityFallbackTimer);
+          window.__sanityFallbackTimer = null;
         }
+      }
 
-        function syncPerspective(incomingPerspective) {
-          if (window.self === window.top || !incomingPerspective) return;
+      // Single unified reload scheduler shared by snapshot-event, Comlink refresh, and window.load
+      function scheduleMutationReload(delayMs) {
+        clearPendingTimer();
+        window.__sanityFallbackTimer = setTimeout(() => {
+          window.__sanityFallbackTimer = null;
+          sessionStorage.removeItem(FLAG);
+          window.location.reload();
+        }, delayMs);
+      }
 
-          const incoming = Array.isArray(incomingPerspective)
-            ? incomingPerspective.join(",")
-            : String(incomingPerspective);
-
-          const currentCookie = getCookiePerspective() || "published";
-
-          if (incoming !== currentCookie) {
-            setCookiePerspective(incoming);
-            stripUrlPerspectiveParams();
-            window.location.reload();
-          }
-        }
-
-        function clearPendingTimer() {
-          if (window.__sanityFallbackTimer) {
-            clearTimeout(window.__sanityFallbackTimer);
-            window.__sanityFallbackTimer = null;
-          }
-        }
-
-        // Single unified reload scheduler shared by snapshot-event, Comlink refresh, and window.load
-        function scheduleMutationReload(delayMs) {
-          clearPendingTimer();
-          window.__sanityFallbackTimer = setTimeout(() => {
-            window.__sanityFallbackTimer = null;
-            sessionStorage.removeItem(FLAG);
-            window.location.reload();
-          }, delayMs);
-        }
-
-        // Expose config, acknowledgement hook, and perspective sync to the module script
-        window.__sanityVEConfig = {
-          enabled: true,
-          zIndex,
-          assureTypingInterval,
-          syncPerspective,
-          triggerImmediateReload: () => {
+      // Expose config, acknowledgement hook, and perspective sync to the module script
+      window.__sanityVEConfig = {
+        enabled: true,
+        zIndex,
+        keepStegaOnCopy,
+        assureTypingInterval,
+        syncPerspective,
+        triggerImmediateReload: () => {
+          scheduleMutationReload(0);
+        },
+        onMutationRefresh: () => {
+          if (assureTypingInterval <= 0) {
             scheduleMutationReload(0);
-          },
-          onMutationRefresh: () => {
-            if (assureTypingInterval <= 0) {
-              scheduleMutationReload(0);
-              return;
-            }
-            // Ensure at least assureTypingInterval has elapsed since the latest optimistic keystroke
-            // so the Content Lake has committed the trailing character before Astro SSR fetches.
-            const elapsed = lastSnapshotTime
-              ? Date.now() - lastSnapshotTime
-              : 0;
-            const remaining = lastSnapshotTime
-              ? Math.max(300, assureTypingInterval - elapsed)
-              : 300;
-            scheduleMutationReload(remaining);
-          },
-        };
-
-        if (window.self === window.top) return;
-
-        // 1. INITIAL SYNC: Persist URL perspective param (if passed by Studio) or initialize default,
-        // then strip the query param in-place so reloads strictly read the updated cookie.
-        const params = new URLSearchParams(window.location.search);
-        const urlPerspective =
-          params.get("sanity-preview-perspective") || params.get("perspective");
-        const initialCookie = getCookiePerspective();
-        const targetPerspective =
-          urlPerspective || initialCookie || "published";
-
-        if (targetPerspective !== initialCookie) {
-          setCookiePerspective(targetPerspective);
-        }
-        stripUrlPerspectiveParams();
-
-        // 2. OBSERVE: Listen for Studio perspective toggles and mutation events
-        window.addEventListener("message", (e) => {
-          // A. Fallback listener for direct postMessage perspective switches
-          if (e.data?.type === "presentation/perspective") {
-            const rawPerspective =
-              e.data?.data?.perspective ?? e.data?.perspective;
-            if (rawPerspective) {
-              syncPerspective(rawPerspective);
-            }
             return;
           }
+          // Ensure at least assureTypingInterval has elapsed since the latest optimistic keystroke
+          // so the Content Lake has committed the trailing character before Astro SSR fetches.
+          const elapsed = lastSnapshotTime
+            ? Date.now() - lastSnapshotTime
+            : 0;
+          const remaining = lastSnapshotTime
+            ? Math.max(300, assureTypingInterval - elapsed)
+            : 300;
+          scheduleMutationReload(remaining);
+        },
+      };
 
-          // B. Optimistic keystroke / mutation events ('presentation/snapshot-event' mutations only)
-          const snapshotEventType =
-            e.data?.data?.event?.type ?? e.data?.event?.type;
-          if (
-            assureTypingInterval > 0 &&
-            e.data?.type === "presentation/snapshot-event" &&
-            snapshotEventType === "mutation"
-          ) {
-            lastSnapshotTime = Date.now();
-            sessionStorage.setItem(FLAG, window.location.href);
+      if (window.self === window.top) return;
 
-            // Push back any pending reload so continuous typing coalesces into one reload
-            if (document.readyState === "complete") {
+      // 1. INITIAL SYNC: Persist URL perspective param (if passed by Studio) or initialize default,
+      // then strip the query param in-place so reloads strictly read the updated cookie.
+      const params = new URLSearchParams(window.location.search);
+      const urlPerspective =
+        params.get("sanity-preview-perspective") || params.get("perspective");
+      const initialCookie = getCookiePerspective();
+      const targetPerspective =
+        urlPerspective || initialCookie || "published";
+
+      if (targetPerspective !== initialCookie) {
+        setCookiePerspective(targetPerspective);
+      }
+      stripUrlPerspectiveParams();
+
+      // 2. OBSERVE: Listen for Studio perspective toggles and mutation events
+      window.addEventListener("message", (e) => {
+        // A. Fallback listener for direct postMessage perspective switches
+        if (e.data?.type === "presentation/perspective") {
+          const rawPerspective =
+            e.data?.data?.perspective ?? e.data?.perspective;
+          if (rawPerspective) {
+            syncPerspective(rawPerspective);
+          }
+          return;
+        }
+
+        // B. Optimistic keystroke / mutation events ('presentation/snapshot-event' mutations only)
+        const snapshotEventType =
+          e.data?.data?.event?.type ?? e.data?.event?.type;
+        if (
+          assureTypingInterval > 0 &&
+          e.data?.type === "presentation/snapshot-event" &&
+          snapshotEventType === "mutation"
+        ) {
+          lastSnapshotTime = Date.now();
+          sessionStorage.setItem(FLAG, window.location.href);
+
+          // Push back any pending reload so continuous typing coalesces into one reload
+          if (document.readyState === "complete") {
+            scheduleMutationReload(assureTypingInterval);
+          }
+        }
+      });
+
+      // 3. RECONCILE: Catch any keystroke that arrived while the previous reload HTTP request was in flight
+      if (assureTypingInterval > 0) {
+        window.addEventListener("load", () => {
+          const pendingUrl = sessionStorage.getItem(FLAG);
+          if (pendingUrl !== null) {
+            sessionStorage.removeItem(FLAG);
+            if (pendingUrl === window.location.href) {
               scheduleMutationReload(assureTypingInterval);
             }
           }
         });
+      }
+    })();
+  </script>
 
-        // 3. RECONCILE: Catch any keystroke that arrived while the previous reload HTTP request was in flight
-        if (assureTypingInterval > 0) {
-          window.addEventListener("load", () => {
-            const pendingUrl = sessionStorage.getItem(FLAG);
-            if (pendingUrl !== null) {
-              sessionStorage.removeItem(FLAG);
-              if (pendingUrl === window.location.href) {
-                scheduleMutationReload(assureTypingInterval);
+  <script>
+    import {
+      enableVisualEditing,
+      type HistoryUpdate,
+    } from "@sanity/visual-editing-standalone";
+
+    function getPresentationUrl(location: {
+      pathname: string;
+      search: string;
+      hash: string;
+    }): string {
+      return `${location.pathname}${location.search}${location.hash}`;
+    }
+
+    function shouldPublishUrl(nextUrl: string, previousUrl: string): boolean {
+      return nextUrl !== previousUrl;
+    }
+
+    function applyPresentationHistoryUpdate(
+      update: Pick<HistoryUpdate, "type" | "url">,
+      currentHref: string,
+      navigate: {
+        assign: (url: string) => void;
+        replace: (url: string) => void;
+        back: () => void;
+      },
+    ): void {
+      switch (update.type) {
+        case "push": {
+          if (currentHref !== update.url) {
+            navigate.assign(update.url);
+          }
+          return;
+        }
+        case "replace": {
+          if (currentHref !== update.url) {
+            navigate.replace(update.url);
+          }
+          return;
+        }
+        case "pop": {
+          navigate.back();
+          return;
+        }
+        default: {
+          throw new Error(
+            `Unknown history update type: ${(update as { type?: string }).type ?? "unknown"}`,
+          );
+        }
+      }
+    }
+
+    const config = (window as any).__sanityVEConfig;
+
+    if (config?.enabled) {
+      const cleanup = enableVisualEditing({
+        zIndex: config.zIndex,
+        keepStegaOnCopy: config.keepStegaOnCopy,
+        history: {
+          subscribe: (navigate) => {
+            let lastUrl = "";
+
+            const publishUrl = (nextUrl: string) => {
+              if (!shouldPublishUrl(nextUrl, lastUrl)) {
+                return;
               }
-            }
-          });
-        }
-      })();
-    </script>
-
-    <script>
-      import {
-        enableVisualEditing,
-        type HistoryUpdate,
-      } from "@sanity/visual-editing-standalone";
-
-      function getPresentationUrl(location: {
-        pathname: string;
-        search: string;
-        hash: string;
-      }): string {
-        return `${location.pathname}${location.search}${location.hash}`;
-      }
-
-      function shouldPublishUrl(nextUrl: string, previousUrl: string): boolean {
-        return nextUrl !== previousUrl;
-      }
-
-      function applyPresentationHistoryUpdate(
-        update: Pick<HistoryUpdate, "type" | "url">,
-        currentHref: string,
-        navigate: {
-          assign: (url: string) => void;
-          replace: (url: string) => void;
-          back: () => void;
-        },
-      ): void {
-        switch (update.type) {
-          case "push": {
-            if (currentHref !== update.url) {
-              navigate.assign(update.url);
-            }
-            return;
-          }
-          case "replace": {
-            if (currentHref !== update.url) {
-              navigate.replace(update.url);
-            }
-            return;
-          }
-          case "pop": {
-            navigate.back();
-            return;
-          }
-          default: {
-            throw new Error(
-              `Unknown history update type: ${(update as { type?: string }).type ?? "unknown"}`,
-            );
-          }
-        }
-      }
-
-      const config = (window as any).__sanityVEConfig;
-
-      if (config?.enabled) {
-        const cleanup = enableVisualEditing({
-          zIndex: config.zIndex,
-          history: {
-            subscribe: (navigate) => {
-              let lastUrl = "";
-
-              const publishUrl = (nextUrl: string) => {
-                if (!shouldPublishUrl(nextUrl, lastUrl)) {
-                  return;
-                }
-                lastUrl = nextUrl;
-                navigate({
-                  type: "push",
-                  title: document.title,
-                  url: nextUrl,
-                });
-              };
-
-              const publishCurrentUrl = () => {
-                publishUrl(getPresentationUrl(window.location));
-              };
-
-              const onClick = (event: MouseEvent) => {
-                if (event.defaultPrevented || event.button !== 0) return;
-                if (
-                  event.metaKey ||
-                  event.ctrlKey ||
-                  event.altKey ||
-                  event.shiftKey
-                ) {
-                  return;
-                }
-                const target = event.target;
-                if (!(target instanceof Element)) return;
-                const anchor = target.closest("a[href]");
-                if (!(anchor instanceof HTMLAnchorElement)) return;
-                if (anchor.target && anchor.target !== "_self") return;
-                if (anchor.hasAttribute("download")) return;
-
-                let targetUrl: URL;
-                try {
-                  targetUrl = new URL(anchor.href, window.location.href);
-                } catch {
-                  return;
-                }
-                if (targetUrl.origin !== window.location.origin) return;
-
-                publishUrl(getPresentationUrl(targetUrl));
-              };
-
-              publishCurrentUrl();
-
-              window.addEventListener("popstate", publishCurrentUrl);
-              window.addEventListener("hashchange", publishCurrentUrl);
-              document.addEventListener("click", onClick, true);
-              document.addEventListener("astro:page-load", publishCurrentUrl);
-
-              return () => {
-                window.removeEventListener("popstate", publishCurrentUrl);
-                window.removeEventListener("hashchange", publishCurrentUrl);
-                document.removeEventListener("click", onClick, true);
-                document.removeEventListener(
-                  "astro:page-load",
-                  publishCurrentUrl,
-                );
-              };
-            },
-            update: (update) => {
-              applyPresentationHistoryUpdate(update, window.location.href, {
-                assign: (url) => window.location.assign(url),
-                replace: (url) => window.location.replace(url),
-                back: () => window.history.back(),
+              lastUrl = nextUrl;
+              navigate({
+                type: "push",
+                title: document.title,
+                url: nextUrl,
               });
-            },
-          },
-          onPerspectiveChange: (perspective) => {
-            config.syncPerspective?.(perspective);
-          },
-          refresh: (payload) => {
-            if (payload.source === "manual") {
-              config.triggerImmediateReload?.();
-              return Promise.resolve();
-            }
-            if (payload.source === "mutation") {
-              config.onMutationRefresh?.();
-              return Promise.resolve();
-            }
-            return false;
-          },
-        });
+            };
 
-        // Tear down Comlink only when the document actually unloads, keeping the channel open
-        // for snapshot-event messages while Astro SSR is fetching the next page over the network.
-        window.addEventListener("pagehide", () => cleanup(), { once: true });
-      }
-    </script>
-  </>
-)}
+            const publishCurrentUrl = () => {
+              publishUrl(getPresentationUrl(window.location));
+            };
+
+            const onClick = (event: MouseEvent) => {
+              if (event.defaultPrevented || event.button !== 0) return;
+              if (
+                event.metaKey ||
+                event.ctrlKey ||
+                event.altKey ||
+                event.shiftKey
+              ) {
+                return;
+              }
+              const target = event.target;
+              if (!(target instanceof Element)) return;
+              const anchor = target.closest("a[href]");
+              if (!(anchor instanceof HTMLAnchorElement)) return;
+              if (anchor.target && anchor.target !== "_self") return;
+              if (anchor.hasAttribute("download")) return;
+
+              let targetUrl: URL;
+              try {
+                targetUrl = new URL(anchor.href, window.location.href);
+              } catch {
+                return;
+              }
+              if (targetUrl.origin !== window.location.origin) return;
+
+              publishUrl(getPresentationUrl(targetUrl));
+            };
+
+            publishCurrentUrl();
+
+            window.addEventListener("popstate", publishCurrentUrl);
+            window.addEventListener("hashchange", publishCurrentUrl);
+            document.addEventListener("click", onClick, true);
+            document.addEventListener("astro:page-load", publishCurrentUrl);
+
+            return () => {
+              window.removeEventListener("popstate", publishCurrentUrl);
+              window.removeEventListener("hashchange", publishCurrentUrl);
+              document.removeEventListener("click", onClick, true);
+              document.removeEventListener(
+                "astro:page-load",
+                publishCurrentUrl,
+              );
+            };
+          },
+          update: (update) => {
+            applyPresentationHistoryUpdate(update, window.location.href, {
+              assign: (url) => window.location.assign(url),
+              replace: (url) => window.location.replace(url),
+              back: () => window.history.back(),
+            });
+          },
+        },
+        onPerspectiveChange: (perspective) => {
+          config.syncPerspective?.(perspective);
+        },
+        refresh: (payload) => {
+          if (payload.source === "manual") {
+            config.triggerImmediateReload?.();
+            return Promise.resolve();
+          }
+          if (payload.source === "mutation") {
+            config.onMutationRefresh?.();
+            return Promise.resolve();
+          }
+          return false;
+        },
+      });
+
+      // Tear down Comlink only when the document actually unloads, keeping the channel open
+      // for snapshot-event messages while Astro SSR is fetching the next page over the network.
+      window.addEventListener("pagehide", () => cleanup(), { once: true });
+    }
+  </script>
+</>
+  )}
