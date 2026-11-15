@@ -9,6 +9,7 @@ import {vitePluginSanityModuleDedupe} from './vite-plugin-sanity-module-dedupe'
 import {vitePluginSanityStudio} from './vite-plugin-sanity-studio'
 import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-chunk-warning'
 import {vitePluginSanityStudioHashRouter} from './vite-plugin-sanity-studio-hash-router'
+import {vitePluginSanityVisualEditingStandalone} from './vite-plugin-sanity-visual-editing-standalone'
 
 // The plugin factories return Vite's `PluginOption` from this package's copy of Vite, which can
 // differ from the copy Astro's config types reference. Passing the array to `updateConfig` as is
@@ -49,6 +50,16 @@ export type IntegrationOptions = ClientConfig & {
    * Top-level client options can be used instead of `clients.default`, but not together with it.
    */
   clients?: Record<string, NamedClientConfig>
+  /**
+   * Runs the `<VisualEditing />` overlays on `@sanity/visual-editing-standalone`
+   * instead of `@sanity/visual-editing`. The standalone build bundles its own React,
+   * React DOM and styled-components instead of using the project's copies. Requires
+   * `@sanity/visual-editing-standalone` to be installed. With
+   * `experimental_refreshStrategy="in-place"` the instant text step doesn't work in this
+   * mode, because the standalone build doesn't export the optimistic document state it
+   * reads. Defaults to `false`.
+   */
+  visualEditingStandalone?: boolean
 }
 
 const defaultClientConfig: ClientConfig = {
@@ -84,6 +95,7 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
     logClientRequests,
     injectTypes: shouldInjectTypes = false,
     clients,
+    visualEditingStandalone = false,
     ...clientConfig
   } = options
   const normalizedStudioBasePath = normalizeStudioBasePath(studioBasePath)
@@ -103,7 +115,7 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
   return {
     name: '@sanity/astro',
     hooks: {
-      'astro:config:setup': ({config, injectScript, injectRoute, updateConfig}) => {
+      'astro:config:setup': ({config, injectScript, injectRoute, logger, updateConfig}) => {
         const studioRouterHistory = resolveStudioRouterHistory(
           requestedStudioRouterHistory,
           config?.output,
@@ -119,7 +131,17 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
           }),
           vitePluginSanityStudioHashRouter(),
           vitePluginSanityStudioChunkWarning(),
+          ...(visualEditingStandalone ? [vitePluginSanityVisualEditingStandalone()] : []),
         ]
+
+        if (
+          visualEditingStandalone &&
+          config?.integrations?.some((integration) => integration.name === '@astrojs/react')
+        ) {
+          logger?.warn(
+            '`visualEditingStandalone` bundles its own copy of React. This project also uses `@astrojs/react`, so pages with Visual Editing load React twice.',
+          )
+        }
 
         updateConfig({
           vite: {
