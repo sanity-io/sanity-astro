@@ -70,6 +70,10 @@ describe('resolveRefreshStrategy', () => {
     })
   })
 
+  it('selects the in-place refresh', () => {
+    expect(resolveRefreshStrategy('in-place')).toEqual({type: 'in-place'})
+  })
+
   it('drops a follow-up delay that would do nothing', () => {
     for (const followUpDelayMs of [undefined, 0, -1, Number.NaN, Number.POSITIVE_INFINITY]) {
       expect(resolveRefreshStrategy({type: 'reload', followUpDelayMs})).toEqual({

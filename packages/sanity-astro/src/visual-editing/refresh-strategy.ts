@@ -15,13 +15,22 @@ import {
  * - `{type: 'reload', followUpDelayMs}`: the same reload, plus a reconciled or fallback reload
  *   `followUpDelayMs` later when a Studio `presentation/snapshot-event` arrives during the
  *   reload window or its accompanying Comlink refresh is dropped.
+ * - `'in-place'`: no reload. Stega text is patched from the document stream the moment a change
+ *   arrives, and fresh server HTML is morphed into the live DOM, with a reload as the fallback.
  *
  * Only plain, JSON-serializable values, so the `.astro` component can pass it to the browser.
+ * A stringified `{type: 'reload', followUpDelayMs}` is accepted too, because an `.astro`
+ * template can hand the prop through as text.
  */
-export type RefreshStrategy = 'reload' | {type: 'reload'; followUpDelayMs?: number}
+export type RefreshStrategy = 'reload' | {type: 'reload'; followUpDelayMs?: number} | 'in-place'
+
+/** The reload strategies of `RefreshStrategy`, the ones `createDefaultRefresh` handles. */
+export type ReloadRefreshStrategy = Exclude<RefreshStrategy, 'in-place'>
+
+export type ResolvedReloadStrategy = {type: 'reload'; followUpDelayMs: number | undefined}
 
 /** `RefreshStrategy` with the shorthands expanded and invalid values dropped. */
-export type ResolvedRefreshStrategy = {type: 'reload'; followUpDelayMs: number | undefined}
+export type ResolvedRefreshStrategy = ResolvedReloadStrategy | {type: 'in-place'}
 
 /**
  * Expands the shorthand and drops values that would do nothing (a missing, zero, negative or
@@ -29,8 +38,18 @@ export type ResolvedRefreshStrategy = {type: 'reload'; followUpDelayMs: number |
  * strategy objects if passed via template literal attribute syntax in `.astro` templates.
  */
 export function resolveRefreshStrategy(
+  strategy: ReloadRefreshStrategy | undefined,
+): ResolvedReloadStrategy
+export function resolveRefreshStrategy(
+  strategy: RefreshStrategy | string | undefined,
+): ResolvedRefreshStrategy
+export function resolveRefreshStrategy(
   strategy: RefreshStrategy | string | undefined,
 ): ResolvedRefreshStrategy {
+  if (strategy === 'in-place') {
+    return {type: 'in-place'}
+  }
+
   if (typeof strategy === 'string' && strategy !== 'reload') {
     const match = strategy.match(/followUpDelayMs\s*:\s*([+-]?\d+(?:\.\d+)?)/)
     if (strategy.includes('reload') && match) {
@@ -42,8 +61,12 @@ export function resolveRefreshStrategy(
     return {type: 'reload', followUpDelayMs: undefined}
   }
 
-  // So far, we only handle the 'reload' strategy type, or none provided
-  if (!strategy || typeof strategy !== 'object' || strategy.type !== 'reload') {
+  if (
+    !strategy ||
+    strategy === 'reload' ||
+    typeof strategy !== 'object' ||
+    strategy.type !== 'reload'
+  ) {
     return {type: 'reload', followUpDelayMs: undefined}
   }
   const {followUpDelayMs} = strategy
@@ -64,9 +87,9 @@ export interface DefaultRefresh {
   arrive: () => (() => void) | undefined
 }
 
-/** Builds the default `refresh` for the selected strategy. */
+/** Builds the reload-based default `refresh`; `'in-place'` lives in `createRuntime`. */
 export function createDefaultRefresh(
-  strategy: ResolvedRefreshStrategy,
+  strategy: ResolvedReloadStrategy,
   host: DefaultRefreshHost,
 ): DefaultRefresh {
   const {followUpDelayMs} = strategy
