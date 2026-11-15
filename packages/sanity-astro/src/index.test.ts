@@ -1,6 +1,13 @@
-import {describe, expect, it, vi} from 'vitest'
+import {mkdir, mkdtemp, readFile, rm, writeFile} from 'node:fs/promises'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
+import {fileURLToPath, pathToFileURL} from 'node:url'
 
-import sanityIntegration, {type IntegrationOptions} from './index'
+import type {HookParameters} from 'astro'
+import {afterEach, describe, expect, it, vi} from 'vitest'
+
+import sanityIntegration, {type IntegrationOptions, type SanityLiveOptions} from './index'
+import {SANITY_LOADER_MODULE_ID} from './vite-plugin-sanity-loader'
 import {vitePluginSanityModuleDedupe} from './vite-plugin-sanity-module-dedupe'
 import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-chunk-warning'
 
@@ -11,7 +18,20 @@ type SetupOptions = Pick<
   output?: 'static' | 'server'
   integrations?: Array<{name: string}>
   options?: IntegrationOptions
+  live?: SanityLiveOptions
+  command?: HookParameters<'astro:config:setup'>['command']
+  root?: string
 }
+
+const fixturePath = fileURLToPath(
+  new URL('./live/__fixtures__/movies-schema.json', import.meta.url),
+)
+
+const tempDirs: string[] = []
+
+afterEach(async () => {
+  await Promise.all(tempDirs.splice(0).map((dir) => rm(dir, {recursive: true, force: true})))
+})
 
 async function runSetup({
   output = 'static',
@@ -21,6 +41,9 @@ async function runSetup({
   visualEditingStandalone,
   integrations = [],
   options,
+  live,
+  command = 'build',
+  root = '/app/',
 }: SetupOptions = {}) {
   const integration = sanityIntegration(
     options ?? {
@@ -30,26 +53,46 @@ async function runSetup({
       studioRouterHistory,
       logClientRequests,
       visualEditingStandalone,
+      experimental_live: live,
     },
   )
   const setup = integration.hooks['astro:config:setup']
   const injectRoute = vi.fn()
   const updateConfig = vi.fn()
   const injectScript = vi.fn()
-  const logger = {warn: vi.fn()}
+  const logger = {info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn()}
+  const codegenDir = await mkdtemp(join(tmpdir(), 'sanity-astro-codegen-'))
+  tempDirs.push(codegenDir)
+  const createCodegenDir = vi.fn(() => pathToFileURL(`${codegenDir}/`))
+  const typesFile = join(codegenDir, 'sanity-loader.d.ts')
+  const injectTypes = vi.fn(() => pathToFileURL(typesFile))
 
   await setup({
-    config: {output, integrations, env: {}},
+    config: {output, root: pathToFileURL(root), integrations, env: {}},
+    command,
     injectRoute,
     updateConfig,
     injectScript,
+    createCodegenDir,
     logger,
   } as never)
+  await integration.hooks['astro:config:done']?.({injectTypes, logger} as never)
 
   const vitePlugins: Array<{name?: string; load?: (id: string) => unknown}> =
     updateConfig.mock.calls[0][0].vite.plugins
+  const loaderPlugin = vitePlugins.find((plugin) => plugin.name === 'sanity:loader')
 
-  return {integration, injectRoute, updateConfig, injectScript, logger, vitePlugins}
+  return {
+    integration,
+    injectRoute,
+    updateConfig,
+    injectScript,
+    injectTypes,
+    logger,
+    vitePlugins,
+    loaderPlugin,
+    typesFile,
+  }
 }
 
 type LoadWithSsr = (id: string, options: {ssr: boolean}) => string
@@ -203,6 +246,87 @@ describe('sanity integration types', () => {
   })
 })
 
+describe('sanity integration live loaders', () => {
+  const live: SanityLiveOptions = {
+    schema: fixturePath,
+    loaders: {movie: {type: 'movie', projection: 'title', orderBy: ['title', 'asc']}},
+  }
+
+  it('serves the generated module from sanity:loader and injects its types', async () => {
+    const {loaderPlugin, injectTypes, logger, typesFile} = await runSetup({live})
+
+    const source = loaderPlugin?.load?.(SANITY_LOADER_MODULE_ID)
+    expect(source).toContain('export const movieLoader = (options = {}) =>')
+    expect(source).toContain('export const movieSchema = z.object({')
+    expect(injectTypes).toHaveBeenCalledTimes(1)
+    const [{filename, content}] = injectTypes.mock.calls[0] as unknown as [
+      {filename: string; content: string},
+    ]
+    expect(filename).toBe('sanity-loader.d.ts')
+    expect(content).toContain('export type Movie = {')
+    expect(content).toContain('title: string | null;')
+    expect(await readFile(typesFile, 'utf8')).toBe(content)
+    expect(logger.warn).not.toHaveBeenCalled()
+  })
+
+  it('is off by default: no loader plugin, no live hooks, no injected types', async () => {
+    const {integration, vitePlugins, loaderPlugin, injectTypes} = await runSetup()
+
+    expect(Object.keys(integration.hooks)).toEqual(['astro:config:setup', 'astro:config:done'])
+    expect(loaderPlugin).toBeUndefined()
+    expect(vitePlugins.map((plugin) => plugin.name)).toEqual([
+      'sanity:module-dedupe',
+      'sanity:client',
+      'sanity:studio',
+      'sanity:studio-hash-router',
+      'sanity:studio-runtime-env',
+      'vite-plugin-sanity-studio-chunk-warning',
+    ])
+    expect(injectTypes).not.toHaveBeenCalled()
+  })
+
+  it('adds the live hooks only when experimental_live is set', async () => {
+    const {integration} = await runSetup({live})
+
+    expect(Object.keys(integration.hooks)).toEqual([
+      'astro:config:setup',
+      'astro:config:done',
+      'astro:server:setup',
+    ])
+  })
+
+  it('requires Astro 6 or later', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sanity-astro-root-'))
+    tempDirs.push(root)
+    const astroDir = join(root, 'node_modules', 'astro')
+    await mkdir(astroDir, {recursive: true})
+    await writeFile(
+      join(astroDir, 'package.json'),
+      JSON.stringify({name: 'astro', version: '5.11.1'}),
+    )
+
+    await expect(runSetup({live, root: `${root}/`})).rejects.toThrow(
+      '[@sanity/astro] The `experimental_live` option requires Astro 6 or later (found astro 5.11.1)',
+    )
+  })
+
+  it('skips the extraction for astro preview, which serves the built output', async () => {
+    const {loaderPlugin, injectTypes, logger} = await runSetup({live, command: 'preview'})
+
+    expect(loaderPlugin).toBeUndefined()
+    expect(injectTypes).not.toHaveBeenCalled()
+    expect(logger.info).not.toHaveBeenCalled()
+  })
+
+  it('keeps experimental_live out of the client config', async () => {
+    const {updateConfig} = await runSetup({live})
+    const clientPlugin = updateConfig.mock.calls[0][0].vite.plugins.find(
+      (plugin: {name?: string}) => plugin.name === 'sanity:client',
+    )
+    expect(clientPlugin.load('\0sanity:client')).not.toContain('loaders')
+  })
+})
+
 describe('sanity integration vite config', () => {
   it('registers module dedupe plugin (#406)', async () => {
     const {updateConfig} = await runSetup()
@@ -352,7 +476,7 @@ describe('sanity integration named clients', () => {
     })
     const configDone = integration.hooks['astro:config:done']
 
-    expect(() => configDone?.({} as never)).not.toThrow()
+    await expect(configDone?.({} as never)).resolves.toBeUndefined()
   })
 })
 
@@ -405,10 +529,10 @@ describe('sanity integration env option', () => {
     },
   )
 
-  it('requires astro:env (Astro 5)', () => {
+  it('requires astro:env (Astro 5)', async () => {
     const setup = sanityIntegration({env: {dataset: 'SANITY_DATASET'}}).hooks['astro:config:setup']
 
-    expect(() => setup?.({config: {}} as never)).toThrow(
+    await expect(setup?.({config: {}} as never)).rejects.toThrow(
       /through `astro:env`, which this Astro version does not have/,
     )
   })
