@@ -25,12 +25,16 @@ vi.mock('sanity', () => ({
   },
 }))
 
-async function renderStudio(studioConfig: unknown, history?: 'browser' | 'hash') {
+async function renderStudio(
+  studioConfig: unknown,
+  history?: 'browser' | 'hash',
+  runtimeEnv?: {projectId?: string; dataset?: string},
+) {
   studio.config = studioConfig
   vi.resetModules()
   const {StudioComponent} = await import('../src/studio/studio-component')
 
-  await renderInAct(React.createElement(StudioComponent, {history}))
+  await renderInAct(React.createElement(StudioComponent, {history, runtimeEnv}))
   return studioRenders[studioRenders.length - 1]
 }
 
@@ -63,6 +67,21 @@ describe('StudioComponent', () => {
     expect(
       document.querySelector('[data-ui="AstroStudioLayout"] [data-testid="studio"]'),
     ).not.toBeNull()
+  })
+
+  it('applies the runtime config from the server over the workspace config', async () => {
+    const workspace = {name: 'default', projectId: 'build', dataset: 'build', basePath: '/admin'}
+
+    expect((await renderStudio(workspace, 'browser', {dataset: 'runtime'})).config).toEqual({
+      ...workspace,
+      dataset: 'runtime',
+    })
+  })
+
+  it('rejects the runtime config for an array of workspaces', async () => {
+    await expect(
+      renderStudio([{name: 'default'}], 'browser', {dataset: 'runtime'}),
+    ).rejects.toThrow(/not an array of workspaces/)
   })
 
   it('hands Studio a hash history that reports plain locations to listeners', async () => {

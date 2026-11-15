@@ -39,7 +39,7 @@ async function runSetup({
   const logger = {warn: vi.fn()}
 
   await setup({
-    config: {output, integrations},
+    config: {output, integrations, env: {}},
     injectRoute,
     updateConfig,
     injectScript,
@@ -51,6 +51,8 @@ async function runSetup({
 
   return {integration, injectRoute, updateConfig, injectScript, logger, vitePlugins}
 }
+
+type LoadWithSsr = (id: string, options: {ssr: boolean}) => string
 
 function loadVirtualClientModule(updateConfig: ReturnType<typeof vi.fn>): string {
   const viteConfig = updateConfig.mock.calls[0][0].vite
@@ -388,6 +390,26 @@ describe('sanity integration studio router history defaults', () => {
         pattern: '/admin/[...params]',
         prerender: false,
       }),
+    )
+  })
+})
+
+describe('sanity integration env option', () => {
+  it.each(['sanity:client', 'sanity:studio-runtime-env'])(
+    'reads the variables in %s on the server',
+    async (name) => {
+      const {vitePlugins} = await runSetup({options: {env: {dataset: 'SANITY_DATASET'}}})
+      const plugin = vitePlugins.find((candidate) => candidate.name === name) as {load: LoadWithSsr}
+
+      expect(plugin.load(`\0${name}`, {ssr: true})).toContain('{"dataset":"SANITY_DATASET"}')
+    },
+  )
+
+  it('requires astro:env (Astro 5)', () => {
+    const setup = sanityIntegration({env: {dataset: 'SANITY_DATASET'}}).hooks['astro:config:setup']
+
+    expect(() => setup?.({config: {}} as never)).toThrow(
+      /through `astro:env`, which this Astro version does not have/,
     )
   })
 })

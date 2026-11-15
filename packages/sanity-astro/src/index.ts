@@ -9,6 +9,10 @@ import {vitePluginSanityModuleDedupe} from './vite-plugin-sanity-module-dedupe'
 import {vitePluginSanityStudio} from './vite-plugin-sanity-studio'
 import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-chunk-warning'
 import {vitePluginSanityStudioHashRouter} from './vite-plugin-sanity-studio-hash-router'
+import {
+  type RuntimeEnvOption,
+  vitePluginSanityStudioRuntimeEnv,
+} from './vite-plugin-sanity-studio-runtime-env'
 import {vitePluginSanityVisualEditingStandalone} from './vite-plugin-sanity-visual-editing-standalone'
 
 // The plugin factories return Vite's `PluginOption` from this package's copy of Vite, which can
@@ -16,7 +20,7 @@ import {vitePluginSanityVisualEditingStandalone} from './vite-plugin-sanity-visu
 // crashes TypeScript 5.9 while it reports the mismatch, so it is typed as Astro's own option.
 type AstroVitePlugins = NonNullable<NonNullable<AstroUserConfig['vite']>['plugins']>
 
-export type {NamedClientConfig}
+export type {NamedClientConfig, RuntimeEnvOption}
 
 export type StudioRouterHistory = 'browser' | 'hash'
 export type LogClientRequests = 'dev' | 'build' | 'always'
@@ -50,6 +54,11 @@ export type IntegrationOptions = ClientConfig & {
    * Top-level client options can be used instead of `clients.default`, but not together with it.
    */
   clients?: Record<string, NamedClientConfig>
+  /**
+   * Names of environment variables for `projectId` and `dataset`, read when the server runs.
+   * Applies to `sanityClient` in server code and the Studio with `browser` history. Requires Astro 5.
+   */
+  env?: RuntimeEnvOption
   /**
    * Runs the `<VisualEditing />` overlays on `@sanity/visual-editing-standalone`
    * instead of `@sanity/visual-editing`. The standalone build bundles its own React,
@@ -95,6 +104,7 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
     logClientRequests,
     injectTypes: shouldInjectTypes = false,
     clients,
+    env,
     visualEditingStandalone = false,
     ...clientConfig
   } = options
@@ -120,16 +130,22 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
           requestedStudioRouterHistory,
           config?.output,
         )
+        if (env && !config?.env) {
+          throw new Error(
+            '[@sanity/astro]: The `env` option reads its variables through `astro:env`, which this Astro version does not have. Upgrade to Astro 5 or later, or remove `env`',
+          )
+        }
         const vitePlugins = [
           ...(process.env.SANITY_ASTRO_DISABLE_MODULE_DEDUPE
             ? []
             : [vitePluginSanityModuleDedupe()]),
-          vitePluginSanityClient(resolvedClients, {logClientRequests}),
+          vitePluginSanityClient(resolvedClients, {logClientRequests, env}),
           vitePluginSanityStudio({
             studioBasePath: normalizedStudioBasePath,
             studioRouterHistory,
           }),
           vitePluginSanityStudioHashRouter(),
+          vitePluginSanityStudioRuntimeEnv(env),
           vitePluginSanityStudioChunkWarning(),
           ...(visualEditingStandalone ? [vitePluginSanityVisualEditingStandalone()] : []),
         ]

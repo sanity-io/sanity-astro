@@ -3,19 +3,21 @@ import type {PartialDeep} from 'type-fest'
 import type {PluginOption} from 'vite'
 
 import {DEFAULT_CLIENT_NAME, type ResolvedClients} from './resolve-clients'
+import {type RuntimeEnvOption, runtimeEnvCode} from './vite-plugin-sanity-studio-runtime-env'
 
 const virtualModuleId = 'sanity:client'
 const resolvedVirtualModuleId = '\0' + virtualModuleId
 
 type PluginOptions = {
   logClientRequests?: 'dev' | 'build' | 'always'
+  env?: RuntimeEnvOption
 }
 
 export function vitePluginSanityClient(
   {clients, presentationClientName}: ResolvedClients,
   options: PluginOptions = {},
 ) {
-  const logClientRequests = options.logClientRequests
+  const {logClientRequests, env} = options
 
   function serializeClients(isServerBuild: boolean): string {
     return Object.entries(clients)
@@ -30,9 +32,13 @@ export function vitePluginSanityClient(
           typeof config.token === 'string' ||
           (typeof headers === 'object' && headers !== null && Object.keys(headers).length > 0)
         const isServerOnly = !isServerBuild && name !== DEFAULT_CLIENT_NAME && hasCredentials
+        const usesRuntimeEnv = isServerBuild && env !== undefined && name === DEFAULT_CLIENT_NAME
+        const serializedConfig = usesRuntimeEnv
+          ? `{...${serialize(config)}, ...runtimeEnv}`
+          : serialize(config)
         const client = isServerOnly
           ? `serverOnlyClient(${serialize(name)})`
-          : `createNamedClient(${serialize(name)}, ${serialize(config)})`
+          : `createNamedClient(${serialize(name)}, ${serializedConfig})`
         return `[${serialize(name)}, ${client}],`
       })
       .join('\n')
@@ -47,9 +53,11 @@ export function vitePluginSanityClient(
     },
     load(id: string, loadOptions?: {ssr?: boolean}) {
       if (id === resolvedVirtualModuleId) {
-        const serializedClients = serializeClients(loadOptions?.ssr === true)
+        const isServerBuild = loadOptions?.ssr === true
+        const serializedClients = serializeClients(isServerBuild)
         return `
           import { createClient } from "@sanity/client";
+          ${runtimeEnvCode(env, isServerBuild)}
 
           const logClientRequests = ${serialize(logClientRequests)};
           const shouldLogInCurrentMode =

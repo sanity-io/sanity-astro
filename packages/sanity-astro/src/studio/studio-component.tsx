@@ -10,7 +10,21 @@ if (!config) {
   )
 }
 
-export function StudioComponent(props: {history?: 'browser' | 'hash'}) {
+export function StudioComponent(props: {
+  history?: 'browser' | 'hash'
+  /** Values the server read through the integration's `env` option. */
+  runtimeEnv?: {projectId?: string; dataset?: string}
+}) {
+  const {runtimeEnv} = props
+  if (runtimeEnv && Array.isArray(config)) {
+    throw new Error(
+      '[@sanity/astro]: The `env` option supports a Studio with a single workspace, not an array of workspaces. Remove `env` or export a single workspace from sanity.config.ts|js',
+    )
+  }
+  const resolvedConfig = React.useMemo(
+    () => (runtimeEnv ? {...config, ...runtimeEnv} : config),
+    [runtimeEnv],
+  )
   const history = React.useMemo(
     () => (props.history === 'hash' ? createHashHistoryForStudio() : undefined),
     [props.history],
@@ -101,7 +115,7 @@ export function StudioComponent(props: {history?: 'browser' | 'hash'}) {
         overflow: 'auto',
       }}
     >
-      <Studio config={config} unstable_history={history} />
+      <Studio config={resolvedConfig} unstable_history={history} />
     </div>
   )
 }
