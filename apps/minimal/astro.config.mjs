@@ -12,6 +12,16 @@ export default defineConfig({
       useCdn: true,
       apiVersion: '2025-01-01',
       injectTypes: true,
+      experimental_live: {
+        schema: './schema.json',
+        loaders: {
+          movie: {
+            type: 'movie',
+            projection: 'title, "slug": slug.current, releaseDate, "poster": poster.asset->url',
+            orderBy: ['releaseDate', 'desc'],
+          },
+        },
+      },
       ...(visualEditingEnabled && {
         stega: {studioUrl: process.env.PUBLIC_SANITY_STUDIO_URL ?? 'http://localhost:3333'},
       }),

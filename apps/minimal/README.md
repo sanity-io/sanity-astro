@@ -1,6 +1,6 @@
 # Minimal
 
-The smallest working Sanity + Astro setup: one integration entry in `astro.config.mjs` and one page that fetches with `sanityClient` from `sanity:client`. No Studio, no React, no CSS framework. Copy this folder to start a new project.
+The smallest working Sanity + Astro setup: one integration entry in `astro.config.mjs`, one live content collection in `src/live.config.ts`, a list page and a detail page. No Studio, no React, no CSS framework. Copy this folder to start a new project.
 
 ## Run it
 
@@ -15,6 +15,12 @@ The page is on `http://localhost:4326`. Other scripts in `apps/minimal`: `pnpm b
 ## Content
 
 The page lists movies from Sanity's public demo dataset (project `4j2qnyob`, dataset `production`) over the CDN. It needs no API token. Poster thumbnails come from the asset URL with `?w=120&h=180&fit=crop&auto=format` appended, so the app does not need `@sanity/image-url`.
+
+## Live content collection
+
+The pages read content through an [Astro live collection](https://docs.astro.build/en/reference/experimental-flags/live-content-collections/) instead of calling the client directly. The `experimental_live` option in `astro.config.mjs` describes one loader, `movie`: the document type, the GROQ projection and the sort order. From that, the integration generates `movieLoader`, `movieSchema` and the `Movie` type on the `sanity:loader` virtual module. Types are derived from `schema.json`, the schema extracted from the movies demo Studio (`apps/movies`) with `sanity schema extract`; re-extract it when that schema changes.
+
+`src/live.config.ts` registers the loader as the `movies` collection. When Visual Editing is on, the loader gets a stega-enabled client. `src/pages/index.astro` lists the entries with `getLiveCollection('movies')`, and `src/pages/movies/[id].astro` renders one entry with `getLiveEntry('movies', id)`. The site builds statically, so each movie page is generated at build time from `getStaticPaths`; with an SSR adapter, the same calls fetch on every request.
 
 ## Visual Editing without a client framework
 
