@@ -1,43 +1,31 @@
 import {describe, expect, it} from 'vitest'
 
 import {
-  runtimeEnvCode,
+  type RuntimeEnvOption,
   vitePluginSanityStudioRuntimeEnv,
 } from './vite-plugin-sanity-studio-runtime-env'
 
-function evaluate(code: string, astroEnv: Record<string, string> = {}) {
+function importRuntimeEnv(env: RuntimeEnvOption | undefined, ssr: boolean) {
+  const plugin = vitePluginSanityStudioRuntimeEnv(env) as unknown as {
+    resolveId: (id: string) => string
+    load: (id: string, options: {ssr: boolean}) => string
+  }
+  const code = plugin.load(plugin.resolveId('sanity:studio-runtime-env'), {ssr})
   const executable = code
-    .replace(
-      'import { getSecret } from "astro:env/server";',
-      'const getSecret = (name) => __astroEnv[name];',
-    )
-    .replace('export default runtimeEnv;', '')
-  return new Function('__astroEnv', `${executable}\nreturn runtimeEnv;`)(astroEnv)
+    .replace('import { getSecret } from "astro:env/server";', 'const getSecret = () => "runtime";')
+    .replace('export default', 'return')
+  return new Function(executable)()
 }
 
-describe('runtimeEnvCode', () => {
-  it('reads the variables on the server and leaves out unset or empty ones', () => {
-    const code = runtimeEnvCode({projectId: 'SANITY_PROJECT_ID', dataset: 'SANITY_DATASET'}, true)
-
-    expect(evaluate(code, {SANITY_DATASET: 'runtime', SANITY_PROJECT_ID: ''})).toEqual({
-      dataset: 'runtime',
-    })
-  })
-
-  it('declares undefined in the browser or without the option', () => {
-    expect(evaluate(runtimeEnvCode({dataset: 'SANITY_DATASET'}, false))).toBeUndefined()
-    expect(evaluate(runtimeEnvCode(undefined, true))).toBeUndefined()
-  })
-})
-
 describe('vitePluginSanityStudioRuntimeEnv', () => {
-  it('exports runtimeEnv from sanity:studio-runtime-env', () => {
-    const plugin = vitePluginSanityStudioRuntimeEnv({dataset: 'SANITY_DATASET'})
-    const resolveId = plugin.resolveId as (id: string) => string | null
-    const load = plugin.load as (id: string, options: {ssr: boolean}) => string
-    const code = load(resolveId('sanity:studio-runtime-env') ?? '', {ssr: true})
+  it('exports the values the server reads', () => {
+    expect(importRuntimeEnv({dataset: 'SANITY_DATASET'}, true)).toStrictEqual({dataset: 'runtime'})
+  })
 
-    expect(code).toContain('export default runtimeEnv;')
-    expect(evaluate(code, {SANITY_DATASET: 'runtime'})).toEqual({dataset: 'runtime'})
+  it.each([
+    ['in the browser', {dataset: 'SANITY_DATASET'}, false],
+    ['without the option', undefined, true],
+  ])('exports undefined %s', (_, env, ssr) => {
+    expect(importRuntimeEnv(env, ssr)).toBeUndefined()
   })
 })

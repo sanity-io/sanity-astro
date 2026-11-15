@@ -10,7 +10,6 @@ const resolvedVirtualModuleId = '\0' + virtualModuleId
 
 type PluginOptions = {
   logClientRequests?: 'dev' | 'build' | 'always'
-  /** Environment variables that override the default client's config on the server. */
   env?: RuntimeEnvOption
 }
 

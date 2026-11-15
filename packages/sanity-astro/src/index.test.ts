@@ -7,12 +7,7 @@ import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-ch
 type SetupOptions = Pick<
   IntegrationOptions,
   'studioBasePath' | 'studioRouterHistory' | 'logClientRequests'
-> & {
-  output?: 'static' | 'server'
-  options?: IntegrationOptions
-  /** Astro 5 and later always set `config.env`, older versions don't */
-  astroEnv?: object
-}
+> & {output?: 'static' | 'server'; options?: IntegrationOptions}
 
 async function runSetup({
   output = 'static',
@@ -20,7 +15,6 @@ async function runSetup({
   studioBasePath = '/admin',
   logClientRequests,
   options,
-  astroEnv,
 }: SetupOptions = {}) {
   const integration = sanityIntegration(
     options ?? {
@@ -36,7 +30,7 @@ async function runSetup({
   const updateConfig = vi.fn()
   const injectScript = vi.fn()
 
-  await setup({config: {output, env: astroEnv}, injectRoute, updateConfig, injectScript} as never)
+  await setup({config: {output, env: {}}, injectRoute, updateConfig, injectScript} as never)
 
   const vitePlugins: Array<{name?: string; load?: (id: string) => unknown}> =
     updateConfig.mock.calls[0][0].vite.plugins
@@ -362,31 +356,21 @@ describe('sanity integration studio router history defaults', () => {
 })
 
 describe('sanity integration env option', () => {
-  it('reads the variables in the server modules for the client and the Studio', async () => {
-    const {vitePlugins} = await runSetup({
-      output: 'server',
-      astroEnv: {schema: {}},
-      options: {projectId: 'project-id', dataset: 'dataset-name', env: {dataset: 'SANITY_DATASET'}},
-    })
-    const load = (name: string) => {
+  it.each(['sanity:client', 'sanity:studio-runtime-env'])(
+    'reads the variables in %s on the server',
+    async (name) => {
+      const {vitePlugins} = await runSetup({options: {env: {dataset: 'SANITY_DATASET'}}})
       const plugin = vitePlugins.find((candidate) => candidate.name === name) as {load: LoadWithSsr}
-      return plugin.load(`\0${name}`, {ssr: true})
-    }
 
-    expect(load('sanity:client')).toContain('{"dataset":"SANITY_DATASET"}')
-    expect(load('sanity:studio-runtime-env')).toContain('{"dataset":"SANITY_DATASET"}')
-  })
+      expect(plugin.load(`\0${name}`, {ssr: true})).toContain('{"dataset":"SANITY_DATASET"}')
+    },
+  )
 
-  it('requires astro:env (Astro 5)', async () => {
-    await expect(
-      runSetup({
-        output: 'server',
-        options: {
-          projectId: 'project-id',
-          dataset: 'dataset-name',
-          env: {dataset: 'SANITY_DATASET'},
-        },
-      }),
-    ).rejects.toThrow(/through `astro:env`, which this Astro version does not have/)
+  it('requires astro:env (Astro 5)', () => {
+    const setup = sanityIntegration({env: {dataset: 'SANITY_DATASET'}}).hooks['astro:config:setup']
+
+    expect(() => setup?.({config: {}} as never)).toThrow(
+      /through `astro:env`, which this Astro version does not have/,
+    )
   })
 })

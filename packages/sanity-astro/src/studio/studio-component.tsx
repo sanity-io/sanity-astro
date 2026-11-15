@@ -10,12 +10,10 @@ if (!config) {
   )
 }
 
-type RuntimeEnv = {projectId?: string; dataset?: string}
-
 export function StudioComponent(props: {
   history?: 'browser' | 'hash'
   /** Values the server read through the integration's `env` option. */
-  runtimeEnv?: RuntimeEnv
+  runtimeEnv?: {projectId?: string; dataset?: string}
 }) {
   const {runtimeEnv} = props
   if (runtimeEnv && Array.isArray(config)) {

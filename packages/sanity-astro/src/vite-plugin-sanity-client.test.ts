@@ -322,41 +322,25 @@ describe('vitePluginSanityClient env option', () => {
   }
   const runtimeEnv = {projectId: 'SANITY_PROJECT_ID', dataset: 'SANITY_DATASET'}
 
-  function createdConfigs(options: {
-    ssr: boolean
-    astroEnv?: Record<string, string | undefined>
-    runtimeEnv?: RuntimeEnvOption
-  }) {
-    const createClient = vi.fn((config: ClientConfig) => ({config}))
-    evaluateVirtualClientModule({
-      resolvedClients: twoClients,
-      logClientRequests: undefined,
-      env: {DEV: false, PROD: true},
-      createClient,
-      runtimeEnv,
-      ...options,
-    })
-    return createClient.mock.calls.map(([config]) => config)
-  }
+  it.each(['', undefined])(
+    'applies set runtime values to the default client on the server, not %j',
+    (dataset) => {
+      const createClient = vi.fn((config: ClientConfig) => ({config}))
+      evaluateVirtualClientModule({
+        resolvedClients: twoClients,
+        logClientRequests: undefined,
+        env: {DEV: false, PROD: true},
+        createClient,
+        runtimeEnv,
+        astroEnv: {SANITY_PROJECT_ID: 'runtime-project', SANITY_DATASET: dataset},
+      })
 
-  it('applies the runtime values to the default client on the server', () => {
-    const [defaultConfig, previewConfig] = createdConfigs({
-      ssr: true,
-      astroEnv: {SANITY_PROJECT_ID: 'runtime-project', SANITY_DATASET: 'runtime-dataset'},
-    })
-
-    expect(defaultConfig).toEqual({projectId: 'runtime-project', dataset: 'runtime-dataset'})
-    expect(previewConfig).toEqual(twoClients.clients.preview)
-  })
-
-  it('keeps the build-time value when a variable is unset or empty', () => {
-    const [defaultConfig] = createdConfigs({
-      ssr: true,
-      astroEnv: {SANITY_PROJECT_ID: undefined, SANITY_DATASET: ''},
-    })
-
-    expect(defaultConfig).toEqual(twoClients.clients.default)
-  })
+      expect(createClient.mock.calls.map(([config]) => config)).toStrictEqual([
+        {projectId: 'runtime-project', dataset: 'build-dataset'},
+        twoClients.clients.preview,
+      ])
+    },
+  )
 
   it('leaves astro:env out of the browser module', () => {
     const plugin = vitePluginSanityClient(twoClients, {env: runtimeEnv}) as unknown as {

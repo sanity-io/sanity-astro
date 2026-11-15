@@ -11,10 +11,8 @@ export type RuntimeEnvOption = {
 const runtimeEnvKeys = ['projectId', 'dataset'] as const
 
 /**
- * Code that declares `runtimeEnv`: in server code with `env` set, an object with the configured
- * values that are set when the server runs, otherwise `undefined`. Unset or empty variables are
- * left out, so the build-time value applies. `getSecret` reads a variable at runtime without an
- * `env.schema` declaration.
+ * Code that declares `runtimeEnv`: on the server, the configured variables that are set when it
+ * runs; otherwise `undefined`. Unset or empty variables are left out, so build-time values apply.
  */
 export function runtimeEnvCode(env: RuntimeEnvOption | undefined, isServerBuild: boolean): string {
   if (!env || !isServerBuild) {
@@ -28,7 +26,7 @@ export function runtimeEnvCode(env: RuntimeEnvOption | undefined, isServerBuild:
     const runtimeEnv = Object.fromEntries(
       Object.entries(${JSON.stringify(names)})
         .map(([key, name]) => [key, getSecret(name)])
-        .filter(([, value]) => typeof value === "string" && value !== "")
+        .filter(([, value]) => value)
     );
   `
 }
