@@ -1,5 +1,27 @@
 # @sanity/astro
 
+## 4.0.0
+
+### Major Changes
+
+- [#503](https://github.com/sanity-io/sanity-astro/pull/503) [`8b96f03`](https://github.com/sanity-io/sanity-astro/commit/8b96f039c09d4c857a1de7a6cb796a80930ad7f9) Thanks [@stipsan](https://github.com/stipsan)! - Publish an ESM-only build. The UMD bundle and the `module` export condition are removed, subpath exports point at `dist/`, and `src/` is no longer included in the package.
+
+### Minor Changes
+
+- [#452](https://github.com/sanity-io/sanity-astro/pull/452) [`b8e1b4b`](https://github.com/sanity-io/sanity-astro/commit/b8e1b4bfe613d498f819c2ea868554c6981d6122) Thanks [@stipsan](https://github.com/stipsan)! - Add an opt-in `experimental_live` option. When set, the integration generates typed live loaders and Zod schemas from your Sanity schema. With the option unset, nothing is extracted or generated. `@sanity/astro/loader` also exports the experimental `createSanityLiveLoader`.
+
+- [#453](https://github.com/sanity-io/sanity-astro/pull/453) [`ca54e0e`](https://github.com/sanity-io/sanity-astro/commit/ca54e0ec9fbf290c211fd0749921e8cfa8f739a8) Thanks [@stipsan](https://github.com/stipsan)! - `<VisualEditing />` now boots `@sanity/visual-editing` from a plain `<script>`, so sites that only use `.astro` components no longer need `@astrojs/react` for Presentation. Set `experimental_refreshStrategy="in-place"` to patch stega text as editors type and morph the page in place instead of reloading it. With the default `'reload'` strategy the page still reloads on every refresh.
+
+- [#538](https://github.com/sanity-io/sanity-astro/pull/538) [`e8da691`](https://github.com/sanity-io/sanity-astro/commit/e8da69143e068dcd9a58419de5194726c07506e0) Thanks [@tolu](https://github.com/tolu)! - Add an opt-in `env` option that reads `projectId` and `dataset` from environment variables when the server runs, so one build can serve several projects or datasets. It applies to `sanityClient` in server code and to the embedded Studio with `browser` history, and requires Astro 5 or later. Sites that don't set `env` are unaffected.
+
+- [#490](https://github.com/sanity-io/sanity-astro/pull/490) [`de670c4`](https://github.com/sanity-io/sanity-astro/commit/de670c4fdc5ce0601324c7636612cea470486e0e) Thanks [@stipsan](https://github.com/stipsan)! - Add an opt-in `visualEditingStandalone` integration option that runs the `<VisualEditing />` overlays on `@sanity/visual-editing-standalone`, a self-contained build with its own React, React DOM and styled-components. Install `@sanity/visual-editing-standalone` next to `@sanity/astro` to use it. Defaults to `false`.
+
+### Patch Changes
+
+- [#453](https://github.com/sanity-io/sanity-astro/pull/453) [`ca54e0e`](https://github.com/sanity-io/sanity-astro/commit/ca54e0ec9fbf290c211fd0749921e8cfa8f739a8) Thanks [@stipsan](https://github.com/stipsan)! - In `astro dev`, only dedupe, alias and pre-bundle React, `styled-components` and `sanity` when the project itself installs them. Packages that only `NODE_PATH` reached, which pnpm's bin shims point at the hidden `node_modules/.pnpm/node_modules` directory, were treated as installed. A project without React of its own could then get the overlays of `<VisualEditing />` built against two copies of React and fail with "Invalid hook call"
+
+- [#452](https://github.com/sanity-io/sanity-astro/pull/452) [`b8e1b4b`](https://github.com/sanity-io/sanity-astro/commit/b8e1b4bfe613d498f819c2ea868554c6981d6122) Thanks [@stipsan](https://github.com/stipsan)! - Generated live-loader Zod schemas accept stega-encoded string literals, such as portable text `style` and `listItem`, and parse them back to the plain literal. Draft Mode no longer fails `getLiveCollection` and `getLiveEntry` on those fields. Prose strings stay encoded.
+
 ## 3.6.2
 
 ### Patch Changes
