@@ -1,34 +1,18 @@
 ---
 import {VisualEditing} from '@sanity/astro/visual-editing'
+import {getLiveCollection} from 'astro:content'
 import {sanityClient} from 'sanity:client'
 
 const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED === 'true'
 const token = import.meta.env.SANITY_API_READ_TOKEN
 const perspective = visualEditingEnabled && token ? 'drafts' : 'published'
 
-type Movie = {
-  _id: string
-  title: string
-  slug: string
-  releaseDate: string
-  poster: string | null
-}
+const {entries, error} = await getLiveCollection('movies')
+if (error) throw error
+const movies = (entries ?? []).map((entry) => entry.data)
 
-const movies = await sanityClient.fetch<Movie[]>(
-  `*[_type == "movie"] | order(releaseDate desc){
-    _id,
-    title,
-    "slug": slug.current,
-    releaseDate,
-    "poster": poster.asset->url
-  }`,
-  {},
-  visualEditingEnabled
-    ? {perspective, stega: true, useCdn: false, ...(token ? {token} : {})}
-    : {},
-)
-
-const year = (date: string) => new Date(date).getUTCFullYear()
+const year = (date: string | null | undefined) =>
+  date ? new Date(date).getUTCFullYear() : null
 ---
 
 <!doctype html>
@@ -47,7 +31,7 @@ const year = (date: string) => new Date(date).getUTCFullYear()
           {movies.length} films from Sanity's demo dataset, newest first.
         </p>
         <p>
-          Fetched with <code>sanityClient</code> from <code>sanity:client</code> at build time.
+          Loaded with <code>getLiveCollection</code> from the <code>movies</code> live collection.
         </p>
         <p class="newest">Newest release: {movies[0]?.title}</p>
       </header>
@@ -68,7 +52,7 @@ const year = (date: string) => new Date(date).getUTCFullYear()
               ) : (
                 <span class="placeholder" aria-hidden="true" />
               )}
-              <span class="title">{movie.title}</span>
+              <a class="title" href={`/movies/${movie._id}`}>{movie.title}</a>
               <span class="year">{year(movie.releaseDate)}</span>
             </li>
           ))
@@ -165,6 +149,7 @@ const year = (date: string) => new Date(date).getUTCFullYear()
   }
 
   .title {
+    color: inherit;
     font-weight: 500;
   }
 
