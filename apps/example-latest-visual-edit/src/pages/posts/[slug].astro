@@ -1,0 +1,51 @@
+---
+import {sanityClient} from 'sanity:client'
+import Layout from '../../layouts/Layout.astro'
+import PortableText from '../../components/PortableText.astro'
+import SanityImage from '../../components/SanityImage.astro'
+
+export async function getStaticPaths() {
+
+    const posts = await sanityClient.fetch(
+      `*[_type == "post"] | order(publishedAt desc) {
+			...,
+			authors[]-> {
+				name
+			}
+		}`,
+    )
+
+  return posts.map((post: any) => ({
+    params: {slug: post.slug.current},
+    props: {post},
+  }))
+}
+
+const POST_QUERY = `
+  *[_type == "post" && slug.current == $slug][0]{
+    ...,
+    authors[]-> {
+				name
+			}
+  }
+`;
+
+const { slug } = Astro.params;
+const post = slug ? await sanityClient.fetch<Post | null>(POST_QUERY, { slug }) : null;
+
+if (!post) {
+  return new Response(null, { status: 404, statusText: 'Not Found' });
+}
+
+const byline = (post.authors || []).map((a: any) => a.name).join(', ')
+---
+<Layout title={post.title}>
+  <article>
+    <h1>{post.title}</h1>
+    <p>Written by {byline}</p>
+    <SanityImage node={post.mainImage} width="600" />
+    <p><i>{post.excerpt}</i></p>
+    <PortableText value={post.description} />
+    <PortableText value={post.body} />
+  </article>
+</Layout>

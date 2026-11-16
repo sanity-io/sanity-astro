@@ -1,0 +1,27 @@
+---
+import {sanityClient} from 'sanity:client'
+import Layout from '../layouts/Layout.astro'
+
+interface PostSlug {
+  slug: string;
+}
+
+const posts = await sanityClient.fetch(
+  `*[_type == "post"] | order(publishedAt desc)`,
+);
+---
+
+<Layout title="Example Latest Visual Edit Blog">
+  <h1>Example Latest Visual Edit Blog Posts</h1>
+  <ul>
+    {
+      posts.map((post: any) => (
+        <li>
+          <a href={'/posts/' + post.slug.current} class="post-link">
+            {post.title}
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</Layout>
