@@ -1,8 +1,7 @@
 // src/sanity/lib/loadQuery.ts
 import { sanityClient } from 'sanity:client';
 import type { ClientPerspective, QueryParams } from '@sanity/client';
-import type { PortableTextBlock } from "@portabletext/types";
-import type { Slug } from "@sanity/types";
+import type { PortableTextBlock, Slug } from "sanity";
 import { getActivePerspective } from '@sanity/astro/middleware';
 import groq from "groq";
 import Author from "../../schemaTypes/objects/author.ts";
@@ -38,8 +37,6 @@ export async function loadQuery<QueryResponse>({
                                                  params = {},
                                                  perspective,
                                                }: LoadQueryOptions) {
-  // console.log('params:', params)
-  // console.log('query:', query)
   const activePerspective: ClientPerspective =
     perspective ??
     (visualEditingEnabled ? getActivePerspective() : defaultPerspective);
@@ -55,7 +52,7 @@ export async function loadQuery<QueryResponse>({
 
   const resultSourceMap = visualEditingEnabled ? 'withKeyArraySelector' : false;
 
-  const { result, resultSourceMap: sourceMap } = await sanityClient
+  const {result, resultSourceMap: sourceMap} = await sanityClient
     .withConfig({
       perspective: activePerspective,
       useCdn: isPublished ? Boolean(sanityClient.config().useCdn) : false,
@@ -73,32 +70,26 @@ export async function loadQuery<QueryResponse>({
       resultSourceMap,
     });
   return result;
-  // return {
-  //   data: result,
-  //   sourceMap,
-  //   perspective: activePerspective,
-  // };
 }
 
-export async function getPosts(): Promise<Post[]> {
-
-  const POSTS_QUERY = groq`
+export const POSTS_QUERY = groq`
   *[_type == "post"] | order(publishedAt desc)
   `
+export async function getPosts(): Promise<Post[]> {
   return loadQuery<Post[]>(
     {
       query: POSTS_QUERY,
     });
 }
 
-export async function getPost(slug: string): Promise<Post> {
-
-  const POST_QUERY = groq`
+export const POST_QUERY = groq`
   *[_type == "post" && slug.current == $slug][0]{
     ...,
     authors[]->{ name }
   }
 `;
+
+export async function getPost(slug: string): Promise<Post> {
 
   return loadQuery<Post>({
     query:POST_QUERY,
@@ -112,6 +103,7 @@ export interface SanityImage {
   hotspot?: { x: number; y: number; height: number; width: number };
   crop?: { top: number; bottom: number; left: number; right: number };
   alt?: string;
+  caption?: string;
   /** Original image width in pixels, from asset metadata */
   width: number;
   /** Original image height in pixels, from asset metadata */

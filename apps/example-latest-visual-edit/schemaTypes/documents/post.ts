@@ -55,6 +55,11 @@ export default defineType({
 					type: 'string',
 					validation: (Rule) => Rule.required(),
 				}),
+        defineField({
+          name: 'caption',
+          type: 'text', // or 'text' if you want multi-line captions
+          title: 'Caption',
+        }),
 			],
     }),
     defineField({

@@ -1,5 +1,12 @@
 ---
+import { VisualEditing } from "@sanity/astro/visual-editing";
+
 // import {NewsBar} from '../components/NewsBar'
+
+
+// Enable visual editing overlays when the env variable is set to "true"
+const visualEditingEnabled =
+  import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED === "true";
 
 interface Props {
   title: string | null,
@@ -19,7 +26,9 @@ const {title} = Astro.props
     <title>{title}</title>
   </head>
   <body>
-    <!--<NewsBar client:only="react" />-->
+  <VisualEditing enabled={visualEditingEnabled} />
+
+  <!--<NewsBar client:only="react" />-->
     <slot />
   </body>
 </html>
