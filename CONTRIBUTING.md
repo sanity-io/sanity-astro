@@ -9,7 +9,7 @@ pnpm install
 pnpm --filter @sanity/astro build
 ```
 
-Node `>=20.19.0 || >=22.12.0` and `pnpm@12.15.0` (see `packageManager` in `package.json`).
+Node `>=20.19.0 || >=22.12.0` and `pnpm@12.21.0` (see `packageManager` in `package.json`).
 
 ## Everyday commands
 
