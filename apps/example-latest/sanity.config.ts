@@ -9,7 +9,7 @@ const {projectId, dataset} = sanityClient.config()
 if (!projectId || !dataset) {
   throw new Error('Missing projectId or dataset')
 }
-console.log('projectId', projectId)
+// console.log('projectId', projectId)
 export default defineConfig([
   {
     name: 'project-name',

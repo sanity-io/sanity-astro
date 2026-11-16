@@ -1,8 +1,10 @@
 ---
 import {sanityClient} from 'sanity:client'
+import {getPost, loadQuery} from '../../utils/sanity.ts'
 import Layout from '../../layouts/Layout.astro'
 import PortableText from '../../components/PortableText.astro'
 import SanityImage from '../../components/SanityImage.astro'
+import YouTube from '../../components/YouTube.astro'
 
 export async function getStaticPaths() {
 
@@ -21,22 +23,11 @@ export async function getStaticPaths() {
   }))
 }
 
-const POST_QUERY = `
-  *[_type == "post" && slug.current == $slug][0]{
-    ...,
-    authors[]-> {
-				name
-			}
-  }
-`;
-
 const { slug } = Astro.params;
-const post = slug ? await sanityClient.fetch<Post | null>(POST_QUERY, { slug }) : null;
-
+const post = slug ? await getPost(slug) : null;
 if (!post) {
   return new Response(null, { status: 404, statusText: 'Not Found' });
 }
-
 const byline = (post.authors || []).map((a: any) => a.name).join(', ')
 ---
 <Layout title={post.title}>
@@ -47,5 +38,6 @@ const byline = (post.authors || []).map((a: any) => a.name).join(', ')
     <p><i>{post.excerpt}</i></p>
     <PortableText value={post.description} />
     <PortableText value={post.body} />
+    <YouTube node={{ url: 'https://www.youtube.com/watch?v=W1jCti4L0k8'}}> </YouTube>
   </article>
 </Layout>

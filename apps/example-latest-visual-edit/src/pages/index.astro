@@ -1,14 +1,12 @@
 ---
-import {sanityClient} from 'sanity:client'
+import { getPosts } from '../utils/sanity'
 import Layout from '../layouts/Layout.astro'
 
 interface PostSlug {
   slug: string;
 }
 
-const posts = await sanityClient.fetch(
-  `*[_type == "post"] | order(publishedAt desc)`,
-);
+const posts = await getPosts()
 ---
 
 <Layout title="Example Latest Visual Edit Blog">

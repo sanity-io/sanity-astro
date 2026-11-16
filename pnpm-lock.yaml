@@ -382,6 +382,9 @@ importers:
       astro-portabletext:
         specifier: ^0.13.0
         version: 0.13.0(astro@7.4.2(@azure/identity@4.14.1(supports-color@8.1.1))(@azure/storage-blob@12.34.0(supports-color@8.1.1))(@types/node@25.9.9)(@vercel/functions@3.11.3(@aws-sdk/credential-provider-web-identity@3.972.90)(ws@8.23.0))(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+      groq:
+        specifier: ^6.23.0
+        version: 6.23.0
       prismjs:
         specifier: ^1.30.0
         version: 1.30.0
