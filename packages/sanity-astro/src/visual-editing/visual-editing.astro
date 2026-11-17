@@ -219,56 +219,12 @@ const { enabled = defaultEnabled, zIndex, keepStegaOnCopy } = Astro.props;
   </script>
 
   <script>
+    import { enableVisualEditing } from "@sanity/visual-editing-standalone";
     import {
-      enableVisualEditing,
-      type HistoryUpdate,
-    } from "@sanity/visual-editing-standalone";
-
-    function getPresentationUrl(location: {
-      pathname: string;
-      search: string;
-      hash: string;
-    }): string {
-      return `${location.pathname}${location.search}${location.hash}`;
-    }
-
-    function shouldPublishUrl(nextUrl: string, previousUrl: string): boolean {
-      return nextUrl !== previousUrl;
-    }
-
-    function applyPresentationHistoryUpdate(
-      update: Pick<HistoryUpdate, "type" | "url">,
-      currentHref: string,
-      navigate: {
-        assign: (url: string) => void;
-        replace: (url: string) => void;
-        back: () => void;
-      },
-    ): void {
-      switch (update.type) {
-        case "push": {
-          if (currentHref !== update.url) {
-            navigate.assign(update.url);
-          }
-          return;
-        }
-        case "replace": {
-          if (currentHref !== update.url) {
-            navigate.replace(update.url);
-          }
-          return;
-        }
-        case "pop": {
-          navigate.back();
-          return;
-        }
-        default: {
-          throw new Error(
-            `Unknown history update type: ${(update as { type?: string }).type ?? "unknown"}`,
-          );
-        }
-      }
-    }
+      applyPresentationHistoryUpdate,
+      getPresentationUrl,
+      shouldPublishUrl,
+    } from "./history";
 
     const config = (window as any).__sanityVEConfig;
 

@@ -2,8 +2,10 @@ import {readFileSync} from 'node:fs'
 import path from 'node:path'
 import {fileURLToPath} from 'node:url'
 
-import {transformWithEsbuild} from 'vite'
+import {transformWithOxc} from 'vite'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+
+import {applyPresentationHistoryUpdate, getPresentationUrl, shouldPublishUrl} from './history'
 
 const astroFilePath = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -195,17 +197,26 @@ async function runModuleBridge(
   env: ReturnType<typeof createBrowserEnv>,
   enableVisualEditingMock: ReturnType<typeof vi.fn>,
 ) {
-  const transformed = await transformWithEsbuild(moduleScript, 'visual-editing-module.ts', {
-    loader: 'ts',
-    format: 'esm',
+  const transformed = await transformWithOxc(moduleScript, 'visual-editing-module.ts', {
+    lang: 'ts',
   })
-  const executable = transformed.code.replace(
-    /import\s*\{[^}]*enableVisualEditing[^}]*}\s*from\s*["']@sanity\/visual-editing-standalone["'];?/,
-    'const { enableVisualEditing } = __deps;',
-  )
+  const executable = transformed.code
+    .replace(
+      /import\s*\{[^}]*enableVisualEditing[^}]*}\s*from\s*["']@sanity\/visual-editing-standalone["'];?/,
+      'const { enableVisualEditing } = __deps;',
+    )
+    .replace(
+      /import\s*\{[^}]*}\s*from\s*["']\.\/history["'];?/,
+      'const { applyPresentationHistoryUpdate, getPresentationUrl, shouldPublishUrl } = __deps;',
+    )
 
   const runner = new Function('window', 'document', '__deps', executable)
-  runner(env.windowObj, env.documentObj, {enableVisualEditing: enableVisualEditingMock})
+  runner(env.windowObj, env.documentObj, {
+    enableVisualEditing: enableVisualEditingMock,
+    applyPresentationHistoryUpdate,
+    getPresentationUrl,
+    shouldPublishUrl,
+  })
 }
 
 describe('visual-editing inline observer', () => {

@@ -1,4 +1,4 @@
-import type {HistoryUpdate} from '@sanity/visual-editing'
+import type {HistoryUpdate} from '@sanity/visual-editing-standalone'
 
 export function getPresentationUrl(location: {
   pathname: string

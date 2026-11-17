@@ -8,7 +8,7 @@ export function vitePluginSanityStudio(resolvedOptions: {
   studioRouterHistory?: 'browser' | 'hash'
 }) {
   const virtualModuleId = 'sanity:studio'
-  const resolvedVirtualModuleId = virtualModuleId
+  const resolvedVirtualModuleId = '\0' + virtualModuleId
 
   return {
     name: 'sanity:studio',
@@ -19,7 +19,7 @@ export function vitePluginSanityStudio(resolvedOptions: {
       return null
     },
     async load(id: string) {
-      if (id === virtualModuleId) {
+      if (id === resolvedVirtualModuleId) {
         const studioConfig = await this.resolve('/sanity.config')
         if (!studioConfig) {
           throw new Error(
@@ -40,10 +40,10 @@ export function vitePluginSanityStudio(resolvedOptions: {
         const studioRouterHistory =
           resolvedOptions.studioRouterHistory === 'hash' ? 'hash' : 'browser'
         return `
-        import studioConfig from "${studioConfig.id}";
+        import studioConfig from ${JSON.stringify(studioConfig.id)};
 
-        const embeddedStudioBasePath = "${studioBasePath}";
-        const historyMode = "${studioRouterHistory}";
+        const embeddedStudioBasePath = ${JSON.stringify(studioBasePath)};
+        const historyMode = ${JSON.stringify(studioRouterHistory)};
         const hashWorkspaceRootPath = "/";
         const browserWorkspaceRootPath = embeddedStudioBasePath;
 

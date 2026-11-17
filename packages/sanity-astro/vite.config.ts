@@ -1,4 +1,4 @@
-import path from 'path'
+import {resolve} from 'node:path'
 
 import {defineConfig, type Plugin} from 'vite'
 import dts from 'vite-plugin-dts'
@@ -7,26 +7,26 @@ const name = 'sanity-astro'
 
 export default defineConfig(() => {
   return {
-    base: '/src',
     build: {
       // Keep existing dist files while watch rebuilds to avoid
       // transient package entry resolution failures in consuming apps.
       emptyOutDir: false,
       lib: {
         entry: {
-          [name]: path.resolve(__dirname, 'src/index.ts'),
-          loader: path.resolve(__dirname, 'src/loader.ts'),
+          [name]: resolve(__dirname, 'src/index.ts'),
+          loader: resolve(__dirname, 'src/loader.ts'),
         },
-        // Two entries rule out UMD; the `.js` build becomes CJS instead.
-        formats: ['es', 'cjs'],
-        fileName: (format, entryName) => (format === 'es' ? `${entryName}.mjs` : `${entryName}.js`),
+        formats: ['es'],
+        fileName: (_, entryName) => `${entryName}.mjs`,
       },
-      rollupOptions: {
+      rolldownOptions: {
         external: [/^node:/, 'vite', 'astro', '@sanity/client'],
       },
     },
     plugins: [
       dts({
+        include: ['src'],
+        entryRoot: 'src',
         outDir: 'dist/types',
         // Type tests augment the global `SanityQueries` registry, which must not ship
         exclude: ['node_modules/**', 'dist/**', 'src/**/*.test-d.ts'],
