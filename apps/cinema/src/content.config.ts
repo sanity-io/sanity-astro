@@ -4,14 +4,13 @@ import {defineCollection} from 'astro:content'
 import {sanityClient} from 'sanity:client'
 
 const sanityImage = z.object({
-  _type: z.literal('image').optional(),
-  asset: z.object({_ref: z.string(), _type: z.literal('reference')}),
+  asset: z.object({url: z.string(), metadata: z.object({lqip: z.string().nullish()}).nullish()}),
   hotspot: z
     .object({x: z.number(), y: z.number(), height: z.number(), width: z.number()})
-    .optional(),
+    .nullish(),
   crop: z
     .object({top: z.number(), bottom: z.number(), left: z.number(), right: z.number()})
-    .optional(),
+    .nullish(),
 })
 
 const portableTextBlock = z.looseObject({_key: z.string(), _type: z.string()})
@@ -44,29 +43,38 @@ type PersonDocument = z.infer<typeof personSummary>
 // fail `parseData` and abort the build for the whole collection. Strings the
 // templates can do without, like `characterName`, stay nullish instead (GROQ
 // projects a missing field as null).
-const MOVIES_QUERY = /* groq */ `*[_type == "movie" && defined(title) && defined(slug.current) && defined(poster.asset) && defined(releaseDate)] | order(popularity desc) {
+// Images keep their crop and hotspot and dereference the asset, so `<SanityImage>`
+// gets the asset URL and, when the asset has one, the blur placeholder.
+const IMAGE_FUNCTIONS = /* groq */ `
+fn image::asset($asset) = $asset->{url, metadata{lqip}};
+fn image::field($image) = $image{crop, hotspot, "asset": image::asset(asset)};
+`
+
+const MOVIES_QUERY = /* groq */ `${IMAGE_FUNCTIONS}
+*[_type == "movie" && defined(title) && defined(slug.current) && defined(poster.asset) && defined(releaseDate)] | order(popularity desc) {
   _id,
   title,
   slug,
   releaseDate,
   "popularity": coalesce(popularity, 0),
-  poster,
+  "poster": image::field(poster),
   "overview": coalesce(overview, []),
   "castMembers": coalesce(castMembers[defined(person->name) && defined(person->slug.current)] {
     _key,
     characterName,
-    person->{_id, name, "slug": slug.current, "image": select(defined(image.asset) => image)}
+    person->{_id, name, "slug": slug.current, "image": select(defined(image.asset) => image::field(image))}
   }, [])
 }`
 
-const PEOPLE_QUERY = /* groq */ `*[_type == "person" && defined(name) && defined(slug.current)] | order(name asc) {
+const PEOPLE_QUERY = /* groq */ `${IMAGE_FUNCTIONS}
+*[_type == "person" && defined(name) && defined(slug.current)] | order(name asc) {
   _id,
   name,
   "slug": slug.current,
   // A person whose image field was opened but never uploaded carries a bare
   // {_type: "image"} without an asset; normalize those to null here so one
   // such document cannot fail the Zod schema for the whole collection.
-  "image": select(defined(image.asset) => image)
+  "image": select(defined(image.asset) => image::field(image))
 }`
 
 const movies = defineCollection({

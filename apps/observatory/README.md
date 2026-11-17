@@ -145,7 +145,7 @@ backlog for streamlining the integration.
 | Perspective & variant switching from Presentation | 2 API routes + cookie plumbing                                   | Missing                                                       |
 | Fetch with sync-tag cache hints                   | `src/sanity/fetch.ts` + `Astro.cache.set` in pages               | Missing (`loadQuery` is a documented app-level pattern)       |
 | Live updates island + CDN tag purge endpoint      | `SanityLive.astro` + `/api/invalidate-tags`                      | Missing                                                       |
-| Image service (CDN-native `astro:assets`)         | `imageService.ts` + `image.ts` + `SanityImage.astro`             | Missing (docs point at `@sanity/image-url` manually)          |
+| Image service (CDN-native `astro:assets`)         | `imageService.ts` + `image.ts` + `SanityImage.astro`             | Covered: `sanityImageService()` + `@sanity/astro/image`       |
 | Edition routing and personalization (variants)    | `src/middleware.ts` + `src/lib/routing.ts` + `audience.ts`       | Missing                                                       |
 | TypeGen wiring                                    | studio `typegen` script + committed types                        | Missing                                                       |
 

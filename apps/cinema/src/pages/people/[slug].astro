@@ -1,7 +1,7 @@
 ---
 import {type CollectionEntry, getCollection} from 'astro:content'
 
-import SanityImage from '../../components/SanityImage.astro'
+import {SanityImage} from '@sanity/astro/image'
 import Layout from '../../layouts/Layout.astro'
 import {releaseYear} from '../../lib/format'
 
@@ -45,9 +45,10 @@ const credits: Credit[] = (await getCollection('movies'))
       {
         image ? (
           <SanityImage
-            image={image}
+            src={image}
             alt={`Photo of ${name}`}
-            aspectRatio={3 / 4}
+            width={480}
+            height={640}
             widths={[240, 480]}
             sizes="(min-width: 768px) 25vw, 16rem"
             loading="eager"
@@ -93,9 +94,10 @@ const credits: Credit[] = (await getCollection('movies'))
                   >
                     <div class="poster-frame w-14 shrink-0 aspect-[2/3] shadow-none">
                       <SanityImage
-                        image={movie.data.poster}
+                        src={movie.data.poster}
                         alt=""
-                        aspectRatio={2 / 3}
+                        width={224}
+                        height={336}
                         widths={[112, 224]}
                         sizes="56px"
                         class="h-full w-full object-cover"

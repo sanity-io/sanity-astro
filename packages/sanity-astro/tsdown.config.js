@@ -23,6 +23,7 @@ export default defineConfig((inlineConfig) => ({
     onlyBundle: ['serialize-javascript'],
   },
   copy: [
+    {from: ['src/image/**/*', '!**/*.test.*', '!**/*.test-d.*'], to: 'dist/image'},
     {from: ['src/studio/**/*', '!**/*.test.*'], to: 'dist/studio'},
     {from: ['src/visual-editing/**/*', '!**/*.test.*'], to: 'dist/visual-editing'},
   ],

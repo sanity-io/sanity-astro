@@ -1,13 +1,11 @@
 ---
-import type {SanityImageSource} from '@sanity/image-url'
-
-import SanityImage from './SanityImage.astro'
+import {type ImageSource, SanityImage} from '@sanity/astro/image'
 
 interface Props {
   href: string
   name: string
   caption?: string | null | undefined
-  image: SanityImageSource | null | undefined
+  image: ImageSource | null | undefined
 }
 
 const {href, name, caption, image} = Astro.props
@@ -23,9 +21,10 @@ const initials = name
     {
       image ? (
         <SanityImage
-          image={image}
+          src={image}
           alt={`Photo of ${name}`}
-          aspectRatio={3 / 4}
+          width={360}
+          height={480}
           widths={[180, 360]}
           sizes="(min-width: 1024px) 160px, (min-width: 640px) 22vw, 40vw"
           class="poster-frame-img"

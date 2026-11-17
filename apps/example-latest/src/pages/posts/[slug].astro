@@ -6,12 +6,18 @@ import SanityImage from '../../components/SanityImage.astro'
 
 export async function getStaticPaths() {
   const posts = await sanityClient.fetch(
-    `*[_type == "post" && defined(publishedAt)] | order(publishedAt desc) {
-			...,
-			authors[]-> {
-				name
-			}
-		}`,
+    `fn image::asset($asset) = $asset->{url, metadata{lqip}};
+    fn image::field($image) = $image{..., "asset": image::asset(asset)};
+    fn image::blocks($blocks) = $blocks[]{..., _type == "image" => image::field(@)};
+    *[_type == "post" && defined(publishedAt)] | order(publishedAt desc) {
+      ...,
+      authors[]-> {
+        name
+      },
+      "poster": image::field(poster),
+      "blurb": image::blocks(blurb),
+      "text": image::blocks(text)
+    }`,
   )
   return posts.map((post: any) => ({
     params: {slug: post.slug.current},
