@@ -11,6 +11,15 @@ export default defineConfig({
       resolveId: (id) => (id === 'sanity:studio' ? '\0sanity:studio' : null),
       load: (id) => (id === '\0sanity:studio' ? 'export const config = {}' : null),
     },
+    {
+      // Stands in for the integration's `sanity:client` in the image helpers' tests.
+      name: 'sanity:client-stub',
+      resolveId: (id) => (id === 'sanity:client' ? '\0sanity:client-stub' : null),
+      load: (id) =>
+        id === '\0sanity:client-stub'
+          ? `export const sanityClient = {config: () => ({projectId: 'stubproject', dataset: 'stubdataset'})}`
+          : null,
+    },
   ],
   test: {
     hookTimeout: 240_000,

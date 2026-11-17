@@ -622,9 +622,73 @@ const components = {
 
 Sanity comes with [a native asset pipeline for your images and files][image-urls]. It has on-demand transforms, automatic optimization for browsers that supports webp, and serves images from a global CDN network. When you upload images to Sanity, it will also automatically analyze the image and add [a metadata document][image-document] with information like dimensions, color palette, generate blurhash, and LQIP strings.
 
-We recommend using [@sanity/image-url](https://www.sanity.io/docs/image-url) to help you generate URLs for presenting Sanity images in your Astro app. See an example of this in [apps/example/src/components/SanityImage.astro](https://github.com/sanity-io/sanity-astro/blob/main/apps/example/src/components/SanityImage.astro)
+`@sanity/astro/image` renders Sanity images through `astro:assets`, with the image CDN doing the transforms (Astro 5 or later). Register the image service, then pass whole image values to `<SanityImage>`:
 
-You can also use community-contributed integrations like [astro-sanity-picture][astro-sanity-picture] to integrate images from Sanity into your website.
+```js
+// astro.config.mjs
+import sanity, {sanityImageService} from '@sanity/astro'
+import {defineConfig} from 'astro/config'
+
+export default defineConfig({
+  image: {service: sanityImageService()},
+  integrations: [sanity({projectId: '<project-id>', dataset: '<dataset>'})],
+})
+```
+
+```astro
+---
+import {isImageWithAsset, SanityImage} from '@sanity/astro/image'
+import {sanityClient} from 'sanity:client'
+
+const post = await sanityClient.fetch(`
+  fn image::asset($asset) = $asset->{url, metadata{lqip}};
+  fn image::field($image) = $image{crop, hotspot, alt, "asset": image::asset(asset)};
+  *[_type == "post" && slug.current == $slug][0]{title, "cover": image::field(cover)}
+`, {slug: Astro.params.slug})
+---
+
+{isImageWithAsset(post.cover) && (
+  <SanityImage src={post.cover} alt={post.cover.alt ?? ''} width={1200} height={630} placeholder="blur" />
+)}
+```
+
+- `src` takes image fields as TypeGen types them, image objects with a dereferenced or referenced asset, asset documents, asset ids, stega-encoded values from Visual Editing, and Sanity CDN URLs.
+- The Studio crop is applied. When `width` and `height` give a different aspect ratio, the CDN crops around the hotspot. Fill modes (`fit="cover"` with Astro's responsive images, or `object-fit: cover`) default `object-position` to the hotspot.
+- Missing `width` and `height` are inferred from the crop, from the other dimension, or from the asset filename, so no request is made to measure the image.
+- `placeholder="blur"` uses `asset.metadata.lqip` when the query includes it, or `blurDataURL`.
+- `queryParams` adds [image transform parameters](https://www.sanity.io/docs/image-urls), for example `queryParams={{sat: -100, blur: 20}}`.
+- Every other `<Image>` prop works, including `widths`, `densities`, `sizes`, `quality` and `format`. Astro 5.10 and later also take `layout`, `fit` and `position`.
+
+`sanityImageService()` answers transforms for `cdn.sanity.io` URLs with CDN URLs and leaves other images to Astro's default sharp service. A custom CDN domain can be added with `sanityImageService({hostnames: ['cdn.sanity.io', 'images.example.com']})`. Astro's own `<Image>`, `<Picture>` and `getImage()` also get CDN URLs when given a Sanity image URL.
+
+`getSanityImageProps()` returns the `src`, `width`, `height` and `style` that `<SanityImage>` passes on, for use with `<Picture>` or `getImage()`. For art direction, build one image per breakpoint:
+
+```astro
+---
+import {getImage} from 'astro:assets'
+import {getSanityImageProps} from '@sanity/astro/image'
+
+const {image} = Astro.props
+const wide = await getImage({...getSanityImageProps(image, {width: 1600, height: 900}), widths: [800, 1600]})
+const tall = await getImage(getSanityImageProps(image, {width: 800, height: 1000}))
+---
+
+<picture>
+  <source media="(min-width: 768px)" srcset={wide.srcSet.attribute} />
+  <img src={tall.src} {...tall.attributes} alt="" />
+</picture>
+```
+
+To type a component that accepts an image from any query, use `InferImageValue` (or `InferStrictImageValue` for values with an asset) on your TypeGen query results. Both accept stega-branded results:
+
+```ts
+import type {InferImageValue} from '@sanity/astro/image'
+import type {SanityQueries} from '@sanity/client'
+
+type ImageValue = InferImageValue<SanityQueries[keyof SanityQueries]>
+```
+
+To build image URLs yourself, use [@sanity/image-url](https://www.sanity.io/docs/image-url).
 
 ## Enabling Visual Editing
 

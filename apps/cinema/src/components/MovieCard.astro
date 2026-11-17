@@ -2,7 +2,7 @@
 import type {CollectionEntry} from 'astro:content'
 
 import {releaseYear} from '../lib/format'
-import SanityImage from './SanityImage.astro'
+import {SanityImage} from '@sanity/astro/image'
 
 interface Props {
   movie: CollectionEntry<'movies'>
@@ -16,9 +16,10 @@ const {title, releaseDate, poster} = movie.data
 <a href={`/movies/${movie.id}`} class="card-link group">
   <div class="poster-frame aspect-[2/3]" transition:name={`poster-${movie.id}`}>
     <SanityImage
-      image={poster}
+      src={poster}
       alt={`Poster for ${title}`}
-      aspectRatio={2 / 3}
+      width={960}
+      height={1440}
       widths={[320, 640, 960]}
       sizes="(min-width: 1024px) 220px, (min-width: 640px) 30vw, 45vw"
       loading={loading}

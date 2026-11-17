@@ -6,7 +6,11 @@ import {fileURLToPath, pathToFileURL} from 'node:url'
 import type {HookParameters} from 'astro'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
-import sanityIntegration, {type IntegrationOptions, type SanityLiveOptions} from './index'
+import sanityIntegration, {
+  type IntegrationOptions,
+  sanityImageService,
+  type SanityLiveOptions,
+} from './index'
 import {SANITY_LOADER_MODULE_ID} from './vite-plugin-sanity-loader'
 import {vitePluginSanityModuleDedupe} from './vite-plugin-sanity-module-dedupe'
 import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-chunk-warning'
@@ -535,5 +539,14 @@ describe('sanity integration env option', () => {
     await expect(setup?.({config: {}} as never)).rejects.toThrow(
       /through `astro:env`, which this Astro version does not have/,
     )
+  })
+})
+
+describe('sanityImageService', () => {
+  it('points image.service at the shipped service and passes its config through', () => {
+    expect(sanityImageService()).toEqual({entrypoint: '@sanity/astro/image/service', config: {}})
+    expect(sanityImageService({hostnames: ['images.example.com']}).config).toEqual({
+      hostnames: ['images.example.com'],
+    })
   })
 })

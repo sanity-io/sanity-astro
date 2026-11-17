@@ -2,7 +2,7 @@ import {writeFile} from 'node:fs/promises'
 import {fileURLToPath} from 'node:url'
 
 import type {ClientConfig} from '@sanity/client'
-import type {AstroIntegration, AstroUserConfig} from 'astro'
+import type {AstroIntegration, AstroUserConfig, ImageServiceConfig} from 'astro'
 
 import {CLIENT_TYPES_FILENAME, generateClientTypes} from './client-types'
 import {type LiveState, setupLive, watchSchema} from './live/integration'
@@ -34,6 +34,32 @@ export type {
 type AstroVitePlugins = NonNullable<NonNullable<AstroUserConfig['vite']>['plugins']>
 
 export type {NamedClientConfig, RuntimeEnvOption}
+
+/**
+ * Options for `sanityImageService()`. Every other key is passed on to Astro's
+ * sharp service, which handles the images that are not on the Sanity CDN.
+ */
+export interface SanityImageServiceConfig {
+  /**
+   * Hostnames served by the Sanity Image CDN. Add a custom CDN domain here.
+   * Defaults to `['cdn.sanity.io']`.
+   */
+  hostnames?: string[]
+  [option: string]: unknown
+}
+
+/**
+ * The `astro:assets` image service for Sanity images, for `image.service` in
+ * `astro.config`. `<Image>`, `<Picture>`, `getImage()` and `<SanityImage>`
+ * then get their `src` and `srcset` straight from the Sanity Image CDN, which
+ * resizes, crops and negotiates AVIF/WebP at the edge. Every other image is
+ * handled by Astro's default sharp service, as before.
+ */
+export function sanityImageService(
+  config: SanityImageServiceConfig = {},
+): ImageServiceConfig<SanityImageServiceConfig> {
+  return {entrypoint: '@sanity/astro/image/service', config}
+}
 
 export type StudioRouterHistory = 'browser' | 'hash'
 export type LogClientRequests = 'dev' | 'build' | 'always'

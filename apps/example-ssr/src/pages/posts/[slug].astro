@@ -5,11 +5,17 @@ import PortableText from '../../components/PortableText.astro'
 import SanityImage from '../../components/SanityImage.astro'
 
 const post = await sanityClient.fetch(
-  `*[_type == "post" && defined(publishedAt) && slug.current == $slug] | order(publishedAt desc) {
+  `fn image::asset($asset) = $asset->{url, metadata{lqip}};
+  fn image::field($image) = $image{..., "asset": image::asset(asset)};
+  fn image::blocks($blocks) = $blocks[]{..., _type == "image" => image::field(@)};
+  *[_type == "post" && defined(publishedAt) && slug.current == $slug] | order(publishedAt desc) {
     ...,
     authors[]-> {
       name
-    }
+    },
+    "poster": image::field(poster),
+    "blurb": image::blocks(blurb),
+    "text": image::blocks(text)
   }[0]`,
   {
     slug: Astro.params.slug,
