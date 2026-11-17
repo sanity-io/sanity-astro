@@ -1,12 +1,14 @@
 import type { ClientPerspective } from "@sanity/client";
-import type { AsyncLocalStorage } from "node:async_hooks";
+
+interface PerspectiveStore {
+  getStore(): ClientPerspective | undefined;
+  run<T>(store: ClientPerspective, callback: () => T): T;
+}
 
 // Share a single AsyncLocalStorage instance across Vite's SSR module graph
 const STORAGE_KEY = Symbol.for("@sanity/astro/perspectiveStorage");
 
-function getPerspectiveStorage():
-  | AsyncLocalStorage<ClientPerspective>
-  | undefined {
+function getPerspectiveStorage(): PerspectiveStore | undefined {
   const globalObj = globalThis as Record<PropertyKey, any>;
   if (globalObj[STORAGE_KEY]) {
     return globalObj[STORAGE_KEY];
@@ -21,7 +23,7 @@ function getPerspectiveStorage():
       return undefined;
     }
 
-    const store = new AsyncLocalStorageCtor();
+    const store: PerspectiveStore = new AsyncLocalStorageCtor();
     globalObj[STORAGE_KEY] = store;
     return store;
   } catch {
@@ -30,7 +32,10 @@ function getPerspectiveStorage():
 }
 
 export function getActivePerspective(): ClientPerspective {
-  return getPerspectiveStorage()?.getStore() ?? "published";
+  const store = (globalThis as Record<PropertyKey, any>)[STORAGE_KEY] as
+    | PerspectiveStore
+    | undefined;
+  return store?.getStore() ?? "published";
 }
 
 export interface SanityMiddlewareContext {
@@ -46,13 +51,15 @@ export async function onRequest(
   context: SanityMiddlewareContext,
   next: () => Promise<Response>,
 ): Promise<Response> {
+  // 1. Short-circuit completely when Visual Editing is disabled so non-editing
+  // builds (including Edge adapters) never invoke or bundle AsyncLocalStorage.
+  if (import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED !== "true") {
+    return next();
+  }
+
   const perspectiveStorage = getPerspectiveStorage();
 
-  // 1. Hard-lock static/prerendered builds and non-editing servers to 'published'
-  if (
-    context.isPrerendered ||
-    import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED !== "true"
-  ) {
+  if (context.isPrerendered) {
     return perspectiveStorage
       ? perspectiveStorage.run("published", () => next())
       : next();
