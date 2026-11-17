@@ -1,0 +1,17 @@
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        actions/*: ref-pin
+        pnpm/*: ref-pin
+        sanity-io/*: ref-pin
+        '*': hash-pin
+    # release-please.yml is replaced by the Changesets release workflow; drop these ignores with it.
+    ignore:
+      - release-please.yml
+  cache-poisoning:
+    ignore:
+      - release-please.yml
+  github-app:
+    ignore:
+      - release-please.yml
