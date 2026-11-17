@@ -1,14 +1,14 @@
 {
-  "name": "example-latest",
+  "name": "example-latest-visual-edit",
   "version": "0.0.1",
   "private": true,
   "scripts": {
     "astro": "astro",
     "build": "astro build",
     "clean": "rimraf .astro rimraf dist && rimraf .turbo && rimraf node_modules",
-    "dev": "astro dev --port 4324",
+    "dev": "astro dev --port 4325",
     "preview": "astro preview",
-    "start": "astro dev --port 4324"
+    "start": "astro dev --port 4325"
   },
   "dependencies": {
     "@astro-community/astro-embed-youtube": "^0.5.10",

@@ -1,4 +1,6 @@
 ---
+import {stegaClean} from '@sanity/client/stega'
+import {createDataAttribute} from '@sanity/astro/visual-editing'
 import {sanityClient} from 'sanity:client'
 import {getPost, POSTS_QUERY} from '../../utils/sanity.ts'
 import Layout from '../../layouts/Layout.astro'
@@ -21,12 +23,34 @@ const post = slug ? await getPost(slug) : null;
 if (!post) {
   return new Response(null, { status: 404, statusText: 'Not Found' });
 }
-const byline = (post.authors || []).map((a: any) => a.name).join(', ')
+
+const visualEditingEnabled =
+  import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED === 'true'
+const studioUrl =
+  (typeof sanityClient.config().stega?.studioUrl === 'string'
+    ? sanityClient.config().stega?.studioUrl
+    : undefined) ||
+  import.meta.env.PUBLIC_SANITY_STUDIO_URL ||
+  '/admin'
+
+const byline = (post.authors || [])
+  .map((a) => stegaClean(a?.name))
+  .filter(Boolean)
+  .join(', ')
+
+const authorsDataSanity = visualEditingEnabled
+  ? createDataAttribute({
+    baseUrl: studioUrl,
+    id: post._id,
+    type: post._type,
+    path: 'authors',
+  }).toString()
+  : undefined
 ---
 <Layout title={post.title ?? ''}>
   <article>
     <h1>{post.title}</h1>
-    <p>Written by {byline}</p>
+    <p data-sanity={authorsDataSanity}>Written by {byline}</p>
     <SanityImage node={post.mainImage} width="600" />
     <pre>{post.mainImage?.caption ?? ''}</pre>
     <h2>{post.excerpt}</h2>

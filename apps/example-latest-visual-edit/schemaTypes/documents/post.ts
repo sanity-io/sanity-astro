@@ -48,19 +48,19 @@ export default defineType({
       options: {
         hotspot: true,
       },
-			fields: [
-				defineField({
-					name: 'alt',
-					title: 'Alternative text',
-					type: 'string',
-					validation: (Rule) => Rule.required(),
-				}),
+      fields: [
+        defineField({
+          name: 'alt',
+          title: 'Alternative text',
+          type: 'string',
+          validation: (Rule) => Rule.required(),
+        }),
         defineField({
           name: 'caption',
           type: 'text', // or 'text' if you want multi-line captions
           title: 'Caption',
         }),
-			],
+      ],
     }),
     defineField({
       name: 'body',
@@ -76,12 +76,19 @@ export default defineType({
   preview: {
     select: {
       title: 'title',
-      author: 'author.name',
+      author0: 'authors.0.name',
+      author1: 'authors.1.name',
+      author2: 'authors.2.name',
+      author3: 'authors.3.name',
       media: 'mainImage',
     },
-    prepare(selection) {
-      const {author} = selection
-      return {...selection, subtitle: author && `by ${author}`}
+    prepare({title, author0, author1, author2, author3, media}) {
+      const authors = [author0, author1, author2].filter(Boolean)
+      const subtitle =
+        authors.length > 0
+          ? `by ${authors.join(', ')}${author3 ? '…' : ''}`
+          : undefined
+      return {title, subtitle, media}
     },
   },
 })

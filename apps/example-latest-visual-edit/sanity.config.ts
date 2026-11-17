@@ -11,7 +11,7 @@ if (!projectId || !dataset) {
 }
 console.log('projectId', projectId)
 // *todo* take this from the sanity:client if possible
-const previewUrl = import.meta.env.SANITY_STUDIO_PREVIEW_URL || 'http://localhost:4324'
+const previewUrl = import.meta.env.SANITY_STUDIO_PREVIEW_URL || 'http://localhost:4325'
 
 export default defineConfig(
   {
@@ -27,11 +27,11 @@ export default defineConfig(
         previewUrl,
         resolve: {
           // Maps a URL in the preview to the corresponding Sanity document,
-          // so opening /post/my-slug in Presentation opens that post in the sidebar.
+          // so opening /posts/my-slug in Presentation opens that post in the sidebar.
           mainDocuments: defineDocuments([
             {
               route: '/posts/:slug',
-              filter: ({params}) => `_type == "post" && slug.current == "${params.slug}"`,
+              filter: '_type == "post" && slug.current == $slug',
             },
           ]),
           // Maps a post document to its preview URL,

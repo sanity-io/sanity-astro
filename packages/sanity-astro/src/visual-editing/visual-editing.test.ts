@@ -228,6 +228,18 @@ describe('visual-editing inline observer', () => {
     vi.useRealTimers()
   })
 
+  it('loads standalone overlay styles via ?raw inside the enabled guard so disabled pages ship no CSS', () => {
+    expect(astroSource).toContain(
+      'import overlayStyles from "@sanity/visual-editing-standalone/styles.css?raw"',
+    )
+    expect(astroSource).not.toMatch(
+      /import\s+["']@sanity\/visual-editing-standalone\/styles\.css["']/,
+    )
+    expect(astroSource).toMatch(
+      /\{enabled\s*&&\s*\([\s\S]*<style is:inline set:html=\{overlayStyles}><\/style>/,
+    )
+  })
+
   it('exposes config but skips cookies and listeners when not in an iframe', () => {
     const env = createBrowserEnv({
       href: 'http://localhost:4321/movies?perspective=drafts',
@@ -350,6 +362,26 @@ describe('visual-editing inline observer', () => {
     // Mismatched URL (user navigated to another page) clears flag without reloading
     env.sessionStorage.setItem('sanity_sync_needed', 'http://localhost:4321/movies/other')
     env.windowObj.dispatchWindowEvent('load')
+
+    vi.advanceTimersByTime(1200)
+    expect(env.reload).toHaveBeenCalledTimes(1)
+  })
+
+  it('continues coalescing mutations and reloading when sessionStorage throws SecurityError', () => {
+    const env = createBrowserEnv({href: 'http://localhost:4321/movies/alien'})
+    Object.defineProperty(env.windowObj, 'sessionStorage', {
+      get() {
+        throw new Error('SecurityError: Access is denied for this document')
+      },
+    })
+
+    runInlineObserver(env, {assureTypingInterval: 1200})
+
+    expect(() => env.windowObj.dispatchWindowEvent('load')).not.toThrow()
+
+    env.windowObj.dispatchWindowEvent('message', {
+      data: {type: 'presentation/snapshot-event', data: {event: {type: 'mutation'}}},
+    })
 
     vi.advanceTimersByTime(1200)
     expect(env.reload).toHaveBeenCalledTimes(1)

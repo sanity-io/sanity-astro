@@ -1,6 +1,6 @@
 ---
 import type { enableVisualEditing } from "@sanity/visual-editing-standalone";
-import "@sanity/visual-editing-standalone/styles.css";
+import overlayStyles from "@sanity/visual-editing-standalone/styles.css?raw";
 
 export interface Props
   extends Pick<
@@ -58,6 +58,7 @@ const { enabled = defaultEnabled, zIndex, keepStegaOnCopy } = Astro.props;
 
 {enabled && (
 <>
+  <style is:inline set:html={overlayStyles}></style>
   <script define:vars={{ assureTypingInterval, zIndex, keepStegaOnCopy }}>
     (function () {
       const FLAG = "sanity_sync_needed";
@@ -79,6 +80,30 @@ const { enabled = defaultEnabled, zIndex, keepStegaOnCopy } = Astro.props;
             ? "path=/; SameSite=None; Secure; Partitioned"
             : "path=/; SameSite=Lax";
         document.cookie = `${cookieName}=${encodeURIComponent(val)}; ${attributes}`;
+      }
+
+      function setSyncFlag(url) {
+        try {
+          if (url) {
+            window.sessionStorage.setItem(FLAG, url);
+          } else {
+            window.sessionStorage.removeItem(FLAG);
+          }
+        } catch {
+          // Ignore SecurityError / QuotaExceededError in restricted or cross-origin iframes
+        }
+      }
+
+      function takeSyncFlag() {
+        try {
+          const pendingUrl = window.sessionStorage.getItem(FLAG);
+          if (pendingUrl !== null) {
+            window.sessionStorage.removeItem(FLAG);
+          }
+          return pendingUrl;
+        } catch {
+          return null;
+        }
       }
 
       function stripUrlPerspectiveParams() {
@@ -125,7 +150,7 @@ const { enabled = defaultEnabled, zIndex, keepStegaOnCopy } = Astro.props;
         clearPendingTimer();
         window.__sanityFallbackTimer = setTimeout(() => {
           window.__sanityFallbackTimer = null;
-          sessionStorage.removeItem(FLAG);
+          setSyncFlag(null);
           window.location.reload();
         }, delayMs);
       }
@@ -194,7 +219,7 @@ const { enabled = defaultEnabled, zIndex, keepStegaOnCopy } = Astro.props;
           snapshotEventType === "mutation"
         ) {
           lastSnapshotTime = Date.now();
-          sessionStorage.setItem(FLAG, window.location.href);
+          setSyncFlag(window.location.href);
 
           // Push back any pending reload so continuous typing coalesces into one reload
           if (document.readyState === "complete") {
@@ -206,12 +231,8 @@ const { enabled = defaultEnabled, zIndex, keepStegaOnCopy } = Astro.props;
       // 3. RECONCILE: Catch any keystroke that arrived while the previous reload HTTP request was in flight
       if (assureTypingInterval > 0) {
         window.addEventListener("load", () => {
-          const pendingUrl = sessionStorage.getItem(FLAG);
-          if (pendingUrl !== null) {
-            sessionStorage.removeItem(FLAG);
-            if (pendingUrl === window.location.href) {
-              scheduleMutationReload(assureTypingInterval);
-            }
+          if (takeSyncFlag() === window.location.href) {
+            scheduleMutationReload(assureTypingInterval);
           }
         });
       }

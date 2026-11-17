@@ -1,6 +1,12 @@
 ---
 import { getPosts } from '../utils/sanity'
 import Layout from '../layouts/Layout.astro'
+// we use stegaClean to avoid items from presenting the
+// blue buttons to go to Studio. In this case, the plain links
+// that we use for our simple posts menu, but this method
+// can be used wherever you don't want blue outlines and
+// and Open In Studio buttons showing.
+import {stegaClean} from '@sanity/client/stega'
 
 interface PostSlug {
   slug: string;
@@ -16,7 +22,7 @@ const posts = await getPosts()
       posts.map((post: any) => (
         <li>
           <a href={'/posts/' + post.slug.current} class="post-link">
-            {post.title}
+            {stegaClean(post.title)}
           </a>
         </li>
       ))

@@ -7,6 +7,7 @@
     "build:cinema": "turbo run build --filter=cinema...",
     "build:example": "turbo run build --filter=example...",
     "build:example-latest": "turbo run build --filter=example-latest...",
+    "build:example-latest-visual-edit": "turbo run build --filter=example-latest-visual-edit...",
     "build:example-ssr": "turbo run build --filter=example-ssr...",
     "build:minimal": "turbo run build --filter=minimal...",
     "build:movies": "turbo run build --filter=movies...",

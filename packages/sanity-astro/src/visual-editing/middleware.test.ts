@@ -34,6 +34,34 @@ function createContext({
   }
 }
 
+async function withoutAsyncLocalStorage<T>(run: () => Promise<T>): Promise<T> {
+  const storageKey = Symbol.for('@sanity/astro/perspectiveStorage')
+  const globalObj = globalThis as Record<PropertyKey, any>
+  const previousStore = globalObj[storageKey]
+  const previousGlobalAls = globalObj.AsyncLocalStorage
+  const previousGetBuiltinModule = globalObj.process?.getBuiltinModule
+
+  delete globalObj[storageKey]
+  globalObj.AsyncLocalStorage = undefined
+  if (globalObj.process) {
+    globalObj.process.getBuiltinModule = undefined
+  }
+
+  try {
+    return await run()
+  } finally {
+    if (previousStore !== undefined) {
+      globalObj[storageKey] = previousStore
+    } else {
+      delete globalObj[storageKey]
+    }
+    globalObj.AsyncLocalStorage = previousGlobalAls
+    if (globalObj.process) {
+      globalObj.process.getBuiltinModule = previousGetBuiltinModule
+    }
+  }
+}
+
 describe('visual-editing middleware', () => {
   afterEach(() => {
     vi.unstubAllEnvs()
@@ -231,5 +259,30 @@ describe('visual-editing middleware', () => {
     expect(observedFirst).toEqual(['drafts', 'drafts'])
     expect(observedSecond).toEqual([['r1', 'drafts']])
     expect(getActivePerspective()).toBe('published')
+  })
+
+  it('passes through cleanly on Edge runtimes without AsyncLocalStorage when visual editing is disabled', async () => {
+    vi.stubEnv('PUBLIC_SANITY_VISUAL_EDITING_ENABLED', 'false')
+
+    await withoutAsyncLocalStorage(async () => {
+      let observed: ClientPerspective | undefined
+      const response = await onRequest(createContext(), async () => {
+        observed = getActivePerspective()
+        return new Response('edge-ok')
+      })
+
+      expect(observed).toBe('published')
+      expect(await response.text()).toBe('edge-ok')
+    })
+  })
+
+  it('throws a clear error when visual editing is enabled on a runtime without AsyncLocalStorage', async () => {
+    vi.stubEnv('PUBLIC_SANITY_VISUAL_EDITING_ENABLED', 'true')
+
+    await withoutAsyncLocalStorage(async () => {
+      await expect(onRequest(createContext(), async () => new Response('ok'))).rejects.toThrow(
+        /AsyncLocalStorage/,
+      )
+    })
   })
 })
