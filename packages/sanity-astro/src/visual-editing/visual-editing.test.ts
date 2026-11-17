@@ -195,7 +195,7 @@ function runInlineObserver(
 
 async function runModuleBridge(
   env: ReturnType<typeof createBrowserEnv>,
-  enableVisualEditingMock: ReturnType<typeof vi.fn>,
+  enableVisualEditingMock: (options: Record<string, any>) => () => void,
 ) {
   const transformed = await transformWithOxc(moduleScript, 'visual-editing-module.ts', {
     lang: 'ts',
@@ -370,7 +370,7 @@ describe('visual-editing module bridge', () => {
     runInlineObserver(env, {assureTypingInterval: 1200, zIndex: 42, keepStegaOnCopy: true})
 
     const cleanupSpy = vi.fn()
-    const enableVisualEditingMock = vi.fn(() => cleanupSpy)
+    const enableVisualEditingMock = vi.fn((_options: Record<string, any>) => cleanupSpy)
 
     await runModuleBridge(env, enableVisualEditingMock)
 
@@ -436,7 +436,7 @@ describe('visual-editing module bridge', () => {
     const env = createBrowserEnv()
     runInlineObserver(env, {zIndex: 'var(--overlay-z)'})
 
-    const enableVisualEditingMock = vi.fn(() => vi.fn())
+    const enableVisualEditingMock = vi.fn((_options: Record<string, any>) => vi.fn())
     await runModuleBridge(env, enableVisualEditingMock)
 
     const options = enableVisualEditingMock.mock.calls[0][0]

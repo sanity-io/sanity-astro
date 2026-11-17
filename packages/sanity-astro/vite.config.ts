@@ -28,8 +28,14 @@ export default defineConfig(() => {
         include: ['src'],
         entryRoot: 'src',
         outDir: 'dist/types',
-        // Type tests augment the global `SanityQueries` registry, which must not ship
-        exclude: ['node_modules/**', 'dist/**', 'src/**/*.test-d.ts'],
+        // Exclude tests and Playwright integration harness from published .d.ts output
+        exclude: [
+          'node_modules/**',
+          'dist/**',
+          'src/**/*.test.*',
+          'src/**/*.test-d.ts',
+          'src/integration/**',
+        ],
       }) as unknown as Plugin,
     ],
   }

@@ -12,9 +12,11 @@ export default defineConfig({
       // If you are doing static builds you may want opt out of the CDN
       useCdn: false,
       studioBasePath: '/admin',
-      studioRouterHistory: 'hash',
+      // left for reference, out as breaks blue click to visual edit,
+      // is now handled automatically between browser and hash
+      // studioRouterHistory: 'hash',
       stega: {
-        studioUrl: '/admin#',
+        studioUrl: '/admin',
       },
       logClientRequests: 'always',
     }),
