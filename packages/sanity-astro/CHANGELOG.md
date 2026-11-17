@@ -1,5 +1,11 @@
 # @sanity/astro
 
+## 4.1.0
+
+### Minor Changes
+
+- [#542](https://github.com/sanity-io/sanity-astro/pull/542) [`c7d0df9`](https://github.com/sanity-io/sanity-astro/commit/c7d0df9fb0a99080c3e94e34c8609d7cfb5f971b) Thanks [@stipsan](https://github.com/stipsan)! - Add `<SanityImage>` and `sanityImageService()` for rendering Sanity images through `astro:assets` (Astro 5 or later). `src` takes whole image values (TypeGen types, image objects, asset documents and references, stega-encoded values) as well as CDN URLs. The Studio crop is applied, the CDN crops around the hotspot when the aspect ratio changes, `object-position` follows the hotspot, missing `width` and `height` are inferred without a request, and `placeholder="blur"` uses the asset's LQIP. `@sanity/astro/image` also exports `getSanityImageProps()` for `<Picture>` and `getImage()`, plus `isImageWithAsset`, `InferImageValue` and `InferStrictImageValue`.
+
 ## 4.0.0
 
 ### Major Changes
