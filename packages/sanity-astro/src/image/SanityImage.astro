@@ -1,0 +1,32 @@
+---
+import {Image, imageConfig} from 'astro:assets'
+
+import {getSanityImageProps} from './image-props.js'
+import type {SanityImageProps} from './types.js'
+
+type Props = SanityImageProps
+
+const {src, alt, width, height, projectId, dataset, queryParams, placeholder, blurDataURL, ...rest} =
+  Astro.props
+
+// Catches alt as undefined, GROQ null, or an omitted alt prop,
+// which would cause Image to exception, in direct or PortableText use
+const resolvedAlt = typeof alt === 'string' ? alt : ''
+
+// Astro 5 names the default `experimentalObjectFit` while responsive images are experimental.
+const config = imageConfig as {objectFit?: string; experimentalObjectFit?: string}
+
+const image = getSanityImageProps(src, {
+  width,
+  height,
+  projectId,
+  dataset,
+  queryParams,
+  placeholder,
+  blurDataURL,
+  fit: rest.fit ?? config.objectFit ?? config.experimentalObjectFit,
+  position: rest.position,
+  style: rest.style,
+})
+---
+<Image {...rest} alt={resolvedAlt} {...image} />

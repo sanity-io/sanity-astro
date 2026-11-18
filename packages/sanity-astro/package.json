@@ -32,6 +32,7 @@
       "module": "./dist/sanity-astro.mjs",
       "default": "./dist/sanity-astro.mjs"
     },
+    "./image": "./dist/image/index.ts",
     "./module": "./module.d.ts",
     "./loader": {
       "types": "./dist/types/loader.d.ts",
@@ -48,7 +49,7 @@
       "import": "./dist/visual-editing/index.ts",
       "default": "./dist/visual-editing/index.ts"
     },
-   "./middleware": {
+    "./middleware": {
       "types": "./dist/visual-editing/middleware.ts",
       "import": "./dist/visual-editing/middleware.ts",
       "default": "./dist/visual-editing/middleware.ts"
@@ -58,9 +59,10 @@
     "access": "public"
   },
   "scripts": {
-    "build": "rimraf dist && vite build && pnpm copyStudio && pnpm copy:visual-editing",
+    "build": "rimraf dist && vite build && pnpm copyStudio && pnpm copy:visual-editing && pnpm copy:image",
     "clean": "rimraf dist && rimraf .turbo && rimraf node_modules",
     "copy:visual-editing": "cp -r src/visual-editing dist/visual-editing",
+    "copy:image": "cp -r src/image dist/image",
     "copyStudio": "cp -r src/studio dist/studio",
     "dev": "vite build --watch",
     "prepublishOnly": "pnpm build",
@@ -68,6 +70,7 @@
     "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
+    "@sanity/image-url": "^2.2.0",
     "@sanity/visual-editing-standalone": "^2.0.3",
     "history": "^5.3.0"
   },

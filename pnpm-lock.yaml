@@ -620,6 +620,9 @@ importers:
 
   packages/sanity-astro:
     dependencies:
+      '@sanity/image-url':
+        specifier: ^2.2.0
+        version: 2.2.0
       '@sanity/visual-editing-standalone':
         specifier: ^2.0.3
         version: 2.0.4
@@ -5131,6 +5134,10 @@ packages:
 
   '@sanity/image-url@2.1.1':
     resolution: {integrity: sha512-qVXsF1teWR6FO3ZFAz46HDcRU+E6EQkpyncPnkGOzeJ1PgnaOiWMVbiSrZtX10s3txzzu/tAjKwbxbGHfDWgGw==}
+    engines: {node: '>=20.19.0'}
+
+  '@sanity/image-url@2.2.0':
+    resolution: {integrity: sha512-6uJnWhDJMlfwsnHwlnHpUgXCo5kmH3Wv/ERXalgRJHiBhChO/UYhIBTOxdwXTP01EkeoDARn6/+e3Vf+db+JIA==}
     engines: {node: '>=20.19.0'}
 
   '@sanity/import@6.0.4':
@@ -19063,6 +19070,10 @@ snapshots:
   '@sanity/image-url@1.2.0': {}
 
   '@sanity/image-url@2.1.1':
+    dependencies:
+      '@sanity/signed-urls': 2.0.6
+
+  '@sanity/image-url@2.2.0':
     dependencies:
       '@sanity/signed-urls': 2.0.6
 
