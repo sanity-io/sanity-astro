@@ -73,8 +73,9 @@ export async function loadQuery<QueryResponse>({
 }
 
 export const POSTS_QUERY = groq`
-  *[_type == "post"] | order(_createdAt desc)
-  `
+  *[_type == "post" && defined(slug.current)] | order(_createdAt desc)
+`;
+
 export async function getPosts(): Promise<Post[]> {
   return loadQuery<Post[]>(
     {

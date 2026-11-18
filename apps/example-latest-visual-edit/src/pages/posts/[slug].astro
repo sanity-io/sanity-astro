@@ -51,7 +51,7 @@ const authorsDataSanity = visualEditingEnabled
   <article>
     <h1>{post.title}</h1>
     <p data-sanity={authorsDataSanity}>Written by {byline}</p>
-    <SanityImage src={post.mainImage} width="600" />
+    <SanityImage src={post.mainImage} alt={post.mainImage.alt} width="600" />
     <pre>{post.mainImage?.caption ?? ''}</pre>
     <h2>{post.excerpt}</h2>
     <PortableText value={post.description} />

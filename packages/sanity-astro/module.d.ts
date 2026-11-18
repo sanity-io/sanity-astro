@@ -41,8 +41,8 @@ declare module 'sanity:client' {
   // A branded query (such as a `.groq` import) carries its own result type, which wins over the
   // per-resource registry the same way it wins over `SanityQueries` in `@sanity/client`.
   type ResourceQueryReturn<Queries, Query extends string, Fallback> = Query extends {
-    readonly __groqResult?: unknown
-  }
+      readonly __groqResult?: unknown
+    }
     ? ClientReturn<Query, Fallback>
     : Query extends keyof Queries
       ? Queries[Query]
@@ -131,9 +131,4 @@ declare module 'sanity:client' {
 
 declare module 'sanity:studio' {
   export const config: import('sanity').Config
-}
-
-declare module '*.astro' {
-  const component: unknown
-  export default component
 }

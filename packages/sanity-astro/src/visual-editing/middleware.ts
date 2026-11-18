@@ -93,13 +93,24 @@ export async function onRequest(
     activePerspective = raw.split(",");
   }
 
-  // 4. Execute request in isolated async context and prevent Edge caching of preview HTML
+  // 4. Execute request in isolated async context and prevent Edge caching of preview HTML.
+  // Mutate headers in-place on standard SSR responses, falling back to a cloned Response
+  // only when next() returns immutable headers (such as Response.redirect() or upstream fetch).
   const response = await perspectiveStorage.run(activePerspective, () =>
     next(),
   );
-  response.headers.set(
-    "Cache-Control",
-    "private, no-cache, no-store, must-revalidate",
-  );
-  return response;
+  const cacheControl = "private, no-cache, no-store, must-revalidate";
+
+  try {
+    response.headers.set("Cache-Control", cacheControl);
+    return response;
+  } catch {
+    const headers = new Headers(response.headers);
+    headers.set("Cache-Control", cacheControl);
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    });
+  }
 }
