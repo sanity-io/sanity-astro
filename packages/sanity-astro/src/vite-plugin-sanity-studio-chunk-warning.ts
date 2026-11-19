@@ -72,7 +72,7 @@ export function formatLargeChunkWarning(
   return `Some chunks are larger than ${limitInKb} kB after minification. Consider:
 ${chunkList}
 - Using dynamic import() to code-split the application
-- Use build.rolldownOptions.output.codeSplitting (or build.rollupOptions.output.manualChunks) to improve chunking
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.`
 }
 
@@ -125,7 +125,7 @@ export function vitePluginSanityStudioChunkWarning(): PluginOption {
           name: output.name,
           fileName: output.fileName,
           facadeModuleId: output.facadeModuleId,
-          moduleIds: output.moduleIds ?? Object.keys(output.modules),
+          moduleIds: Object.keys(output.modules),
           imports: output.imports,
           dynamicImports: output.dynamicImports,
           code: output.code,

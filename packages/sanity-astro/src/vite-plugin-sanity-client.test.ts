@@ -3,6 +3,7 @@ import {describe, expect, it, vi} from 'vitest'
 
 import type {ResolvedClients} from './resolve-clients'
 import {vitePluginSanityClient} from './vite-plugin-sanity-client'
+import type {RuntimeEnvOption} from './vite-plugin-sanity-studio-runtime-env'
 
 type LogMode = 'dev' | 'build' | 'always' | undefined
 type FakeClient = Record<string, unknown>
@@ -23,6 +24,8 @@ function evaluateVirtualClientModule({
   env,
   createClient,
   ssr = true,
+  runtimeEnv,
+  astroEnv = {},
 }: {
   resolvedClients?: ResolvedClients
   logClientRequests: LogMode
@@ -30,8 +33,12 @@ function evaluateVirtualClientModule({
   createClient: (config: ClientConfig) => FakeClient
   /** Vite passes `ssr: true` for server builds and `ssr: false` for browser builds */
   ssr?: boolean
+  /** The integration's `env` option */
+  runtimeEnv?: RuntimeEnvOption
+  /** Values `getSecret` from `astro:env/server` returns when the server runs */
+  astroEnv?: Record<string, string | undefined>
 }): VirtualClientModule {
-  const plugin = vitePluginSanityClient(resolvedClients, {logClientRequests})
+  const plugin = vitePluginSanityClient(resolvedClients, {logClientRequests, env: runtimeEnv})
   const pluginHooks = plugin as unknown as {
     resolveId?: (id: string) => string | undefined
     load?: (id: string, options?: {ssr?: boolean}) => string | undefined
@@ -49,6 +56,10 @@ function evaluateVirtualClientModule({
 
   const executableSource = source
     .replace('import { createClient } from "@sanity/client";', 'const {createClient} = __deps;')
+    .replace(
+      'import { getSecret } from "astro:env/server";',
+      'const getSecret = (name) => __deps.astroEnv[name];',
+    )
     .replace(/import\.meta\.env\.DEV/g, '__deps.importMeta.env.DEV')
     .replace(/import\.meta\.env\.PROD/g, '__deps.importMeta.env.PROD')
     .replace(
@@ -59,11 +70,13 @@ function evaluateVirtualClientModule({
   const factory = new Function('__deps', executableSource) as (deps: {
     createClient: (config: ClientConfig) => FakeClient
     importMeta: {env: {DEV: boolean; PROD: boolean}}
+    astroEnv: Record<string, string | undefined>
   }) => VirtualClientModule
 
   return factory({
     createClient,
     importMeta: {env},
+    astroEnv,
   })
 }
 
@@ -296,6 +309,45 @@ describe('vitePluginSanityClient named clients', () => {
     expect(String(infoSpy.mock.calls[1]?.[1])).not.toContain('[sanity:client:')
 
     infoSpy.mockRestore()
+  })
+})
+
+describe('vitePluginSanityClient env option', () => {
+  const twoClients: ResolvedClients = {
+    clients: {
+      default: {projectId: 'build-project', dataset: 'build-dataset'},
+      preview: {projectId: 'build-project', dataset: 'preview-dataset'},
+    },
+    presentationClientName: 'default',
+  }
+  const runtimeEnv = {projectId: 'SANITY_PROJECT_ID', dataset: 'SANITY_DATASET'}
+
+  it.each(['', undefined])(
+    'applies set runtime values to the default client on the server, not %j',
+    (dataset) => {
+      const createClient = vi.fn((config: ClientConfig) => ({config}))
+      evaluateVirtualClientModule({
+        resolvedClients: twoClients,
+        logClientRequests: undefined,
+        env: {DEV: false, PROD: true},
+        createClient,
+        runtimeEnv,
+        astroEnv: {SANITY_PROJECT_ID: 'runtime-project', SANITY_DATASET: dataset},
+      })
+
+      expect(createClient.mock.calls.map(([config]) => config)).toStrictEqual([
+        {projectId: 'runtime-project', dataset: 'build-dataset'},
+        twoClients.clients.preview,
+      ])
+    },
+  )
+
+  it('leaves astro:env out of the browser module', () => {
+    const plugin = vitePluginSanityClient(twoClients, {env: runtimeEnv}) as unknown as {
+      load: (id: string, options?: {ssr?: boolean}) => string
+    }
+
+    expect(plugin.load('\0sanity:client', {ssr: false})).not.toContain('astro:env')
   })
 })
 

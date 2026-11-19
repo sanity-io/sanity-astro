@@ -4,11 +4,14 @@ import path from 'node:path'
 import type {PluginOption, UserConfig} from 'vite'
 
 /**
- * Dev-only Vite dedupe for embedded Studio + @astrojs/react islands (#406).
+ * Dev-only Vite module deduplication and root-aliasing for embedded Studio + @astrojs/react islands (#406).
  *
- * Vite can load the same logical package through pre-bundled and direct paths even
- * when npm reports a single copy. The studio chunk-size warning plugin (apply: 'build')
- * is not involved in dev.
+ * Vite can load the same logical package through pre-bundled and direct paths in `astro dev`,
+ * and workspace/monorepo or non-hoisted installs can resolve `sanity` or `styled-components`
+ * from `@sanity/astro`'s own dependency tree when bundling `studio-component.tsx` in `astro build`.
+ * Running `resolve.dedupe` and `resolve.alias` across both `serve` and `build` ensures the
+ * embedded Studio always binds to the consuming application's `sanity` and `styled-components`
+ * instances, while Vite applies `optimizeDeps.include` during dev server pre-bundling.
  *
  * Membership rule for SANITY_MODULE_DEDUPE: only packages that must be a single instance
  * per page belong here — React, its renderer, styled-components, and the Studio itself
@@ -43,7 +46,30 @@ export const SANITY_OPTIMIZE_DEPS_CANDIDATES = [
   'styled-components',
 ] as const
 
+/**
+ * Whether `dependency`'s package sits in a `node_modules` directory at or above `projectRoot`,
+ * which is where Vite looks. Node's `require.resolve` also honours `NODE_PATH`, which pnpm's bin
+ * shims point at the hidden `node_modules/.pnpm/node_modules` hoist directory, so on its own it
+ * finds packages the project never installed: a React-free project then gets `styled-components`
+ * aliased to whichever copy pnpm hoisted, built against a different React than the overlays.
+ */
+function isInstalledFrom(projectRoot: string, dependency: string): boolean {
+  const segments = dependency.split('/')
+  const packageName = dependency.startsWith('@') ? segments.slice(0, 2).join('/') : segments[0]!
+  for (let dir = path.resolve(projectRoot); ; dir = path.dirname(dir)) {
+    if (existsSync(path.join(dir, 'node_modules', packageName, 'package.json'))) {
+      return true
+    }
+    if (path.dirname(dir) === dir) {
+      return false
+    }
+  }
+}
+
 function canResolveDependency(projectRoot: string, dependency: string): boolean {
+  if (!isInstalledFrom(projectRoot, dependency)) {
+    return false
+  }
   try {
     const require = createRequire(path.join(projectRoot, 'package.json'))
     require.resolve(dependency)
@@ -54,6 +80,9 @@ function canResolveDependency(projectRoot: string, dependency: string): boolean 
 }
 
 function resolvePackageRoot(projectRoot: string, packageName: string): string | undefined {
+  if (!isInstalledFrom(projectRoot, packageName)) {
+    return undefined
+  }
   try {
     const require = createRequire(path.join(projectRoot, 'package.json'))
     return require // assure Windows as well as linux paths are properly handled

@@ -4,6 +4,23 @@ export default defineConfig({
   // The Astro base tsconfig sets `jsx: preserve`, so the transform needs telling how to lower
   // JSX in `.test.tsx` files.
   oxc: {jsx: {runtime: 'automatic'}},
+  plugins: [
+    {
+      // Makes `sanity:studio` resolvable so `vi.mock` can take over in tests.
+      name: 'sanity:studio-stub',
+      resolveId: (id) => (id === 'sanity:studio' ? '\0sanity:studio' : null),
+      load: (id) => (id === '\0sanity:studio' ? 'export const config = {}' : null),
+    },
+    {
+      // Stands in for the integration's `sanity:client` in the image helpers' tests.
+      name: 'sanity:client-stub',
+      resolveId: (id) => (id === 'sanity:client' ? '\0sanity:client-stub' : null),
+      load: (id) =>
+        id === '\0sanity:client-stub'
+          ? `export const sanityClient = {config: () => ({projectId: 'stubproject', dataset: 'stubdataset'})}`
+          : null,
+    },
+  ],
   test: {
     hookTimeout: 240_000,
     testTimeout: 240_000,
@@ -11,6 +28,23 @@ export default defineConfig({
     typecheck: {
       enabled: true,
       include: ['src/**/*.test-d.ts'],
+    },
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        'src/**/*.test.{ts,tsx}',
+        'src/**/*.test-d.ts',
+        'src/**/*.d.ts',
+        'src/integration/**',
+      ],
+      reporter: ['text', 'json-summary'],
+      thresholds: {
+        statements: 85,
+        branches: 78,
+        functions: 85,
+        lines: 85,
+      },
     },
   },
 })

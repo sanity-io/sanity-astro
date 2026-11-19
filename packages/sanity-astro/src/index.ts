@@ -1,20 +1,65 @@
+import {writeFile} from 'node:fs/promises'
+import {fileURLToPath} from 'node:url'
+
 import type {ClientConfig} from '@sanity/client'
-import type {AstroIntegration, AstroUserConfig} from 'astro'
+import type {AstroIntegration, AstroUserConfig, ImageServiceConfig} from 'astro'
 
 import {CLIENT_TYPES_FILENAME, generateClientTypes} from './client-types'
+import {type LiveState, setupLive, watchSchema} from './live/integration'
+import type {SanityLiveOptions} from './live/options'
 import {type NamedClientConfig, resolveClientConfigs} from './resolve-clients'
 import {normalizeStudioBasePath, studioRoutePattern} from './studio-base-path'
 import {vitePluginSanityClient} from './vite-plugin-sanity-client'
+import {vitePluginSanityLoader} from './vite-plugin-sanity-loader'
 import {vitePluginSanityModuleDedupe} from './vite-plugin-sanity-module-dedupe'
 import {vitePluginSanityStudio} from './vite-plugin-sanity-studio'
 import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-chunk-warning'
+import {vitePluginSanityStudioHashRouter} from './vite-plugin-sanity-studio-hash-router'
+import {
+  type RuntimeEnvOption,
+  vitePluginSanityStudioRuntimeEnv,
+} from './vite-plugin-sanity-studio-runtime-env'
+import {vitePluginSanityVisualEditingStandalone} from './vite-plugin-sanity-visual-editing-standalone'
+
+export type {
+  SanityLiveLoaderConfig,
+  SanityLiveOptions,
+  SanityLiveOrderBy,
+  SanityLiveSchemaOptions,
+} from './live/options'
 
 // The plugin factories return Vite's `PluginOption` from this package's copy of Vite, which can
 // differ from the copy Astro's config types reference. Passing the array to `updateConfig` as is
 // crashes TypeScript 5.9 while it reports the mismatch, so it is typed as Astro's own option.
 type AstroVitePlugins = NonNullable<NonNullable<AstroUserConfig['vite']>['plugins']>
 
-export type {NamedClientConfig}
+export type {NamedClientConfig, RuntimeEnvOption}
+
+/**
+ * Options for `sanityImageService()`. Every other key is passed on to Astro's
+ * sharp service, which handles the images that are not on the Sanity CDN.
+ */
+export interface SanityImageServiceConfig {
+  /**
+   * Hostnames served by the Sanity Image CDN. Add a custom CDN domain here.
+   * Defaults to `['cdn.sanity.io']`.
+   */
+  hostnames?: string[]
+  [option: string]: unknown
+}
+
+/**
+ * The `astro:assets` image service for Sanity images, for `image.service` in
+ * `astro.config`. `<Image>`, `<Picture>`, `getImage()` and `<SanityImage>`
+ * then get their `src` and `srcset` straight from the Sanity Image CDN, which
+ * resizes, crops and negotiates AVIF/WebP at the edge. Every other image is
+ * handled by Astro's default sharp service, as before.
+ */
+export function sanityImageService(
+  config: SanityImageServiceConfig = {},
+): ImageServiceConfig<SanityImageServiceConfig> {
+  return {entrypoint: '@sanity/astro/image/service', config}
+}
 
 export type StudioRouterHistory = 'browser' | 'hash'
 export type LogClientRequests = 'dev' | 'build' | 'always'
@@ -48,6 +93,27 @@ export type IntegrationOptions = ClientConfig & {
    * Top-level client options can be used instead of `clients.default`, but not together with it.
    */
   clients?: Record<string, NamedClientConfig>
+  /**
+   * Names of environment variables for `projectId` and `dataset`, read when the server runs.
+   * Applies to `sanityClient` in server code and the Studio with `browser` history. Requires Astro 5.
+   */
+  env?: RuntimeEnvOption
+  /**
+   * Runs the `<VisualEditing />` overlays on `@sanity/visual-editing-standalone`
+   * instead of `@sanity/visual-editing`. The standalone build bundles its own React,
+   * React DOM and styled-components instead of using the project's copies. Requires
+   * `@sanity/visual-editing-standalone` to be installed. With
+   * `experimental_refreshStrategy="in-place"` the instant text step doesn't work in this
+   * mode, because the standalone build doesn't export the optimistic document state it
+   * reads. Defaults to `false`.
+   */
+  visualEditingStandalone?: boolean
+  /**
+   * Generates typed live loaders, Zod schemas and the `sanity:loader` module from your Sanity
+   * schema for Astro live collections. Nothing runs unless this is set.
+   * @experimental The option name and shape may change in minor releases.
+   */
+  experimental_live?: SanityLiveOptions
 }
 
 const defaultClientConfig: ClientConfig = {
@@ -83,6 +149,9 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
     logClientRequests,
     injectTypes: shouldInjectTypes = false,
     clients,
+    env,
+    visualEditingStandalone = false,
+    experimental_live: liveOptions,
     ...clientConfig
   } = options
   const normalizedStudioBasePath = normalizeStudioBasePath(studioBasePath)
@@ -99,31 +168,74 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
     defaults: defaultClientConfig,
   })
 
+  let live: LiveState | undefined
+
+  // With `experimental_live` unset the integration registers the same hooks and Vite plugins as
+  // before the option existed.
+  const liveHooks: AstroIntegration['hooks'] = liveOptions
+    ? {
+        'astro:server:setup': async ({server, logger}) => {
+          if (live) {
+            await watchSchema(live, server, logger)
+          }
+        },
+      }
+    : {}
+
   return {
     name: '@sanity/astro',
     hooks: {
-      'astro:config:setup': ({config, addMiddleware, injectScript, injectRoute, updateConfig}) => {
+      'astro:config:setup': async ({
+        config,
+        command,
+        injectScript,
+        injectRoute,
+        updateConfig,
+        createCodegenDir,
+        logger,
+      }) => {
         const studioRouterHistory = resolveStudioRouterHistory(
           requestedStudioRouterHistory,
           config?.output,
         )
+        if (env && !config?.env) {
+          throw new Error(
+            '[@sanity/astro]: The `env` option reads its variables through `astro:env`, which this Astro version does not have. Upgrade to Astro 5 or later, or remove `env`',
+          )
+        }
+        // `astro preview` runs this hook too but serves the built output, so it never imports
+        // `sanity:loader` and does not need an extraction.
+        if (liveOptions && command !== 'preview') {
+          live = await setupLive(liveOptions, {
+            root: fileURLToPath(config.root),
+            command,
+            createCodegenDir,
+            logger,
+          })
+        }
         const vitePlugins = [
           ...(process.env.SANITY_ASTRO_DISABLE_MODULE_DEDUPE
             ? []
             : [vitePluginSanityModuleDedupe()]),
-          vitePluginSanityClient(resolvedClients, {logClientRequests}),
+          vitePluginSanityClient(resolvedClients, {logClientRequests, env}),
+          ...(live ? [vitePluginSanityLoader(live)] : []),
           vitePluginSanityStudio({
             studioBasePath: normalizedStudioBasePath,
             studioRouterHistory,
           }),
+          vitePluginSanityStudioHashRouter(),
+          vitePluginSanityStudioRuntimeEnv(env),
           vitePluginSanityStudioChunkWarning(),
+          ...(visualEditingStandalone ? [vitePluginSanityVisualEditingStandalone()] : []),
         ]
 
-        if (typeof addMiddleware === "function") {
-          addMiddleware({
-            order: "pre",
-            entrypoint: "@sanity/astro/middleware",
-          });
+        if (
+          visualEditingStandalone &&
+          config?.integrations?.some((integration) => integration.name === '@astrojs/react')
+        ) {
+          logger?.warn(
+            '`visualEditingStandalone` bundles its own copy of React. This project also uses `@astrojs/react`, so pages with Visual Editing load React twice.',
+          )
         }
 
         updateConfig({
@@ -154,7 +266,7 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
       },
       // `injectTypes` arrived in Astro 4.14; older versions keep using the manual
       // `/// <reference types="@sanity/astro/module" />` even when opted in.
-      'astro:config:done': ({injectTypes}) => {
+      'astro:config:done': async ({injectTypes}) => {
         if (typeof injectTypes !== 'function') return
         if (shouldInjectTypes) {
           injectTypes({
@@ -171,7 +283,18 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
             content: generateClientTypes(resolvedClients),
           })
         }
+        if (!live) {
+          return
+        }
+        live.typesFile = injectTypes({
+          filename: 'sanity-loader.d.ts',
+          content: live.module.types,
+        })
+        // Astro only writes injected types during sync, which a config-triggered dev restart
+        // skips, so the file is written here as well to keep the declarations current.
+        await writeFile(live.typesFile, live.module.types)
       },
+      ...liveHooks,
     },
   }
 }

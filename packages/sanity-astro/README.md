@@ -11,10 +11,12 @@ This integration enables the [Sanity Client][sanity-client] in your [Astro][astr
   - [Multiple clients](#multiple-clients)
   - [Typing query results](#typing-query-results)
   - [Embedding Sanity Studio on a route](#embedding-sanity-studio-on-a-route)
+- [Live collections](#live-collections)
 - [Rendering rich text and block content with Portable Text](#rendering-rich-text-and-block-content-with-portable-text)
 - [Presenting images](#presenting-images)
-  - [Resources](#resources)
 - [Enabling Visual Editing](#enabling-visual-editing)
+- [Examples](#examples)
+  - [Resources](#resources)
 
 ## Installation
 
@@ -101,7 +103,7 @@ const posts = await sanityClient.fetch(`*[_type == "post" && defined(slug)] | or
 </ul>
 ```
 
-[Check out this guide][guide] for a more elaborate introduction to how to integrate content from Sanity into Astro. You can also look in the `examples` folder in this repository for complete implementation examples.
+[Check out this guide][guide] for a more elaborate introduction to how to integrate content from Sanity into Astro. You can also look in the `apps` folder in this repository for complete implementation examples.
 
 To log server-side requests made with `sanity:client`, set `logClientRequests` in your integration config:
 
@@ -110,6 +112,25 @@ To log server-side requests made with `sanity:client`, set `logClientRequests` i
 - `logClientRequests: 'always'` logs during both development and builds
 
 If omitted, request logging is disabled.
+
+### Reading `projectId` and `dataset` at runtime
+
+`projectId` and `dataset` are written into the build. To build once and choose them when the server starts, for example when the same Docker image runs in several environments, name the environment variables in `env`:
+
+```javascript
+sanity({
+  // Build-time values
+  projectId: '<YOUR-PROJECT-ID>',
+  dataset: 'production',
+  // Read on the server when it runs
+  env: {projectId: 'SANITY_PROJECT_ID', dataset: 'SANITY_DATASET'},
+  studioBasePath: '/admin',
+})
+```
+
+The integration reads the variables at runtime with [`getSecret`](https://docs.astro.build/en/reference/modules/astro-env/#getsecret) from `astro:env/server`, so they don't need to be declared in `env.schema`. Requires Astro 5 or later.
+
+The values apply to `sanityClient` in server code rendered on demand, and to the embedded Studio with `browser` history, which receives them in the rendered page, falls back to `sanity.config.ts` and supports a single workspace only; an array of workspaces throws. Everything else keeps the build-time values: browser code, other named clients, the Studio with `hash` history, and prerendered pages and `sanityLoader`, which run during the build and read the variables only if they are set then.
 
 ### Loading Sanity documents into content collections
 
@@ -398,7 +419,7 @@ export async function sanityFetch<const Q extends string>(
 
 Sanity Studio is a customizable content workspace where you can edit your content. It‘s a Single Page Application that you can keep in its own repository, together with your Astro project as a monorepo, or embedded in your website.
 
-To initialize a Studio in a dedicated folder, you can run `npm create sanity@latest` and follow the instructions.
+To initialize a Studio in a dedicated folder, you can run `npm create sanity@latest` and follow the instructions.
 
 This integration lets you embed a Sanity Studio on a route in your Astro project. To enable it:
 
@@ -467,6 +488,102 @@ When Studio is embedded through `@sanity/astro`, the integration owns workspace 
 
 If you are also using Visual Editing stega, set `stega.studioUrl` to your Studio route path (for example `'/admin'`) and avoid appending a manual hash suffix.
 
+## Live collections
+
+> **Experimental.** Everything in this section is opt-in behind the `experimental_live` option and may change in minor releases. With the option unset, the integration behaves exactly as before: no schema extraction, no `sanity:loader` module, no extra hooks. The `@sanity/astro/loader` entry point it relies on is experimental too.
+
+Astro 6 and later can serve content through [live collections][astro-live-collections], which fetch on every request instead of at build time. Where [`sanityLoader`](#loading-sanity-documents-into-content-collections) loads a query into the Content Layer at build time, the `experimental_live` option generates a typed live loader and a Zod schema for each document type you list, derived from your Sanity schema:
+
+```typescript
+// astro.config.mjs
+sanity({
+  projectId: '<YOUR-PROJECT-ID>',
+  dataset: '<YOUR-DATASET-NAME>',
+  experimental_live: {
+    schema: './sanity.config.ts',
+    loaders: {
+      movie: {
+        type: 'movie',
+        projection: 'title, releaseDate, poster, "slug": slug.current',
+        orderBy: ['title', 'asc'],
+      },
+    },
+  },
+})
+```
+
+`experimental_live.schema` accepts either kind of input:
+
+- A `sanity.config.ts` (or `.js`, `.mjs`, `.tsx`, `.jsx`). The integration extracts the schema itself with the same node API as `sanity schema extract`, using the `sanity` package installed next to that config. This needs `sanity` 5.29 or later (`@sanity/cli` 6.7 or later); on older versions extract the schema yourself and use the `.json` form.
+- A `schema.json` produced by `npx sanity schema extract`, which can live in another directory or repository.
+
+The object form adds extraction options:
+
+```typescript
+experimental_live: {
+  schema: {
+    path: '../studio/sanity.config.ts',
+    workspace: 'default', // only needed when the config defines several workspaces
+    enforceRequiredFields: false,
+    // extra globs, relative to the studio directory, that re-extract the schema in dev
+    // (same shape as `schemaExtraction.watchPatterns` in sanity.cli.ts)
+    watchPatterns: ['src/lib/**/*.ts'],
+  },
+  loaders: {...},
+}
+```
+
+Each key in `experimental_live.loaders` becomes a set of exports on the `sanity:loader` virtual module: `<key>Loader`, `<key>Schema` and the type `<Key>` (`blog-posts` gives `blogPostsLoader`, `blogPostsSchema` and `BlogPosts`). A loader takes:
+
+- `type` (required): the document `_type` the loader serves.
+- `filter`: an extra GROQ condition, combined with the type check using `&&`.
+- `projection`: the GROQ projection body, defaulting to `...`. `_id` and `_updatedAt` are always added; `_id` is the entry id and `_updatedAt` its `lastModified` cache hint.
+- `orderBy`: a `[field, 'asc' | 'desc']` tuple or a list of them, applied to the collection query only.
+- `entryBy`: which field the id passed to `getLiveEntry` is compared with. `'id'` (default) matches `_id == $id`; `'slug'` matches `slug.current == $id`, so `getLiveEntry('people', 'ridley-scott')` looks the person up by slug.
+
+Wire the loaders up in `src/live.config.ts`:
+
+```typescript
+import {defineLiveCollection} from 'astro:content'
+import {movieLoader, movieSchema} from 'sanity:loader'
+
+export const collections = {
+  movies: defineLiveCollection({loader: movieLoader(), schema: movieSchema}),
+}
+```
+
+`movieLoader()` uses the `sanity:client` instance and is built on `createSanityLiveLoader` from `@sanity/astro/loader`, the same experimental entry point as `sanityLoader`. Pass your own client for Draft Mode or Visual Editing:
+
+```typescript
+import {sanityClient} from 'sanity:client'
+
+const client = sanityClient.withConfig({
+  token: import.meta.env.SANITY_API_READ_TOKEN,
+  perspective: 'drafts',
+  useCdn: false,
+  stega: true,
+})
+movieLoader({client})
+```
+
+The generated Zod schema strips stega characters from string literals (`_type`, portable text `style` and `listItem`, and other enums) before checking them, so those comparisons keep working. Prose fields are left encoded for Visual Editing.
+
+Then query the collection in your pages. `getLiveCollection` accepts flat GROQ parameters as its filter, and `getLiveEntry` takes the id (or `{id, ...params}` to bind extra GROQ parameters):
+
+```mdx
+---
+import {getLiveCollection, getLiveEntry} from 'astro:content'
+
+const {entries, error} = await getLiveCollection('movies')
+const {entry} = await getLiveEntry('movies', 'movie-alien')
+// entry.data is typed as Movie: {_id: string; _updatedAt: string; title: string | null; ...}
+---
+```
+
+In a dynamic route, check the parameter first (`Astro.params.id` is typed `string | undefined`) and return a 404 when the entry is missing; `apps/movies/src/pages/movies/[id].astro` shows the full pattern.
+
+The generated files live in `.astro/integrations/_sanity_astro/`: `schema.json` (when extracting from a studio config) and `sanity-loader.d.ts`, which Astro references from `.astro/types.d.ts` so the exports of `sanity:loader` are typed without any manual setup. `astro build` and `astro sync` always extract a fresh schema. `astro dev` starts from the previous `schema.json` so the server is ready immediately, re-extracts in the background, and re-extracts again whenever a schema file changes, regenerating `sanity:loader` and its types in place. Which files count is decided by the patterns of `sanity schema extract --watch` from the installed CLI (`sanity.config.*` and `schema*/**/*.{js,jsx,ts,tsx,mjs}` next to it) plus your `watchPatterns`.
+
 ## Rendering rich text and block content with Portable Text
 
 Sanity uses an open specification for rich text and block content called [Portable Text][portabletext]. Portable Text stores content from the editor as JSON (and not HTML or Markdown). This makes it platform/framework agnostic, and also queryable (for example, you can query for blog posts that have more than 4 TypeScript code blocks).
@@ -505,9 +622,73 @@ const components = {
 
 Sanity comes with [a native asset pipeline for your images and files][image-urls]. It has on-demand transforms, automatic optimization for browsers that supports webp, and serves images from a global CDN network. When you upload images to Sanity, it will also automatically analyze the image and add [a metadata document][image-document] with information like dimensions, color palette, generate blurhash, and LQIP strings.
 
-We recommend using [@sanity/image-url](https://www.sanity.io/docs/image-url) to help you generate URLs for presenting Sanity images in your Astro app. See an example of this in [apps/example/src/components/SanityImage.astro](https://github.com/sanity-io/sanity-astro/blob/main/apps/example/src/components/SanityImage.astro)
+`@sanity/astro/image` renders Sanity images through `astro:assets`, with the image CDN doing the transforms (Astro 5 or later). Register the image service, then pass whole image values to `<SanityImage>`:
 
-You can also use community-contributed integrations like [astro-sanity-picture][astro-sanity-picture] to integrate images from Sanity into your website.
+```js
+// astro.config.mjs
+import sanity, {sanityImageService} from '@sanity/astro'
+import {defineConfig} from 'astro/config'
+
+export default defineConfig({
+  image: {service: sanityImageService()},
+  integrations: [sanity({projectId: '<project-id>', dataset: '<dataset>'})],
+})
+```
+
+```astro
+---
+import {isImageWithAsset, SanityImage} from '@sanity/astro/image'
+import {sanityClient} from 'sanity:client'
+
+const post = await sanityClient.fetch(`
+  fn image::asset($asset) = $asset->{url, metadata{lqip}};
+  fn image::field($image) = $image{crop, hotspot, alt, "asset": image::asset(asset)};
+  *[_type == "post" && slug.current == $slug][0]{title, "cover": image::field(cover)}
+`, {slug: Astro.params.slug})
+---
+
+{isImageWithAsset(post.cover) && (
+  <SanityImage src={post.cover} alt={post.cover.alt ?? ''} width={1200} height={630} placeholder="blur" />
+)}
+```
+
+- `src` takes image fields as TypeGen types them, image objects with a dereferenced or referenced asset, asset documents, asset ids, stega-encoded values from Visual Editing, and Sanity CDN URLs.
+- The Studio crop is applied. When `width` and `height` give a different aspect ratio, the CDN crops around the hotspot. Fill modes (`fit="cover"` with Astro's responsive images, or `object-fit: cover`) default `object-position` to the hotspot.
+- Missing `width` and `height` are inferred from the crop, from the other dimension, or from the asset filename, so no request is made to measure the image.
+- `placeholder="blur"` uses `asset.metadata.lqip` when the query includes it, or `blurDataURL`.
+- `queryParams` adds [image transform parameters](https://www.sanity.io/docs/image-urls), for example `queryParams={{sat: -100, blur: 20}}`.
+- Every other `<Image>` prop works, including `widths`, `densities`, `sizes`, `quality` and `format`. Astro 5.10 and later also take `layout`, `fit` and `position`.
+
+`sanityImageService()` answers transforms for `cdn.sanity.io` URLs with CDN URLs and leaves other images to Astro's default sharp service. A custom CDN domain can be added with `sanityImageService({hostnames: ['cdn.sanity.io', 'images.example.com']})`. Astro's own `<Image>`, `<Picture>` and `getImage()` also get CDN URLs when given a Sanity image URL.
+
+`getSanityImageProps()` returns the `src`, `width`, `height` and `style` that `<SanityImage>` passes on, for use with `<Picture>` or `getImage()`. For art direction, build one image per breakpoint:
+
+```astro
+---
+import {getImage} from 'astro:assets'
+import {getSanityImageProps} from '@sanity/astro/image'
+
+const {image} = Astro.props
+const wide = await getImage({...getSanityImageProps(image, {width: 1600, height: 900}), widths: [800, 1600]})
+const tall = await getImage(getSanityImageProps(image, {width: 800, height: 1000}))
+---
+
+<picture>
+  <source media="(min-width: 768px)" srcset={wide.srcSet.attribute} />
+  <img src={tall.src} {...tall.attributes} alt="" />
+</picture>
+```
+
+To type a component that accepts an image from any query, use `InferImageValue` (or `InferStrictImageValue` for values with an asset) on your TypeGen query results. Both accept stega-branded results:
+
+```ts
+import type {InferImageValue} from '@sanity/astro/image'
+import type {SanityQueries} from '@sanity/client'
+
+type ImageValue = InferImageValue<SanityQueries[keyof SanityQueries]>
+```
+
+To build image URLs yourself, use [@sanity/image-url](https://www.sanity.io/docs/image-url).
 
 ## Enabling Visual Editing
 
@@ -567,14 +748,14 @@ const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLE
 </html>
 ```
 
-`VisualEditing` is needed to render Overlays. It's a React component under the hood, so you'll need the [React integration for Astro][astro-react] if you don't already use that at this point.
+`VisualEditing` renders the Overlays from a plain `<script>`. It does not need the [React integration for Astro][astro-react] or any React component in your project, so a site built only from `.astro` files gets Visual Editing by adding this one component. See [`apps/minimal`](https://github.com/sanity-io/sanity-astro/tree/main/apps/minimal) for a React-free setup. The overlay chunk is emitted into your build output whether or not `enabled` is true, exactly as the React island before it was; a page with Visual Editing off never fetches it.
 
 `VisualEditing` takes these props:
 
 - `enabled`: so you can control whether or not visual editing is enabled depending on your environment.
 - `zIndex` (optional): allows you to change the `z-index` of overlay elements.
 - `keepStegaOnCopy` (optional): by default, Visual Editing strips stega from the clipboard on copy. Pass `keepStegaOnCopy` to opt out and leave stega in copied text.
-- `experimental_refreshStrategy` (optional, experimental, opt-in): how the preview updates when the Studio reports a change. Unset (the default) reloads the page, as it always has. See [Customizing how the preview refreshes](#customizing-how-the-preview-refreshes).
+- `experimental_refreshStrategy` (optional, experimental, opt-in): how the preview catches up with an edit. Unset (the default) reloads the page, as it always has. `{type: 'reload', followUpDelayMs}` adds one follow-up reload after a change, and `'in-place'` refreshes the page without reloading it. See [How the preview refreshes](#how-the-preview-refreshes).
 
 In the example above, `enabled` is controlled using an [environment variable](https://docs.astro.build/en/guides/environment-variables/):
 
@@ -583,16 +764,15 @@ In the example above, `enabled` is controlled using an [environment variable](ht
 PUBLIC_SANITY_VISUAL_EDITING_ENABLED="true"
 ```
 
-#### Customizing how the preview refreshes
+#### How the preview refreshes
 
-By default `VisualEditing` reloads the whole page with `window.location.reload()` whenever the Studio reports a change. The experimental `experimental_refreshStrategy` prop picks another strategy. It's accepted by both the `.astro` `VisualEditing` component and `VisualEditingComponent`, and it's ignored when you pass your own `refresh`:
+By default `VisualEditing` reloads the whole page with `window.location.reload()` whenever Presentation asks for a refresh: when the editor clicks the refresh button, and when the document open in the Studio changes. That is what this integration has always done, and nothing below changes it unless you opt in with `experimental_refreshStrategy`. It's accepted by both the `.astro` `VisualEditing` component and `VisualEditingComponent`, and it's ignored when you pass your own `refresh`:
 
-| Strategy                                  | What happens on a change                                                                                                                                                                                          | Trade-offs                                                                                                                                                                                                                                                                                                                                                |
-| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `'reload'` (default)                      | The page reloads. Eventually correct for whatever the server renders, though it may take extra typing to see so. This happens if a natural pause occurs before typing a short completion, like a period or comma. | The refresh Visual Editing runs about a second after a change gains data of that moment, but text typed in the Studio while the page was reloading can be missing until a next longer typing or other edit. The reload to see edits visually is invisible or hardly visible, depending on the page                                                        |
-| `{type: 'reload', followUpDelayMs: 1200}` | Should be always correct, soon after typing completed. The page reloads, then reloads once more `followUpDelayMs` after it is back.                                                                               | Corrects to also catch text typed during the first reload, such as after a normal human pause before a comma or period. Only change-triggered reloads arm the action for this, never ordinary navigations or the manual refresh button. Uses `sessionStorage`. The reloads are invisible or hardly visible, just as in first case, depending on the page. |
-
-Here's an example of how to use the experimental refreshStrategy to improve confidence by not missing a content editor's typing. Be sure to follow the double brackets ( {{ }} ) example at each end. It's how Astro expects to read a multiple item prop.
+| Strategy                                  | What the editor sees                                                                   | Trade-off                                                                                                                                                                                                                                                            |
+| ----------------------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `'reload'` (default)                      | The page reloads on every refresh.                                                     | Every edit costs a full page load and resets scroll, focus and form state, but the page is always exactly what the server renders and every script runs again.                                                                                                       |
+| `{type: 'reload', followUpDelayMs: 1200}` | The page reloads, then reloads once more `followUpDelayMs` after it is back.           | Catches text typed in the Studio while the first reload was in flight, which a plain reload can miss until the next edit, at the cost of a second reload per change. A snapshot that lands during the reload, or a dropped refresh, arms it. Needs `sessionStorage`. |
+| `'in-place'`                              | Stega text updates as the editor types, then the page morphs to the fresh server HTML. | Scroll, focus and the Presentation connection survive, but DOM injected by third-party scripts is removed and those scripts do not run again. See below.                                                                                                             |
 
 ```astro
 <VisualEditing
@@ -601,11 +781,60 @@ Here's an example of how to use the experimental refreshStrategy to improve conf
 />
 ```
 
-For a practical situation where you may need to sdjust timing from the server, or differently for servers access used by differing clients such as pds on a slow cellular network, just develop the timing value from an environmental variable, via a constant set from it in the js code of an Astro page.
+An object prop needs Astro's double brackets, `{{ }}`, so the template passes the object rather than its text.
 
-If you'd rather refresh another way, for example re-fetching data and swapping the DOM in place, pass your own `refresh` function.
+#### Experimental: refreshing in place
 
-`refresh` is a function, and Astro can't serialize functions through to a client component, so it isn't accepted on the `.astro` `VisualEditing` component. Instead, import the React component from `@sanity/astro/visual-editing/component` and render it as a `client:only` island:
+Pass `experimental_refreshStrategy="in-place"` to update the page without reloading it:
+
+```astro
+<VisualEditing enabled={visualEditingEnabled} experimental_refreshStrategy="in-place" />
+```
+
+Edits then reach the page in two steps.
+
+1. **Instant text.** Presentation streams document changes to the overlays. `VisualEditing` listens to that stream and rewrites the stega-encoded text nodes rendered from the changed document as soon as the change arrives, before any request to your server. A node is rewritten only once the page has been seen rendering that field verbatim and the node still shows a value the field held before. Text your page transformed (truncated, formatted, upper-cased) and text built from several fields are left to the server render.
+2. **In-place morph.** Half a second after the last change, `VisualEditing` fetches the current URL and patches the live DOM with [idiomorph](https://github.com/bigskysoftware/idiomorph) so it matches the fresh server HTML. Everything the text patch cannot express (ordering, images, dates, references, conditionally rendered markup) updates here. Scroll position, focus, form state and the Presentation connection survive because the document never navigates. If the server has not caught up with the change yet, the fetch retries briefly, and a settle pass runs one second later.
+
+The morph makes the DOM match the server HTML, with a short list of exceptions. It leaves the overlay host, Astro's dev toolbar and Vite's error overlay alone. In `<head>` it keeps only nodes a client injected at runtime, recognised by the `data-vite-dev-id`, `data-styled`, `data-styled-version` or `data-astro-transition-persist` attribute; every other head node, including `<title>`, `<meta>`, `<link>` and `<script>` tags, is reconciled against the fresh HTML. Hydrated `<astro-island>` elements keep their client-rendered subtree and receive the new `props` attribute, which Astro re-hydrates from. Form controls the visitor has typed in or toggled keep their value, and `class` and `style` on `<html>` and `<body>` stay as client scripts left them.
+
+**DOM that a third-party script injected is removed by the morph.** Cookie banners, chat widgets, analytics beacons, A/B testing snippets and similar scripts add elements the server HTML does not contain, so the morph deletes them, and they are not re-created until the next real page load. Mark such an element with Astro's `transition:persist` attribute (`data-astro-transition-persist` when a script creates it) if you control it. If you cannot, or if a script relies on running again after each change, keep the default `'reload'` strategy on that site. This is one of the reasons the in-place refresh is opt-in.
+
+When the fetch fails, the response is not HTML, the request was redirected elsewhere, or the fresh HTML introduces a `<script>` the page does not have yet, `VisualEditing` falls back to a full reload. The script case exists because a script parsed from a fetched document can be inserted but never executed, so only a reload gives it the behaviour the server intended. Should the in-place refresh itself throw, the error is logged once and the page reloads on every refresh from then on, instead of the failure hiding behind a reload.
+
+Visual Editing needs fresh HTML per request, so run the site with `astro dev` or an SSR adapter while previewing.
+
+Two limits are worth knowing. Values rendered from a release perspective are not patched instantly, because the overlays stream the draft and published forms of a document but not its version form; those update through the morph. And the option is experimental: while it carries the `experimental_` prefix, its name and behaviour can change in a minor release.
+
+#### Running the overlays on `@sanity/visual-editing-standalone` (optional)
+
+By default the overlays come from `@sanity/visual-editing`, which Vite bundles together with your project's copy of React, React DOM and styled-components. Set `visualEditingStandalone: true` to load them from [`@sanity/visual-editing-standalone`](https://www.npmjs.com/package/@sanity/visual-editing-standalone) instead. It is a self-contained build with its own copy of those libraries, so the overlays don't depend on the versions installed in your project. Install it next to `@sanity/astro`:
+
+```sh
+npm install @sanity/visual-editing-standalone
+```
+
+```js
+// astro.config.mjs
+export default defineConfig({
+  integrations: [
+    sanity({
+      // ...
+      visualEditingStandalone: true,
+    }),
+  ],
+})
+```
+
+Only the `VisualEditing` component switches; the deprecated React component keeps using `@sanity/visual-editing`. The standalone build isn't smaller: in `apps/minimal` the script that boots the overlays shrinks, and the lazily loaded overlay chunk grows by the overlay stylesheet. The client inserts that CSS into `<head>` with `data-astro-transition-persist`, so an in-place refresh keeps it. If your project uses the React integration for Astro, the overlays then ship a second copy of React, and the integration logs a warning.
+
+With `experimental_refreshStrategy="in-place"`, the instant text step doesn't work in this mode. It reads the overlays' document state from `@sanity/visual-editing/optimistic`, and the standalone build keeps its own copy of that state without exporting it. With both options on, edits don't patch the page's text in place. The in-place morph and the default page reload still run.
+
+#### Customizing how the preview refreshes
+
+If you'd rather refresh another way, for example re-fetching data and swapping the DOM in place yourself, pass your own `refresh` function.
+
+`refresh` is a function, and Astro can't serialize functions through to a client component, so it isn't accepted on the `.astro` `VisualEditing` component. Instead, import the React component from `@sanity/astro/visual-editing/component` and render it as a `client:only` island. It needs the [React integration for Astro][astro-react]:
 
 ```tsx
 // src/components/VisualEditing.tsx
@@ -653,6 +882,7 @@ The `payload` tells you why the refresh fired: `payload.source` is `'manual'` wh
 - `onPerspectiveChange` / `onVariantChange`: keep server-side fetching on the same perspective and variant as the Studio driving the preview.
 - `components` (alpha): a resolver for custom overlay UI, such as an insert menu on an array field.
 - `plugins` (alpha): an array of overlay plugin definitions.
+- `experimental_refreshStrategy`: the same option as on the `.astro` component. It is ignored when you pass your own `refresh`.
 
 `refresh` falls back to `window.location.reload()` and `history` to the built-in adapter when you don't pass them; everything else is passed straight through. The alpha options follow `@sanity/visual-editing`'s stability policy rather than this package's: they can change in a minor release of that dependency without a corresponding `@sanity/astro` release, so pin it if you rely on them.
 
@@ -740,6 +970,20 @@ const {data: movies} = await loadQuery<Array<{title: string}>>({
 })
 ```
 
+## Examples
+
+The `apps` folder holds runnable examples. Each one reads published content from a hosted Sanity dataset, so it runs without an API token unless noted.
+
+| App                                                                                              | Shows                                                                                                                                                                                                                                                                                                                                                                                                                   | Run from the repo root    |
+| ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| [`apps/minimal`](https://github.com/sanity-io/sanity-astro/tree/main/apps/minimal)               | The smallest setup: one page that fetches with `sanity:client`. No Studio, no React                                                                                                                                                                                                                                                                                                                                     | `pnpm dev:minimal`        |
+| [`apps/example`](https://github.com/sanity-io/sanity-astro/tree/main/apps/example)               | Blog with Portable Text, images and an embedded Studio, on Astro 5                                                                                                                                                                                                                                                                                                                                                      | `pnpm dev:example`        |
+| [`apps/example-latest`](https://github.com/sanity-io/sanity-astro/tree/main/apps/example-latest) | The same blog on the newest Astro and Sanity releases                                                                                                                                                                                                                                                                                                                                                                   | `pnpm dev:example-latest` |
+| [`apps/example-ssr`](https://github.com/sanity-io/sanity-astro/tree/main/apps/example-ssr)       | The blog rendered on the server with the Vercel adapter                                                                                                                                                                                                                                                                                                                                                                 | `pnpm dev:example-ssr`    |
+| [`apps/cinema`](https://github.com/sanity-io/sanity-astro/tree/main/apps/cinema)                 | A static site on Astro 7 with content collections loaded through `sanityLoader`, an embedded Studio and Tailwind CSS                                                                                                                                                                                                                                                                                                    | `pnpm dev:cinema`         |
+| [`apps/movies`](https://github.com/sanity-io/sanity-astro/tree/main/apps/movies)                 | Server rendering, Visual Editing and the Presentation tool. Needs `SANITY_API_READ_TOKEN`; see the app README                                                                                                                                                                                                                                                                                                           | `pnpm dev:movies`         |
+| [`apps/observatory`](https://github.com/sanity-io/sanity-astro/tree/main/apps/observatory)       | A reference implementation of advanced Sanity features (sync tag caching, draft preview, Visual Editing) on Astro 7, built without `@sanity/astro`. Its Studio is [`apps/observatory-studio`](https://github.com/sanity-io/sanity-astro/tree/main/apps/observatory-studio) and its Sanity Function is in [`apps/observatory-functions`](https://github.com/sanity-io/sanity-astro/tree/main/apps/observatory-functions) | `pnpm dev:observatory`    |
+
 ### Resources
 
 - [The official Astro + Sanity guide][guide]
@@ -749,6 +993,7 @@ const {data: movies} = await loadQuery<Array<{title: string}>>({
 - [Egghead's Introduction to GROQ][groq-intro]
 
 [astro]: https://astro.build
+[astro-live-collections]: https://docs.astro.build/en/guides/content-collections/#live-content-collections
 [astro-react]: https://docs.astro.build/en/guides/integrations-guide/react/
 [guide]: https://www.sanity.io/guides/sanity-astro-blog
 [docs]: https://www.sanity.io/docs
