@@ -1,4 +1,5 @@
 import {createRequire} from 'node:module'
+import { existsSync } from "node:fs"
 import path from 'node:path'
 
 import type {PluginOption, UserConfig} from 'vite'

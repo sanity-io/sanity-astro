@@ -35,6 +35,12 @@
       "types": "./dist/loader.d.mts",
       "default": "./dist/loader.mjs"
     },
+    "./middleware": {
+      "types": "./dist/visual-editing/middleware.ts",
+      "import": "./dist/visual-editing/middleware.ts",
+      "default": "./dist/visual-editing/middleware.ts"
+    },
+
     "./studio/studio-route.astro": "./dist/studio/studio-route.astro",
     "./studio/studio-route-hash.astro": "./dist/studio/studio-route-hash.astro",
     "./studio/studio-component.tsx": "./dist/studio/studio-component.tsx",
