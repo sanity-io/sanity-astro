@@ -5,6 +5,8 @@ packages:
 overrides:
   'braces@<3.0.3': '>=3.0.3'
   'ws@>=8.0.0 <8.17.1': '>=8.22.0'
+  # GHSA-p4f5-76q4-ffq7: Vite 8 dev-server RCE / server.fs bypass
+  'vite@>=8.0.0 <8.3.7': '8.3.8'
 
 allowBuilds:
   '@swc/core': true
@@ -20,3 +22,4 @@ allowBuilds:
 # First-party release this repo adopts on publish day; pnpm's default minimumReleaseAge would block it for 24h
 minimumReleaseAgeExclude:
   - '@sanity/client@8.11.0'
+  - '@sanity/image-url@2.2.0'
