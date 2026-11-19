@@ -2,6 +2,9 @@ packages:
   - 'apps/*'
   - 'packages/*'
 
+lockfile:
+  format: v13
+
 overrides:
   'braces@<3.0.3': '>=3.0.3'
   'ws@>=8.0.0 <8.17.1': '>=8.22.0'
