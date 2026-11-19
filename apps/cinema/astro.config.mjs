@@ -1,10 +1,13 @@
 import react from '@astrojs/react'
-import sanity from '@sanity/astro'
+import sanity, {sanityImageService} from '@sanity/astro'
 import tailwindcss from '@tailwindcss/vite'
 import {defineConfig} from 'astro/config'
 
 // https://astro.build/config
 export default defineConfig({
+  image: {
+    service: sanityImageService(),
+  },
   integrations: [
     sanity({
       projectId: '4j2qnyob',

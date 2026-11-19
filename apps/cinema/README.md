@@ -5,7 +5,7 @@ A static film programme built on Astro 7 and `@sanity/astro`. It shows the curre
 - Content collections load from Sanity through `sanityLoader` in `src/content.config.ts`. Pages use `getCollection()` and `getStaticPaths()` from `astro:content`, and Zod parses every document at build time.
 - `sanity:client` and `sanity:studio` are typed through `/// <reference types="@sanity/astro/module" />` in `src/env.d.ts`.
 - Sanity Studio is embedded at `/admin`. The output is static, so the integration picks the hash router on its own.
-- Images use `@sanity/image-url` with `srcset`, hotspot cropping, and fixed `width` and `height` attributes in `src/components/SanityImage.astro`.
+- Images use `<SanityImage>` from `@sanity/astro/image` with the `sanityImageService()` image service: the CDN crops each `srcset` candidate around the hotspot, and `width` and `height` are fixed.
 - Portable Text renders with `astro-portabletext`.
 - Styling is Tailwind CSS 4 through `@tailwindcss/vite`, with design tokens in `src/styles/global.css`.
 

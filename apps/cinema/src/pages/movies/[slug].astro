@@ -3,7 +3,7 @@ import {type CollectionEntry, getCollection} from 'astro:content'
 import {PortableText} from 'astro-portabletext'
 
 import PersonCard from '../../components/PersonCard.astro'
-import SanityImage from '../../components/SanityImage.astro'
+import {SanityImage} from '@sanity/astro/image'
 import Layout from '../../layouts/Layout.astro'
 import {releaseDateLong, releaseYear} from '../../lib/format'
 
@@ -31,9 +31,11 @@ const year = releaseYear(releaseDate)
   <article class="mt-8 grid gap-10 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:gap-16">
     <div class="poster-frame aspect-[2/3] md:sticky md:top-8" transition:name={`poster-${movie.id}`}>
       <SanityImage
-        image={poster}
+        src={poster}
         alt={`Poster for ${title}`}
-        aspectRatio={2 / 3}
+        width={1280}
+        height={1920}
+        widths={[320, 640, 960, 1280]}
         sizes="(min-width: 768px) 40vw, 100vw"
         loading="eager"
         fetchpriority="high"

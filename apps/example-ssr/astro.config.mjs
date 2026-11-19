@@ -1,10 +1,13 @@
 import react from '@astrojs/react'
 import vercel from '@astrojs/vercel'
-import sanity from '@sanity/astro'
+import sanity, {sanityImageService} from '@sanity/astro'
 import {defineConfig} from 'astro/config'
 
 // https://astro.build/config
 export default defineConfig({
+  image: {
+    service: sanityImageService(),
+  },
   integrations: [
     sanity({
       projectId: '3do82whm',

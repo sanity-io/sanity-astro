@@ -7,10 +7,10 @@ const {perspective, variant} = Astro.locals.preview
 
 <link rel="stylesheet" href={visualEditingStyles} />
 <script
-    is:inline
-    id="preview-state"
-    type="application/json"
-    set:html={JSON.stringify({perspective: perspective ?? 'drafts', variant: variant ?? null})}
+  is:inline
+  id="preview-state"
+  type="application/json"
+  set:html={JSON.stringify({perspective: perspective ?? 'drafts', variant: variant ?? null})}
 />
 <script>
   import {enableVisualEditing} from '@sanity/visual-editing-standalone'

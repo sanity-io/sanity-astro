@@ -1,0 +1,69 @@
+---
+import {VisualEditing} from '@sanity/astro/visual-editing'
+import {LiveEntryNotFoundError} from 'astro/content/runtime'
+import {getLiveCollection, getLiveEntry} from 'astro:content'
+
+export async function getStaticPaths() {
+  const {entries, error} = await getLiveCollection('movies')
+  if (error) throw error
+  return (entries ?? []).map((entry) => ({params: {id: entry.id}}))
+}
+
+const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED === 'true'
+const {id} = Astro.params
+
+const {entry, error} = await getLiveEntry('movies', id)
+if (error && !LiveEntryNotFoundError.is(error)) throw error
+const movie = entry?.data
+if (!movie) Astro.response.status = 404
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{movie?.title ?? 'Movie not found'}</title>
+  </head>
+  <body>
+    <main>
+      <p><a href="/">All movies</a></p>
+      {
+        movie ? (
+          <article>
+            <h1>{movie.title}</h1>
+            {movie.releaseDate && <p>Released {movie.releaseDate}</p>}
+            {movie.poster && (
+              <img
+                src={`${movie.poster}?w=480&h=720&fit=crop&auto=format`}
+                width="240"
+                height="360"
+                alt=""
+              />
+            )}
+            <p>
+              Loaded with <code>getLiveEntry</code> from the <code>movies</code> live collection.
+            </p>
+          </article>
+        ) : (
+          <h1>Movie not found</h1>
+        )
+      }
+    </main>
+    <VisualEditing enabled={visualEditingEnabled} experimental_refreshStrategy="in-place" />
+  </body>
+</html>
+
+<style>
+  main {
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: 4rem 1.5rem;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+
+  img {
+    display: block;
+    border-radius: 4px;
+  }
+</style>
