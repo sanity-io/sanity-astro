@@ -38,9 +38,9 @@ export async function loadQuery<QueryResponse>({
                                                  perspective,
                                                }: LoadQueryOptions) {
   // *todo* put this back and fix perspective syncing merge breakage
-  const activePerspective: ClientPerspective = 'drafts'
-    // perspective ??
-    // (visualEditingEnabled ? getActivePerspective() : defaultPerspective);
+  const activePerspective: ClientPerspective = // 'drafts'
+    perspective ??
+    (visualEditingEnabled ? getActivePerspective() : defaultPerspective);
 
   // Sanity API invariant: perspectives other than 'published' require a token and useCdn: false
   const isPublished = activePerspective === 'published';

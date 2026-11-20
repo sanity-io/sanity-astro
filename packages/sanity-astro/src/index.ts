@@ -186,6 +186,7 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
     name: '@sanity/astro',
     hooks: {
       'astro:config:setup': async ({
+        addMiddleware,
         config,
         command,
         injectScript,
@@ -236,6 +237,13 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
           logger?.warn(
             '`visualEditingStandalone` bundles its own copy of React. This project also uses `@astrojs/react`, so pages with Visual Editing load React twice.',
           )
+        }
+
+        if (typeof addMiddleware === "function") {
+          addMiddleware({
+            order: "pre",
+            entrypoint: "@sanity/astro/middleware",
+          });
         }
 
         updateConfig({

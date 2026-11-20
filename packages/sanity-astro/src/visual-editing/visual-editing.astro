@@ -10,45 +10,47 @@ export interface Props
   enabled?: boolean;
 }
 
-// The environmental below allows adjusting optimal timing for visible
-// studio updates, while a 0 or a negative value in .env disables
-// typing loss prevention.
-//
-// The purpose of the timeout is two-fold. Primarily, it arranges the
-// interval after a typing pause for a second invisible refresh be
-// requested, which picks up any further typing while the first refresh
-// has made a blind interval to being informed about it. This correcis
-// for the non-closed protocol sanity-astro uses for visual editing.
-//
-// The second effect of the interval is to accommodate the full delay
-// sequence for the keystrokes to viewing screen update. This includes
-// the studio data send to the Content Lake, the Lake's resolution time,
-// then the latency from the iframed browser request to pick up
-// the changes which are to be made visible, once signaled.
+/**
+ * How the two-phase reload protocol works:
+ * 1. Immediate committed refresh: When Presentation invokes `refresh` for a
+ *    committed mutation or manual click, we reload on the next turn
+ *    (`setTimeout(..., 0)`). Deferring by one turn lets Comlink finish
+ *    acknowledging the message before the document unloads, without adding
+ *    artificial latency in front of the first visible update.
+ * 2. Blind-window reconciliation: While that reload HTTP request is in flight
+ *    to Astro SSR, the outgoing iframe stays alive until navigation commits.
+ *    Any keystrokes/mutations arriving during that blind window miss the
+ *    in-flight SSR fetch, so we record the URL in `sessionStorage`. Once the
+ *    reloaded page finishes loading, a single catch-up reload runs after
+ *    `assureTypingInterval` ms — giving Studio commits, Content Lake
+ *    propagation, and the iframe SSR round-trip time to settle.
+ * 3. Bounded throttle for continuous typing: If `presentation/snapshot-event`
+ *    mutations stream in while the page is idle (without a `refresh` callback
+ *    canceling it first), we arm the fallback timer once instead of resetting
+ *    it on every keystroke. Long, un-paused typing streams therefore appear in
+ *    steady chunks rather than stalling until typing stops.
+ */
 
-// That last signaling is done by the refresh call via the new
-// visual-editing hook, which we implement here.
+/*
+  Explaining reload typing-loss prevention timing, coded just below
+for rawInterval as import PUBLIC_SANITY_ASSURE_TYPING_INTERVAL.
 
-// The setting can be long to work with a very uneven connection such as
-// a pad or laptop operating over a poor cellular internet access. What
-// the content editor would see is increased delay until their iframed
-// browser updates, but with reliability that it always delivers the
-// typing complete, even with natural pauses in keying text.
+  This interval is read directly from a server-level environment variable rather
+than requiring each Astro app to define and wire its own env variable or prop.
+  That keeps app page coding simple, while still letting operators tune the timing
+per deployment (e.g., increasing it on high-latency or unreliable connections).
 
-// The default value set here is thought to fit fairly ordinary situations,
-// but you should feel free to increase it until visual editing operates
-// with regularity that is comfortable to content editors, our purpose here.
-
-// Our overall operation in this component is to implement the new
-// visual-edeting-standalone hook, as must be used above recent upgrades
-// to Sanity Studio. There are relatively instant requests from even a
-// tiny pause in typing are smoothed by our non-loss actions, so it should
-// be expected as normal that a word could arrive in two segments, if typing
-// is the slightest bit uneven. For the reliability, 'it's a feature'.
-
+  Set to `0` or a negative value to disable the added reload for catch-up
+ pass, which is what gives our prevention of typing loss on natural
+ human pauses for thought before a comma or period after composing a
+  a phrase. That's our primary example of why this ability was created.
+*/
 const rawInterval = import.meta.env.PUBLIC_SANITY_ASSURE_TYPING_INTERVAL;
-const assureTypingInterval: number =
-  rawInterval !== undefined && rawInterval !== "" ? Number(rawInterval) : 1200;
+const parsedInterval =
+  rawInterval !== undefined && rawInterval !== "" ? Number(rawInterval) : NaN;
+const assureTypingInterval: number = Number.isFinite(parsedInterval)
+  ? parsedInterval
+  : 1200;
 
 const defaultEnabled =
   import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED === "true";
@@ -62,9 +64,10 @@ const { enabled = defaultEnabled, zIndex, keepStegaOnCopy } = Astro.props;
   <script define:vars={{ assureTypingInterval, zIndex, keepStegaOnCopy }}>
     (function () {
       const FLAG = "sanity_sync_needed";
-      let lastSnapshotTime = 0;
+      let reloadInFlight = false;
 
-      // Host-isolated cookie name matching middleware.ts
+      // Host-isolated cookie name matching `middleware.ts` so multiple local
+      // ports or preview hosts do not collide on a shared perspective cookie.
       const cookieName = `sanity-perspective-${window.location.host.replace(/[:.]/g, "-")}`;
 
       function getCookiePerspective() {
@@ -74,7 +77,7 @@ const { enabled = defaultEnabled, zIndex, keepStegaOnCopy } = Astro.props;
         return match ? decodeURIComponent(match[1]) : "";
       }
 
-      // Returns true only if the browser allowed the iframe cookie to persist
+      // Returns true only if the browser allowed the iframe cookie to persist.
       function setCookiePerspective(val) {
         const attributes =
           window.location.protocol === "https:"
@@ -133,6 +136,13 @@ const { enabled = defaultEnabled, zIndex, keepStegaOnCopy } = Astro.props;
         }
       }
 
+      function clearPendingTimer() {
+        if (window.__sanityFallbackTimer) {
+          clearTimeout(window.__sanityFallbackTimer);
+          window.__sanityFallbackTimer = null;
+        }
+      }
+
       function syncPerspective(incomingPerspective) {
         if (window.self === window.top || !incomingPerspective) return;
 
@@ -144,6 +154,9 @@ const { enabled = defaultEnabled, zIndex, keepStegaOnCopy } = Astro.props;
           getCookiePerspective() || getUrlPerspective() || "published";
 
         if (incoming !== current) {
+          clearPendingTimer();
+          reloadInFlight = true;
+
           if (setCookiePerspective(incoming)) {
             stripUrlPerspectiveParams();
             window.location.reload();
@@ -158,24 +171,21 @@ const { enabled = defaultEnabled, zIndex, keepStegaOnCopy } = Astro.props;
         }
       }
 
-      function clearPendingTimer() {
-        if (window.__sanityFallbackTimer) {
-          clearTimeout(window.__sanityFallbackTimer);
-          window.__sanityFallbackTimer = null;
-        }
-      }
-
-      // Single unified reload scheduler shared by snapshot-event, Comlink refresh, and window.load
+      // Single unified reload scheduler shared by Comlink refresh, snapshot fallback,
+      // and post-load reconciliation. Clears the sync flag right before reloading so
+      // only mutations arriving *during* the in-flight navigation re-arm a follow-up.
       function scheduleMutationReload(delayMs) {
+        if (reloadInFlight) return;
         clearPendingTimer();
         window.__sanityFallbackTimer = setTimeout(() => {
           window.__sanityFallbackTimer = null;
+          reloadInFlight = true;
           setSyncFlag(null);
           window.location.reload();
         }, delayMs);
       }
 
-      // Expose config, acknowledgement hook, and perspective sync to the module script
+      // Expose config, reload hooks, and perspective sync to the bundled module script.
       window.__sanityVEConfig = {
         enabled: true,
         zIndex,
@@ -186,19 +196,17 @@ const { enabled = defaultEnabled, zIndex, keepStegaOnCopy } = Astro.props;
           scheduleMutationReload(0);
         },
         onMutationRefresh: () => {
-          if (assureTypingInterval <= 0) {
-            scheduleMutationReload(0);
+          // If a reload is already in flight, do not abort it; mark the URL so the
+          // incoming page runs one catch-up reload after assureTypingInterval ms.
+          if (reloadInFlight) {
+            if (assureTypingInterval > 0) {
+              setSyncFlag(window.location.href);
+            }
             return;
           }
-          // Ensure at least assureTypingInterval has elapsed since the latest optimistic keystroke
-          // so the Content Lake has committed the trailing character before Astro SSR fetches.
-          const elapsed = lastSnapshotTime
-            ? Date.now() - lastSnapshotTime
-            : 0;
-          const remaining = lastSnapshotTime
-            ? Math.max(300, assureTypingInterval - elapsed)
-            : 300;
-          scheduleMutationReload(remaining);
+          // Reload on the next turn so Comlink can finish its refresh reply before
+          // unload, without holding the initial update behind assureTypingInterval.
+          scheduleMutationReload(0);
         },
       };
 
@@ -218,9 +226,9 @@ const { enabled = defaultEnabled, zIndex, keepStegaOnCopy } = Astro.props;
         stripUrlPerspectiveParams();
       }
 
-      // 2. OBSERVE: Listen for Studio perspective toggles and mutation events
+      // 2. OBSERVE: Listen for Studio perspective toggles and mutation events.
       window.addEventListener("message", (e) => {
-        // A. Fallback listener for direct postMessage perspective switches
+        // A. Fallback listener for direct postMessage perspective switches.
         if (e.data?.type === "presentation/perspective") {
           const rawPerspective =
             e.data?.data?.perspective ?? e.data?.perspective;
@@ -230,7 +238,7 @@ const { enabled = defaultEnabled, zIndex, keepStegaOnCopy } = Astro.props;
           return;
         }
 
-        // B. Optimistic keystroke / mutation events ('presentation/snapshot-event' mutations only)
+        // B. Mutation events ('presentation/snapshot-event' mutations only).
         const snapshotEventType =
           e.data?.data?.event?.type ?? e.data?.event?.type;
         if (
@@ -238,23 +246,38 @@ const { enabled = defaultEnabled, zIndex, keepStegaOnCopy } = Astro.props;
           e.data?.type === "presentation/snapshot-event" &&
           snapshotEventType === "mutation"
         ) {
-          lastSnapshotTime = Date.now();
+          // Record the URL so if a reload is already in flight (blind window), the
+          // incoming document will run a catch-up reload on load.
           setSyncFlag(window.location.href);
 
-          // Push back any pending reload so continuous typing coalesces into one reload
-          if (document.readyState === "complete") {
+          // Arm a bounded fallback timer only if idle and no timer is already queued.
+          // Not resetting an existing timer ensures continuous typing updates in
+          // steady chunks instead of waiting for a full pause; if Presentation sends
+          // a paired `refresh` callback sooner, onMutationRefresh() preempts this.
+          if (
+            !reloadInFlight &&
+            document.readyState === "complete" &&
+            !window.__sanityFallbackTimer
+          ) {
             scheduleMutationReload(assureTypingInterval);
           }
         }
       });
 
-      // 3. RECONCILE: Catch any keystroke that arrived while the previous reload HTTP request was in flight
+      // 3. RECONCILE: Catch any keystroke that arrived while the previous reload
+      // HTTP request was in flight, after giving Content Lake propagation time to settle.
       if (assureTypingInterval > 0) {
-        window.addEventListener("load", () => {
+        const reconcileAfterLoad = () => {
           if (takeSyncFlag() === window.location.href) {
             scheduleMutationReload(assureTypingInterval);
           }
-        });
+        };
+
+        if (document.readyState === "complete") {
+          reconcileAfterLoad();
+        } else {
+          window.addEventListener("load", reconcileAfterLoad, { once: true });
+        }
       }
     })();
   </script>
@@ -394,4 +417,4 @@ const { enabled = defaultEnabled, zIndex, keepStegaOnCopy } = Astro.props;
     }
   </script>
 </>
-  )}
+)}
