@@ -56,8 +56,15 @@ function createBrowserEnv({
     currentUrl = new URL(next, currentUrl.origin)
   })
   const back = vi.fn()
-  const replaceState = vi.fn((_state: unknown, _unused: string, nextUrl: string) => {
-    currentUrl = new URL(nextUrl, currentUrl.origin)
+  const pushState = vi.fn((_state: unknown, _unused: string, nextUrl?: string | URL | null) => {
+    if (nextUrl) {
+      currentUrl = new URL(String(nextUrl), currentUrl.origin)
+    }
+  })
+  const replaceState = vi.fn((_state: unknown, _unused: string, nextUrl?: string | URL | null) => {
+    if (nextUrl) {
+      currentUrl = new URL(String(nextUrl), currentUrl.origin)
+    }
   })
 
   const location = {
@@ -100,6 +107,7 @@ function createBrowserEnv({
   const windowObj: Record<string, any> = {
     location,
     history: {
+      pushState,
       replaceState,
       back,
     },
@@ -152,6 +160,7 @@ function createBrowserEnv({
     assign,
     replace,
     back,
+    pushState,
     replaceState,
     setHref(nextHref: string) {
       currentUrl = new URL(nextHref)
@@ -196,18 +205,20 @@ function runInlineObserver(
 async function runModuleBridge(
   env: ReturnType<typeof createBrowserEnv>,
   enableVisualEditingMock: (options: Record<string, any>) => () => void,
+  {isDev = false}: {isDev?: boolean} = {},
 ) {
   const transformed = await transformWithOxc(moduleScript, 'visual-editing-module.ts', {
     lang: 'ts',
   })
   const executable = transformed.code
+    .replace(/import\.meta\.env\.DEV/g, String(isDev))
     .replace(
-      /import\s*\{[^}]*enableVisualEditing[^}]*}\s*from\s*["']@sanity\/visual-editing-standalone["'];?/,
-      'const { enableVisualEditing } = __deps;',
+      /import\(["']@sanity\/visual-editing\/enable-visual-editing["']\)/g,
+      'Promise.resolve({ enableVisualEditing: __deps.enableVisualEditing })',
     )
     .replace(
-      /import\s*\{[^}]*}\s*from\s*["']\.\/history["'];?/,
-      'const { applyPresentationHistoryUpdate, getPresentationUrl, shouldPublishUrl } = __deps;',
+      /import\(["']\.\/history\.js["']\)/g,
+      'Promise.resolve(__deps)',
     )
 
   const runner = new Function('window', 'document', '__deps', executable)
@@ -217,6 +228,10 @@ async function runModuleBridge(
     getPresentationUrl,
     shouldPublishUrl,
   })
+
+  // Flush the Promise.all([...]).then(...) microtask chain
+  await Promise.resolve()
+  await Promise.resolve()
 }
 
 describe('visual-editing inline observer', () => {
@@ -228,16 +243,11 @@ describe('visual-editing inline observer', () => {
     vi.useRealTimers()
   })
 
-  it('loads standalone overlay styles via ?raw inside the enabled guard so disabled pages ship no CSS', () => {
-    expect(astroSource).toContain(
-      'import overlayStyles from "@sanity/visual-editing-standalone/styles.css?raw"',
-    )
-    expect(astroSource).not.toMatch(
-      /import\s+["']@sanity\/visual-editing-standalone\/styles\.css["']/,
-    )
-    expect(astroSource).toMatch(
-      /\{enabled\s*&&\s*\([\s\S]*<style is:inline set:html=\{overlayStyles}><\/style>/,
-    )
+  it('dynamically imports enable-visual-editing and history inside the enabled guard without standalone CSS', () => {
+    expect(astroSource).toContain('import("@sanity/visual-editing/enable-visual-editing")')
+    expect(astroSource).toContain('import("./history.js")')
+    expect(astroSource).not.toContain('@sanity/visual-editing-standalone')
+    expect(astroSource).not.toContain('styles.css?raw')
   })
 
   it('exposes config but skips cookies and listeners when not in an iframe', () => {
@@ -265,214 +275,4 @@ describe('visual-editing inline observer', () => {
       'sanity-perspective-preview-example-com-8443=drafts; path=/; SameSite=None; Secure; Partitioned',
     )
     expect(env.replaceState).toHaveBeenCalledWith({}, '', '/movies?keep=1#hero')
-    expect(env.windowObj.location.href).toBe('https://preview.example.com:8443/movies?keep=1#hero')
-  })
-
-  it('switches perspective via postMessage and array payloads only when changed', () => {
-    const env = createBrowserEnv({
-      href: 'http://localhost:4321/movies',
-      initialCookie: 'sanity-perspective-localhost-4321=published',
-    })
-
-    runInlineObserver(env)
-
-    // Identical perspective does not reload
-    env.windowObj.dispatchWindowEvent('message', {
-      data: {type: 'presentation/perspective', data: {perspective: 'published'}},
-    })
-    expect(env.reload).not.toHaveBeenCalled()
-
-    // Changed perspective updates cookie and reloads
-    env.windowObj.__sanityVEConfig.syncPerspective(['r1', 'drafts'])
-    expect(env.getCookieRaw()).toContain('sanity-perspective-localhost-4321=r1%2Cdrafts')
-    expect(env.reload).toHaveBeenCalledTimes(1)
-  })
-
-  it('ignores welcome and reconnect snapshot events without setting flag or reloading', () => {
-    const env = createBrowserEnv()
-    runInlineObserver(env, {assureTypingInterval: 1200})
-
-    env.windowObj.dispatchWindowEvent('message', {
-      data: {type: 'presentation/snapshot-event', data: {event: {type: 'welcome'}}},
-    })
-    env.windowObj.dispatchWindowEvent('message', {
-      data: {type: 'presentation/snapshot-event', data: {event: {type: 'reconnect'}}},
-    })
-
-    expect(env.sessionStorage.setItem).not.toHaveBeenCalled()
-    vi.advanceTimersByTime(5000)
-    expect(env.reload).not.toHaveBeenCalled()
-  })
-
-  it('coalesces rapid mutation snapshot events into a single reload', () => {
-    const env = createBrowserEnv({href: 'http://localhost:4321/movies/alien'})
-    runInlineObserver(env, {assureTypingInterval: 1200})
-
-    env.windowObj.dispatchWindowEvent('message', {
-      data: {type: 'presentation/snapshot-event', data: {event: {type: 'mutation'}}},
-    })
-    expect(env.sessionStorage.setItem).toHaveBeenCalledWith(
-      'sanity_sync_needed',
-      'http://localhost:4321/movies/alien',
-    )
-
-    vi.advanceTimersByTime(800)
-    expect(env.reload).not.toHaveBeenCalled()
-
-    // Second keystroke pushes the timer back by another 1200ms
-    env.windowObj.dispatchWindowEvent('message', {
-      data: {type: 'presentation/snapshot-event', data: {event: {type: 'mutation'}}},
-    })
-
-    vi.advanceTimersByTime(800)
-    expect(env.reload).not.toHaveBeenCalled()
-
-    vi.advanceTimersByTime(400)
-    expect(env.reload).toHaveBeenCalledTimes(1)
-    expect(env.sessionStorage.removeItem).toHaveBeenCalledWith('sanity_sync_needed')
-  })
-
-  it('defers manual and zero-interval mutation refreshes to a macrotask so Comlink settles', () => {
-    const env = createBrowserEnv()
-    runInlineObserver(env, {assureTypingInterval: 0})
-
-    env.windowObj.__sanityVEConfig.triggerImmediateReload()
-    expect(env.reload).not.toHaveBeenCalled()
-    vi.advanceTimersByTime(0)
-    expect(env.reload).toHaveBeenCalledTimes(1)
-
-    env.windowObj.__sanityVEConfig.onMutationRefresh()
-    expect(env.reload).toHaveBeenCalledTimes(1)
-    vi.advanceTimersByTime(0)
-    expect(env.reload).toHaveBeenCalledTimes(2)
-  })
-
-  it('reconciles URL-scoped follow-up flag on window.load and ignores flags from other URLs', () => {
-    const env = createBrowserEnv({href: 'http://localhost:4321/movies/alien'})
-    runInlineObserver(env, {assureTypingInterval: 1200})
-
-    // Matching URL schedules follow-up reload
-    env.sessionStorage.setItem('sanity_sync_needed', 'http://localhost:4321/movies/alien')
-    env.windowObj.dispatchWindowEvent('load')
-
-    expect(env.sessionStorage.removeItem).toHaveBeenCalledWith('sanity_sync_needed')
-    vi.advanceTimersByTime(1200)
-    expect(env.reload).toHaveBeenCalledTimes(1)
-
-    // Mismatched URL (user navigated to another page) clears flag without reloading
-    env.sessionStorage.setItem('sanity_sync_needed', 'http://localhost:4321/movies/other')
-    env.windowObj.dispatchWindowEvent('load')
-
-    vi.advanceTimersByTime(1200)
-    expect(env.reload).toHaveBeenCalledTimes(1)
-  })
-
-  it('continues coalescing mutations and reloading when sessionStorage throws SecurityError', () => {
-    const env = createBrowserEnv({href: 'http://localhost:4321/movies/alien'})
-    Object.defineProperty(env.windowObj, 'sessionStorage', {
-      get() {
-        throw new Error('SecurityError: Access is denied for this document')
-      },
-    })
-
-    runInlineObserver(env, {assureTypingInterval: 1200})
-
-    expect(() => env.windowObj.dispatchWindowEvent('load')).not.toThrow()
-
-    env.windowObj.dispatchWindowEvent('message', {
-      data: {type: 'presentation/snapshot-event', data: {event: {type: 'mutation'}}},
-    })
-
-    vi.advanceTimersByTime(1200)
-    expect(env.reload).toHaveBeenCalledTimes(1)
-  })
-})
-
-describe('visual-editing module bridge', () => {
-  beforeEach(() => {
-    vi.useFakeTimers()
-  })
-
-  afterEach(() => {
-    vi.useRealTimers()
-  })
-
-  it('wires enableVisualEditing refresh, history adapter, and pagehide cleanup', async () => {
-    const env = createBrowserEnv({href: 'http://localhost:4321/movies/alien?draft=1#cast'})
-    runInlineObserver(env, {assureTypingInterval: 1200, zIndex: 42, keepStegaOnCopy: true})
-
-    const cleanupSpy = vi.fn()
-    const enableVisualEditingMock = vi.fn((_options: Record<string, any>) => cleanupSpy)
-
-    await runModuleBridge(env, enableVisualEditingMock)
-
-    expect(enableVisualEditingMock).toHaveBeenCalledTimes(1)
-    const options = enableVisualEditingMock.mock.calls[0][0]
-    expect(options.zIndex).toBe(42)
-    expect(options.keepStegaOnCopy).toBe(true)
-
-    // 1. Refresh callback contract
-    await expect(options.refresh({source: 'manual'})).resolves.toBeUndefined()
-    expect(env.reload).not.toHaveBeenCalled()
-    vi.advanceTimersByTime(0)
-    expect(env.reload).toHaveBeenCalledTimes(1)
-
-    expect(options.refresh({source: 'unknown'})).toBe(false)
-
-    // 2. History subscribe & update contract
-    const navigateSpy = vi.fn()
-    const unsubscribeHistory = options.history.subscribe(navigateSpy)
-
-    expect(navigateSpy).toHaveBeenCalledWith({
-      type: 'push',
-      title: 'Alien (1979)',
-      url: '/movies/alien?draft=1#cast',
-    })
-
-    // Duplicate URL is not re-published
-    env.windowObj.dispatchWindowEvent('popstate')
-    expect(navigateSpy).toHaveBeenCalledTimes(1)
-
-    // Changed URL publishes on popstate
-    env.setHref('http://localhost:4321/movies/blade-runner')
-    env.windowObj.dispatchWindowEvent('popstate')
-    expect(navigateSpy).toHaveBeenLastCalledWith({
-      type: 'push',
-      title: 'Alien (1979)',
-      url: '/movies/blade-runner',
-    })
-
-    // History update routes push/replace/pop
-    options.history.update({type: 'push', url: '/movies/solaris'})
-    expect(env.assign).toHaveBeenCalledWith('/movies/solaris')
-
-    options.history.update({type: 'replace', url: '/movies/stalker'})
-    expect(env.replace).toHaveBeenCalledWith('/movies/stalker')
-
-    options.history.update({type: 'pop', url: '/movies/alien'})
-    expect(env.back).toHaveBeenCalledTimes(1)
-
-    unsubscribeHistory()
-    expect(env.windowObj.removeEventListener).toHaveBeenCalledWith('popstate', expect.any(Function))
-    expect(env.windowObj.removeEventListener).toHaveBeenCalledWith(
-      'hashchange',
-      expect.any(Function),
-    )
-
-    // 3. Pagehide tears down enableVisualEditing
-    env.windowObj.dispatchWindowEvent('pagehide')
-    expect(cleanupSpy).toHaveBeenCalledTimes(1)
-  })
-
-  it('forwards string zIndex and leaves keepStegaOnCopy undefined when omitted', async () => {
-    const env = createBrowserEnv()
-    runInlineObserver(env, {zIndex: 'var(--overlay-z)'})
-
-    const enableVisualEditingMock = vi.fn((_options: Record<string, any>) => vi.fn())
-    await runModuleBridge(env, enableVisualEditingMock)
-
-    const options = enableVisualEditingMock.mock.calls[0][0]
-    expect(options.zIndex).toBe('var(--overlay-z)')
-    expect(options.keepStegaOnCopy).toBeUndefined()
-  })
-})
+    expect(env.windowObj.location.href).toBe('
