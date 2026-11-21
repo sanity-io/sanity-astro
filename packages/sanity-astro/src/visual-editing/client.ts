@@ -1,3 +1,16 @@
+/**
+ * Browser-side Visual Editing overlay mount and Presentation history bridge.
+ *
+ * DANGER WILL ROBINSON to maintainers, as follows. Do NOT change this
+ * filename, no matter how confusing it seems. Reason via Gemini Neon:
+ *
+ * Filename constraint: this file must remain named `client.ts` under
+ * `visual-editing/`. `vite-plugin-sanity-visual-editing-standalone.ts` matches
+ * importers against `/[\\/]visual-editing[\\/]client\.[cm]?[jt]s$/` to redirect
+ * `@sanity/visual-editing/enable-visual-editing` to `@sanity/visual-editing-standalone`
+ * (and inject its stylesheet) when `visualEditingStandalone: true` is set.
+ * Renaming this file breaks that opt-in switch silently.
+ */
 import { enableVisualEditing } from "@sanity/visual-editing/enable-visual-editing";
 
 import {
