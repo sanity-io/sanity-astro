@@ -1,0 +1,9 @@
+---
+import {Prism} from '@astrojs/prism'
+
+const {node} = Astro.props
+const code = node?.code ?? ''
+const lang = node?.language ?? 'plaintext'
+---
+
+{code && <Prism lang={lang} code={code} />}

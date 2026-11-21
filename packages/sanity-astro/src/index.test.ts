@@ -17,7 +17,7 @@ import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-ch
 
 type SetupOptions = Pick<
   IntegrationOptions,
-  'studioBasePath' | 'studioRouterHistory' | 'logClientRequests' | 'visualEditingStandalone'
+  'studioBasePath' | 'studioRouterHistory' | 'logClientRequests'
 > & {
   output?: 'static' | 'server'
   integrations?: Array<{name: string}>
@@ -38,17 +38,16 @@ afterEach(async () => {
 })
 
 async function runSetup({
-  output = 'static',
-  studioRouterHistory,
-  studioBasePath = '/admin',
-  logClientRequests,
-  visualEditingStandalone,
-  integrations = [],
-  options,
-  live,
-  command = 'build',
-  root = '/app/',
-}: SetupOptions = {}) {
+                          output = 'static',
+                          studioRouterHistory,
+                          studioBasePath = '/admin',
+                          logClientRequests,
+                          integrations = [],
+                          options,
+                          live,
+                          command = 'build',
+                          root = '/app/',
+                        }: SetupOptions = {}) {
   const integration = sanityIntegration(
     options ?? {
       projectId: 'project-id',
@@ -56,7 +55,6 @@ async function runSetup({
       studioBasePath,
       studioRouterHistory,
       logClientRequests,
-      visualEditingStandalone,
       experimental_live: live,
     },
   )
@@ -377,31 +375,6 @@ describe('sanity integration vite config', () => {
     expect(chunkWarningPlugin).toBeDefined()
     expect(chunkWarningPlugin?.apply).toBe('build')
     expect((vitePluginSanityStudioChunkWarning() as {apply?: string}).apply).toBe('build')
-  })
-
-  it('registers the visual editing standalone plugin only when opted in', async () => {
-    const off = await runSetup()
-    expect(off.vitePlugins.map((plugin) => plugin.name)).not.toContain(
-      'sanity:visual-editing-standalone',
-    )
-
-    const {vitePlugins} = await runSetup({visualEditingStandalone: true})
-    expect(vitePlugins.map((plugin) => plugin.name)).toContain('sanity:visual-editing-standalone')
-  })
-
-  it('warns when visualEditingStandalone is combined with @astrojs/react', async () => {
-    const {logger} = await runSetup({
-      visualEditingStandalone: true,
-      integrations: [{name: '@astrojs/react'}],
-    })
-
-    expect(logger.warn).toHaveBeenCalledOnce()
-  })
-
-  it('does not warn about @astrojs/react unless visualEditingStandalone is on', async () => {
-    const {logger} = await runSetup({integrations: [{name: '@astrojs/react'}]})
-
-    expect(logger.warn).not.toHaveBeenCalled()
   })
 })
 

@@ -6,8 +6,18 @@ import type {SanityImageProps} from './types.js'
 
 type Props = SanityImageProps
 
-const {src, width, height, projectId, dataset, queryParams, placeholder, blurDataURL, ...rest} =
+const {src, alt, width, height, projectId, dataset, queryParams, placeholder, blurDataURL, ...rest} =
   Astro.props
+
+// Require an explicit string alt prop (e.g. alt={image.alt ?? ''}) rather than
+// silently defaulting to '', both for accessibility and because Visual Editing
+// relies on stega-encoded text in the rendered alt attribute to attach overlays.
+if (typeof alt !== 'string') {
+  throw new TypeError(
+    '[@sanity/astro]: `<SanityImage>` requires a string `alt` prop (for example `alt={image.alt ?? ""}`). An explicit `alt` is required for accessibility and carries the stega metadata needed for Visual Editing overlays.',
+  )
+}
+
 // Astro 5 names the default `experimentalObjectFit` while responsive images are experimental.
 const config = imageConfig as {objectFit?: string; experimentalObjectFit?: string}
 
@@ -24,5 +34,4 @@ const image = getSanityImageProps(src, {
   style: rest.style,
 })
 ---
-
-<Image {...rest} {...image} />
+<Image {...rest} alt={alt} {...image} />
