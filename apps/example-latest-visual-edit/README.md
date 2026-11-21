@@ -9,7 +9,8 @@ This example application is the same as the [`example`](../../example) app, but 
 - `@sanity/client` 8
 - `@sanity/image-url` 2
 
-It renders the Sanity.io blog using Astro and shows how to configure the Sanity + Astro integration in `astro.config.mjs`, query and display Sanity content in `src/pages/index.astro` and `src/pages/posts/[slug].astro`, render Portable Text in `src/components/PortableText.astro`, and present Sanity images in `src/components/SanityImage.astro`.
+It renders the Sanity.io blog using Astro and shows how to configure the Sanity + Astro integration in `astro.config.mjs`, query and display Sanity content in `src/pages/index.astro` and `src/pages/posts/[slug].astro`, render Portable Text in `src/components/PortableText.astro`, and present Sanity images in `import {SanityImage} from '@sanity/astro/image'
+`.
 
 Run it with:
 
