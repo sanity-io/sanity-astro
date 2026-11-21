@@ -8,6 +8,7 @@ import PortableText from '../../components/PortableText.astro'
 import {SanityImage} from '@sanity/astro/image'
 import YouTube from '../../components/YouTube.astro'
 
+// getStaticPaths() is provided for static builds also used
 export async function getStaticPaths() {
 
   const posts = await sanityClient.fetch(POSTS_QUERY)
@@ -51,7 +52,13 @@ const authorsDataSanity = visualEditingEnabled
   <article>
     <h1>{post.title}</h1>
     <p data-sanity={authorsDataSanity}>Written by {byline}</p>
-    <SanityImage src={post.mainImage} alt={post.mainImage.alt} width="600" />
+    {post.mainImage && (
+        <SanityImage
+            src={post.mainImage}
+            alt={post.mainImage.alt ?? ''}
+            width="600"
+        />
+    )}
     <pre>{post.mainImage?.caption ?? ''}</pre>
     <h2>{post.excerpt}</h2>
     <PortableText value={post.description} />
