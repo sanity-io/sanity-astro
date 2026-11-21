@@ -47,7 +47,6 @@
     "./image": "./dist/image/index.ts",
     "./image/service": "./dist/image/service.ts",
     "./visual-editing": "./dist/visual-editing/index.ts",
-    "./visual-editing/component": "./dist/visual-editing/visual-editing-component.tsx",
     "./package.json": "./package.json"
   },
   "publishConfig": {
