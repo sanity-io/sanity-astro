@@ -4,14 +4,14 @@ import Code from './Code.astro'
 import Debug from './Debug.astro'
 import YouTube from './YouTube.astro'
 import {PortableText as PortableTextInternal} from 'astro-portabletext'
-import SanityImage from './SanityTextImage.astro'
+import {SanityTextImage} from '@sanity/astro/image'
 import InternalLink from './InternalLink.astro'
 
 const components = {
   type: {
     youtube: YouTube,
     callToActionBox: CallToActionBox,
-    image: SanityImage,
+    image: SanityTextImage,
     code: Code,
   },
   mark: {

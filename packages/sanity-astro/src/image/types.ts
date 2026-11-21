@@ -34,3 +34,18 @@ export type SanityImageProps = DistributiveOmit<
    */
   alt: string
 }
+
+/**
+ * Props of `<SanityTextImage>`: identical to `<SanityImage>`, substituting
+ * `node` in place of `src`.
+ */
+export type SanityTextImageProps = DistributiveOmit<SanityImageProps, 'src'> & {
+  /**
+   * The image to render: a Sanity Image CDN URL (from `asset->url` or an
+   * `@sanity/image-url` builder), an image object from a GROQ query
+   * (`{asset, crop, hotspot}`), an asset document or reference, or an asset
+   * id (`image-…`). The crop set in the Studio is applied, and stega-encoded
+   * metadata from Content Source Maps is stripped automatically.
+   */
+  node: SanityImageProps['src']
+}

@@ -1,4 +1,5 @@
 export {default as SanityImage} from './SanityImage.astro'
+export {default as SanityTextImage} from './SanityTextImage.astro'
 export {
   getSanityImageProps,
   type GetSanityImagePropsOptions,
