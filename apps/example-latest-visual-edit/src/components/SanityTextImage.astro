@@ -1,0 +1,13 @@
+---
+import { SanityImage } from "@sanity/astro/image";
+
+const { node } = Astro.props;
+---
+
+{node?.asset && (
+<SanityImage
+    src={node}
+    alt={node.alt ?? ""}
+    width={800}
+/>
+  )}
