@@ -29,5 +29,8 @@
     "react-is": "^19.2.7",
     "sanity": "^6.2.0",
     "styled-components": "^6.4.3"
+  },
+  "devDependencies": {
+    "prism-themes": "^1.9.0"
   }
 }

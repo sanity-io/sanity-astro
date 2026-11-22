@@ -392,6 +392,10 @@ importers:
       styled-components:
         specifier: ^6.4.3
         version: 6.6.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+    devDependencies:
+      prism-themes:
+        specifier: ^1.9.0
+        version: 1.9.0
 
   apps/example-ssr:
     dependencies:
@@ -9861,6 +9865,9 @@ packages:
   pretty-ms@9.3.1:
     resolution: {integrity: sha512-HzMy3Geq23nVALD/M2LliU+F+M+gVNsvkQWWqeBZ8HDiCgzo6YPJ/Omrmtq24EFrIsk0a3EkQGEd7bDOo+IhGA==}
     engines: {node: '>=18'}
+
+  prism-themes@1.9.0:
+    resolution: {integrity: sha512-tX2AYsehKDw1EORwBps+WhBFKc2kxfoFpQAjxBndbZKr4fRmMkv47XN0BghC/K1qwodB1otbe4oF23vUTFDokw==}
 
   prismjs@1.30.0:
     resolution: {integrity: sha512-DEvV2ZF2r2/63V+tK8hQvrR2ZGn10srHbXviTlcv7Kpzw8jWiNTqbVgjO3IY8RxrrOUF8VPMQQFysYYYv0YZxw==}
@@ -22858,6 +22865,8 @@ snapshots:
   pretty-ms@9.3.1:
     dependencies:
       parse-ms: 4.0.0
+
+  prism-themes@1.9.0: {}
 
   prismjs@1.30.0: {}
 
