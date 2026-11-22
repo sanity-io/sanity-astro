@@ -1,7 +1,24 @@
 import type {PartialDeep} from 'type-fest'
-import type {PluginOption} from 'vite'
+import type {ConfigEnv, PluginOption, UserConfig} from 'vite'
 
 import {normalizeStudioBasePath} from './studio-base-path'
+
+/**
+ * Lets Vite's dependency scan reach the embedded Studio (#435). The Studio route lives in
+ * `@sanity/astro` and imports the project's `sanity.config` through the `sanity:studio` virtual
+ * module, so the startup scan never sees `sanity`, its plugins, or the Studio's own imports. Vite
+ * then finds them on the first `/admin` load, optimizes again and reloads the page, and chunks the
+ * browser already asked for (or imports lazily later, like Sanity's `refractor` syntax
+ * highlighting) answer `504 Outdated Optimize Dep`.
+ */
+export const STUDIO_OPTIMIZE_DEPS_ENTRIES = ['sanity.config.{js,jsx,mjs,mts,ts,tsx}']
+
+/**
+ * Imported where the scan cannot follow. `sanity:client` imports `@sanity/client` from the project
+ * root, where it is installed as a peer dependency. The Studio route imports `history` from
+ * `@sanity/astro`, so the nested form finds it when pnpm does not hoist it.
+ */
+export const STUDIO_OPTIMIZE_DEPS_INCLUDE = ['@sanity/client', '@sanity/astro > history']
 
 export function vitePluginSanityStudio(resolvedOptions: {
   studioBasePath?: string
@@ -12,6 +29,17 @@ export function vitePluginSanityStudio(resolvedOptions: {
 
   return {
     name: 'sanity:studio',
+    config(_config: UserConfig, {command}: ConfigEnv) {
+      if (command !== 'serve' || !resolvedOptions.studioBasePath) {
+        return
+      }
+      return {
+        optimizeDeps: {
+          entries: STUDIO_OPTIMIZE_DEPS_ENTRIES,
+          include: STUDIO_OPTIMIZE_DEPS_INCLUDE,
+        },
+      }
+    },
     resolveId(id: string) {
       if (id === virtualModuleId) {
         return resolvedVirtualModuleId
