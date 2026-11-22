@@ -1,4 +1,4 @@
-import {defineType, defineArrayMember} from 'sanity'
+import {defineType, defineField, defineArrayMember} from 'sanity'
 
 /**
  * This is the schema definition for the rich text fields used for
@@ -55,6 +55,55 @@ export default defineType({
           },
         ],
       },
+    }),
+    defineArrayMember({
+      type: 'image',
+      options: {
+        hotspot: true, // enables crop/hotspot in Studio
+      },
+      fields: [
+        defineField({
+          name: 'alt',
+          type: 'string',
+          title: 'Alternative text',
+        }),
+      ],
+    }),
+    defineArrayMember({
+      name: 'youtube',
+      type: 'object',
+      title: 'YouTube Video',
+      fields: [
+        defineField({
+          name: 'url',
+          type: 'url',
+          title: 'YouTube URL',
+          validation: (Rule) => Rule.required(),
+        }),
+        defineField({
+          name: 'title',
+          type: 'string',
+          title: 'Title',
+        }),
+      ],
+    }),
+    defineArrayMember({
+      name: 'code',
+      type: 'object',
+      title: 'Code',
+      fields: [
+        defineField({
+          name: 'code',
+          type: 'text',
+          title: 'Code',
+          validation: (Rule) => Rule.required(),
+        }),
+        defineField({
+          name: 'lang',
+          type: 'string',
+          title: 'Language',
+        }),
+      ],
     }),
     // defineArrayMember({
     //   type: 'code',
