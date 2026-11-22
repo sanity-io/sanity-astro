@@ -102,6 +102,20 @@ export default defineType({
           name: 'language',
           type: 'string',
           title: 'Language (all lowercase)',
+          validation: (Rule) =>
+            Rule.custom((value) => {
+              if (!value) return true; // Allow empty if optional; add Rule.required() if mandatory
+
+              if (value !== value.toLowerCase()) {
+                return `Prism requires lowercase language names. Please use "${value.toLowerCase()}" instead of "${value}".`;
+              }
+
+              if (/\s/.test(value)) {
+                return 'Prism language identifiers cannot contain spaces.';
+              }
+
+              return true;
+            }),
         }),
       ],
     }),
