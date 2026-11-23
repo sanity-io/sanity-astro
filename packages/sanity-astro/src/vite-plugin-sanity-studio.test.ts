@@ -6,16 +6,19 @@ import {pathToFileURL} from 'node:url'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {
+  preBundlesWithLegacyEsbuildTarget,
   STUDIO_OPTIMIZE_DEPS_ENTRIES,
+  STUDIO_OPTIMIZE_DEPS_ESBUILD_OPTIONS,
   STUDIO_OPTIMIZE_DEPS_INCLUDE,
   vitePluginSanityStudio,
 } from './vite-plugin-sanity-studio'
 
 type StudioPluginOptions = Parameters<typeof vitePluginSanityStudio>[0]
 type ConfigHook = (
+  this: {meta?: {viteVersion?: string}} | undefined,
   config: object,
   env: {command: 'build' | 'serve'; mode: string},
-) => {optimizeDeps?: {entries?: string[]; include?: string[]}} | undefined
+) => {optimizeDeps?: {entries?: string[]; include?: string[]; esbuildOptions?: object}} | undefined
 type LoadHook = (
   this: {resolve: (id: string) => Promise<{id: string} | null>},
   id: string,
@@ -150,18 +153,43 @@ describe('vitePluginSanityStudio', () => {
   })
 
   describe('dev dependency optimization (#435)', () => {
-    function runConfig(options: StudioPluginOptions, command: 'build' | 'serve') {
+    function runConfig(
+      options: StudioPluginOptions,
+      command: 'build' | 'serve',
+      context?: {meta: {viteVersion: string}},
+    ) {
       const config = vitePluginSanityStudio(options).config as unknown as ConfigHook
-      return config({}, {command, mode: 'development'})
+      return config.call(context, {}, {command, mode: 'development'})
     }
 
     it('lets the dev scan reach sanity.config and pre-bundles the Studio route imports', () => {
-      expect(runConfig({studioBasePath: '/admin'}, 'serve')).toEqual({
+      expect(
+        runConfig({studioBasePath: '/admin'}, 'serve', {meta: {viteVersion: '8.3.8'}}),
+      ).toEqual({
         optimizeDeps: {
           entries: STUDIO_OPTIMIZE_DEPS_ENTRIES,
           include: STUDIO_OPTIMIZE_DEPS_INCLUDE,
         },
       })
+    })
+
+    it('allows top-level await in the pre-bundle on Vite 6 and older, which call config without a context', () => {
+      expect(runConfig({studioBasePath: '/admin'}, 'serve')).toEqual({
+        optimizeDeps: {
+          entries: STUDIO_OPTIMIZE_DEPS_ENTRIES,
+          include: STUDIO_OPTIMIZE_DEPS_INCLUDE,
+          esbuildOptions: STUDIO_OPTIMIZE_DEPS_ESBUILD_OPTIONS,
+        },
+      })
+      expect(STUDIO_OPTIMIZE_DEPS_ESBUILD_OPTIONS.supported['top-level-await']).toBe(true)
+    })
+
+    it('leaves esbuildOptions alone from Vite 7 on, whose targets support top-level await', () => {
+      expect(preBundlesWithLegacyEsbuildTarget(undefined)).toBe(true)
+      expect(preBundlesWithLegacyEsbuildTarget('5.4.21')).toBe(true)
+      expect(preBundlesWithLegacyEsbuildTarget('6.4.1')).toBe(true)
+      expect(preBundlesWithLegacyEsbuildTarget('7.0.0')).toBe(false)
+      expect(preBundlesWithLegacyEsbuildTarget('8.3.8')).toBe(false)
     })
 
     it('leaves optimizeDeps alone without an embedded Studio', () => {
