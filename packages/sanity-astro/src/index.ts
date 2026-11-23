@@ -19,7 +19,6 @@ import {
   type RuntimeEnvOption,
   vitePluginSanityStudioRuntimeEnv,
 } from './vite-plugin-sanity-studio-runtime-env'
-import {vitePluginSanityVisualEditingStandalone} from './vite-plugin-sanity-visual-editing-standalone'
 
 export type {
   SanityLiveLoaderConfig,
@@ -99,16 +98,6 @@ export type IntegrationOptions = ClientConfig & {
    */
   env?: RuntimeEnvOption
   /**
-   * Runs the `<VisualEditing />` overlays on `@sanity/visual-editing-standalone`
-   * instead of `@sanity/visual-editing`. The standalone build bundles its own React,
-   * React DOM and styled-components instead of using the project's copies. Requires
-   * `@sanity/visual-editing-standalone` to be installed. With
-   * `experimental_refreshStrategy="in-place"` the instant text step doesn't work in this
-   * mode, because the standalone build doesn't export the optimistic document state it
-   * reads. Defaults to `false`.
-   */
-  visualEditingStandalone?: boolean
-  /**
    * Generates typed live loaders, Zod schemas and the `sanity:loader` module from your Sanity
    * schema for Astro live collections. Nothing runs unless this is set.
    * @experimental The option name and shape may change in minor releases.
@@ -150,7 +139,6 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
     injectTypes: shouldInjectTypes = false,
     clients,
     env,
-    visualEditingStandalone = false,
     experimental_live: liveOptions,
     ...clientConfig
   } = options
@@ -174,26 +162,27 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
   // before the option existed.
   const liveHooks: AstroIntegration['hooks'] = liveOptions
     ? {
-        'astro:server:setup': async ({server, logger}) => {
-          if (live) {
-            await watchSchema(live, server, logger)
-          }
-        },
-      }
+      'astro:server:setup': async ({server, logger}) => {
+        if (live) {
+          await watchSchema(live, server, logger)
+        }
+      },
+    }
     : {}
 
   return {
     name: '@sanity/astro',
     hooks: {
       'astro:config:setup': async ({
-        config,
-        command,
-        injectScript,
-        injectRoute,
-        updateConfig,
-        createCodegenDir,
-        logger,
-      }) => {
+                                     addMiddleware,
+                                     config,
+                                     command,
+                                     injectScript,
+                                     injectRoute,
+                                     updateConfig,
+                                     createCodegenDir,
+                                     logger,
+                                   }) => {
         const studioRouterHistory = resolveStudioRouterHistory(
           requestedStudioRouterHistory,
           config?.output,
@@ -226,16 +215,13 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
           vitePluginSanityStudioHashRouter(),
           vitePluginSanityStudioRuntimeEnv(env),
           vitePluginSanityStudioChunkWarning(),
-          ...(visualEditingStandalone ? [vitePluginSanityVisualEditingStandalone()] : []),
         ]
 
-        if (
-          visualEditingStandalone &&
-          config?.integrations?.some((integration) => integration.name === '@astrojs/react')
-        ) {
-          logger?.warn(
-            '`visualEditingStandalone` bundles its own copy of React. This project also uses `@astrojs/react`, so pages with Visual Editing load React twice.',
-          )
+        if (typeof addMiddleware === 'function') {
+          addMiddleware({
+            order: 'pre',
+            entrypoint: '@sanity/astro/middleware',
+          })
         }
 
         updateConfig({

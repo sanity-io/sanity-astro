@@ -1,15 +1,18 @@
-import {existsSync} from 'node:fs'
 import {createRequire} from 'node:module'
+import { existsSync } from "node:fs"
 import path from 'node:path'
 
 import type {PluginOption, UserConfig} from 'vite'
 
 /**
- * Dev-only Vite dedupe for embedded Studio + @astrojs/react islands (#406).
+ * Dev-only Vite module deduplication and root-aliasing for embedded Studio + @astrojs/react islands (#406).
  *
- * Vite can load the same logical package through pre-bundled and direct paths even
- * when npm reports a single copy. The studio chunk-size warning plugin (apply: 'build')
- * is not involved in dev.
+ * Vite can load the same logical package through pre-bundled and direct paths in `astro dev`,
+ * and workspace/monorepo or non-hoisted installs can resolve `sanity` or `styled-components`
+ * from `@sanity/astro`'s own dependency tree when bundling `studio-component.tsx` in `astro build`.
+ * Running `resolve.dedupe` and `resolve.alias` across both `serve` and `build` ensures the
+ * embedded Studio always binds to the consuming application's `sanity` and `styled-components`
+ * instances, while Vite applies `optimizeDeps.include` during dev server pre-bundling.
  *
  * Membership rule for SANITY_MODULE_DEDUPE: only packages that must be a single instance
  * per page belong here — React, its renderer, styled-components, and the Studio itself

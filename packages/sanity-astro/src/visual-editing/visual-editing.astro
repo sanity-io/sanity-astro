@@ -1,107 +1,442 @@
 ---
-import type {VisualEditingConfig} from './client'
-import {FOLLOW_UP_RELOAD_KEY} from './follow-up-reload'
-import {resolveRefreshStrategy} from './refresh-strategy'
+import type { enableVisualEditing } from "@sanity/visual-editing/enable-visual-editing";
 
-export interface Props extends VisualEditingConfig {
-  enabled?: boolean
+export interface Props
+  extends Pick<
+    NonNullable<Parameters<typeof enableVisualEditing>[0]>,
+    "zIndex" | "keepStegaOnCopy"
+  > {
+  enabled?: boolean;
 }
 
-const {enabled, zIndex, keepStegaOnCopy, experimental_refreshStrategy} = Astro.props
-const config: VisualEditingConfig = {zIndex, keepStegaOnCopy, experimental_refreshStrategy}
-const resolvedStrategy = resolveRefreshStrategy(experimental_refreshStrategy)
-const followUpDelayMs =
-  resolvedStrategy.type === 'reload' ? (resolvedStrategy.followUpDelayMs ?? 0) : 0
+/**
+ * How the dropped typing avoidance two-phase protocol works:
+ * 1. Immediate committed refresh: When Presentation invokes `refresh` for a
+ *    committed mutation or manual click, we reload on the next turn
+ *    (`setTimeout(..., 0)`). Deferring by one turn lets Comlink finish
+ *    acknowledging the message before the document unloads, without adding
+ *    artificial latency in front of the first visible update.
+ * 2. Post-load catch-up reconciliation: Every mutation-triggered reload
+ *    proactively records the current URL in `sessionStorage` right before
+ *    unloading (and any mutation arriving while a reload is already in flight
+ *    also records it). Once the reloaded page finishes loading, a single
+ *    catch-up reload runs after `assureTypingInterval` ms with follow-up
+ *    disarmed — catching trailing keystrokes that landed during the in-flight
+ *    SSR fetch, the unload-to-Comlink-reconnect gap, or Content Lake
+ *    propagation lag, then terminating cleanly.
+ * 3. Bounded throttle for continuous typing: If `presentation/snapshot-event`
+ *    mutations stream in while the page is idle (without a `refresh` callback
+ *    canceling it first), we arm the fallback timer once instead of resetting
+ *    it on every keystroke. Long, un-paused typing streams therefore appear in
+ *    steady chunks rather than stalling until typing stops.
+ */
+
+/*
+  Explaining reload typing-loss prevention timing, coded just below
+for rawInterval as import PUBLIC_SANITY_ASSURE_TYPING_INTERVAL.
+
+  This interval is read directly from a server-level environment variable rather
+than requiring each Astro app to define and wire its own env variable or prop.
+  That keeps app page coding simple, while still letting operators tune the timing
+per deployment (e.g., increasing it on high-latency or unreliable connections).
+
+  Set to `0` or a negative value to disable the added reload for catch-up
+ pass, which is what gives our prevention of typing loss on natural
+ human pauses for thought before a comma or period after composing a
+  a phrase. That's our primary example of why this ability was created.
+*/
+const rawInterval = import.meta.env.PUBLIC_SANITY_ASSURE_TYPING_INTERVAL;
+const parsedInterval =
+  rawInterval !== undefined && rawInterval !== "" ? Number(rawInterval) : NaN;
+const assureTypingInterval: number = Number.isFinite(parsedInterval)
+  ? parsedInterval
+  : 1200;
+
+const defaultEnabled =
+  import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED === "true";
+
+const { enabled = defaultEnabled, zIndex, keepStegaOnCopy } = Astro.props;
 ---
 
-{
-  enabled ? (
-    <>
-      <script
-        is:inline
-        define:vars={{followUpDelayMs, flagKey: FOLLOW_UP_RELOAD_KEY}}
-      >
-        (function () {
-          // Expose synchronous refresh acknowledgement hook and shared timer state on window
-          // before the client module downloads.
-          window.__sanityVEConfig = {
-            acknowledgeRefresh: function () {
-              try {
-                sessionStorage.removeItem(flagKey)
-              } catch {}
-              window.__sanityPendingFollowUpUrl = null
-              if (window.__sanityFallbackTimer) {
-                clearTimeout(window.__sanityFallbackTimer)
-                window.__sanityFallbackTimer = null
-              }
-            },
+{enabled && (
+<>
+  <script define:vars={{ assureTypingInterval, zIndex, keepStegaOnCopy }}>
+    (function () {
+      const FLAG = "sanity_sync_needed";
+      let reloadInFlight = false;
+      let pendingFollowUp = false;
+
+      // Host-isolated cookie name matching `middleware.ts` so multiple local
+      // ports or preview hosts do not collide on a shared perspective cookie.
+      const cookieName = `sanity-perspective-${window.location.host.replace(/[:.]/g, "-")}`;
+
+      function getCookiePerspective() {
+        const match = document.cookie.match(
+          new RegExp(`(?:^|;\\s*)${cookieName}=([^;]*)`),
+        );
+        return match ? decodeURIComponent(match[1]) : "";
+      }
+
+      // Returns true only if the browser allowed the iframe cookie to persist.
+      function setCookiePerspective(val) {
+        const attributes =
+          window.location.protocol === "https:"
+            ? "path=/; SameSite=None; Secure; Partitioned"
+            : "path=/; SameSite=Lax";
+        document.cookie = `${cookieName}=${encodeURIComponent(val)}; ${attributes}`;
+        return getCookiePerspective() === val;
+      }
+
+      function getUrlPerspective() {
+        const params = new URLSearchParams(window.location.search);
+        return (
+          params.get("sanity-preview-perspective") ||
+          params.get("perspective") ||
+          ""
+        );
+      }
+
+      function setSyncFlag(url) {
+        try {
+          if (url) {
+            window.sessionStorage.setItem(FLAG, url);
+          } else {
+            window.sessionStorage.removeItem(FLAG);
           }
+        } catch {
+          // Ignore SecurityError / QuotaExceededError in restricted or cross-origin iframes
+        }
+      }
 
-          if (window.self === window.top) return
-          if (!followUpDelayMs || followUpDelayMs <= 0) return
+      function takeSyncFlag() {
+        try {
+          const pendingUrl = window.sessionStorage.getItem(FLAG);
+          if (pendingUrl !== null) {
+            window.sessionStorage.removeItem(FLAG);
+          }
+          return pendingUrl;
+        } catch {
+          return null;
+        }
+      }
 
-          // Mark that the inline observer is active so the client does not attach duplicate listeners.
-          window.__sanityFollowUpInstalled = true
+      function stripUrlPerspectiveParams() {
+        const url = new URL(window.location.href);
+        if (
+          url.searchParams.has("sanity-preview-perspective") ||
+          url.searchParams.has("perspective")
+        ) {
+          url.searchParams.delete("sanity-preview-perspective");
+          url.searchParams.delete("perspective");
+          window.history.replaceState(
+            {},
+            "",
+            url.pathname + url.search + url.hash,
+          );
+        }
+      }
 
-          // 1. OBSERVE: Monitor ONLY actual mutation events ('presentation/snapshot-event').
-          // Ignoring 'presentation/preview-snapshots' prevents post-refresh and on-load
-          // snapshot dumps from falsely re-arming flagKey after acknowledgeRefresh().
-          window.addEventListener('message', function (e) {
-            if (
-              e.data &&
-              e.data.type === 'presentation/snapshot-event' &&
-              e.data.data &&
-              e.data.data.event &&
-              e.data.data.event.type === 'mutation'
-            ) {
-              try {
-                sessionStorage.setItem(flagKey, window.location.href)
-              } catch {}
-              // Fallback if the page is already loaded and Comlink drops the accompanying refresh:
-              // ensure a fallback reload still fires after followUpDelayMs.
-              if (document.readyState === 'complete' && !window.__sanityFallbackTimer) {
-                window.__sanityFallbackTimer = setTimeout(function () {
-                  window.__sanityFallbackTimer = null
-                  window.__sanityPendingFollowUpUrl = null
+      function clearPendingTimer() {
+        if (window.__sanityFallbackTimer) {
+          clearTimeout(window.__sanityFallbackTimer);
+          window.__sanityFallbackTimer = null;
+        }
+        pendingFollowUp = false;
+      }
+
+      function syncPerspective(incomingPerspective) {
+        if (window.self === window.top || !incomingPerspective) return;
+
+        const incoming = Array.isArray(incomingPerspective)
+          ? incomingPerspective.join(",")
+          : String(incomingPerspective);
+
+        const current =
+          getCookiePerspective() || getUrlPerspective() || "published";
+
+        if (incoming !== current) {
+          clearPendingTimer();
+          reloadInFlight = true;
+
+          if (setCookiePerspective(incoming)) {
+            stripUrlPerspectiveParams();
+            window.location.reload();
+          } else {
+            // Fallback when third-party cookies are blocked in the iframe:
+            // keep perspective in the URL query string so middleware.ts can read it.
+            const url = new URL(window.location.href);
+            url.searchParams.delete("perspective");
+            url.searchParams.set("sanity-preview-perspective", incoming);
+            window.location.replace(url.toString());
+          }
+        }
+      }
+
+      // Single unified reload scheduler shared by Comlink refresh, snapshot fallback,
+      // and post-load reconciliation. Mutation-driven reloads arm one catch-up pass
+      // via sessionStorage so trailing edits committing during unload/reconnect or
+      // Content Lake lag are not lost; manual and catch-up reloads clear the flag.
+      function scheduleMutationReload(delayMs, armFollowUp = false) {
+        if (reloadInFlight) return;
+        clearPendingTimer();
+        pendingFollowUp = armFollowUp && assureTypingInterval > 0;
+        window.__sanityFallbackTimer = setTimeout(() => {
+          window.__sanityFallbackTimer = null;
+          reloadInFlight = true;
+          const shouldArm = pendingFollowUp;
+          pendingFollowUp = false;
+          setSyncFlag(shouldArm ? window.location.href : null);
+          window.location.reload();
+        }, delayMs);
+      }
+
+      // Expose config, reload hooks, and perspective sync to the bundled module script.
+      window.__sanityVEConfig = {
+        enabled: true,
+        zIndex,
+        keepStegaOnCopy,
+        assureTypingInterval,
+        syncPerspective,
+        triggerImmediateReload: () => {
+          scheduleMutationReload(0, false);
+        },
+        onMutationRefresh: () => {
+          // If a reload is already in flight, do not abort it; mark the URL so the
+          // incoming page runs one catch-up reload after assureTypingInterval ms.
+          if (reloadInFlight) {
+            if (assureTypingInterval > 0) {
+              setSyncFlag(window.location.href);
+            }
+            return;
+          }
+          // Reload on the next turn so Comlink can finish its refresh reply before
+          // unload, and arm one post-load catch-up pass for trailing edits.
+          scheduleMutationReload(0, true);
+        },
+      };
+
+      if (window.self === window.top) return;
+
+      // 1. INITIAL SYNC: Persist URL perspective param (if passed by Studio) or initialize default,
+      // then strip the query param in-place only if cookie persistence succeeded.
+      const urlPerspective = getUrlPerspective();
+      const initialCookie = getCookiePerspective();
+      const targetPerspective =
+        urlPerspective || initialCookie || "published";
+
+      if (
+        targetPerspective === initialCookie ||
+        setCookiePerspective(targetPerspective)
+      ) {
+        stripUrlPerspectiveParams();
+      }
+
+      // 2. OBSERVE: Listen for Studio perspective toggles and mutation events.
+      window.addEventListener("message", (e) => {
+        // A. Fallback listener for direct postMessage perspective switches.
+        if (e.data?.type === "presentation/perspective") {
+          const rawPerspective =
+            e.data?.data?.perspective ?? e.data?.perspective;
+          if (rawPerspective) {
+            syncPerspective(rawPerspective);
+          }
+          return;
+        }
+
+        // B. Mutation events ('presentation/snapshot-event' mutations only).
+        const snapshotEventType =
+          e.data?.data?.event?.type ?? e.data?.event?.type;
+        if (
+          assureTypingInterval > 0 &&
+          e.data?.type === "presentation/snapshot-event" &&
+          snapshotEventType === "mutation"
+        ) {
+          // Record the URL so if a reload is already in flight (blind window), the
+          // incoming document will run a catch-up reload on load.
+          setSyncFlag(window.location.href);
+
+          // Arm a bounded fallback timer only if idle and no timer is already queued.
+          // If a catch-up timer is already counting down, upgrade it to re-arm a
+          // follow-up so the new edit is not wiped when that timer fires.
+          if (!reloadInFlight && document.readyState === "complete") {
+            if (window.__sanityFallbackTimer) {
+              pendingFollowUp = true;
+            } else {
+              scheduleMutationReload(assureTypingInterval, true);
+            }
+          }
+        }
+      });
+
+      // 3. RECONCILE: Catch any keystroke that arrived during the previous reload
+      // or unload/reconnect gap, after giving Content Lake propagation time to settle.
+      if (assureTypingInterval > 0) {
+        const reconcileAfterLoad = () => {
+          if (takeSyncFlag() === window.location.href) {
+            scheduleMutationReload(assureTypingInterval, false);
+          }
+        };
+
+        if (document.readyState === "complete") {
+          reconcileAfterLoad();
+        } else {
+          window.addEventListener("load", reconcileAfterLoad, { once: true });
+        }
+      }
+    })();
+  </script>
+
+  <script>
+    const config = (window as any).__sanityVEConfig;
+
+    if (config?.enabled) {
+      if (import.meta.env.DEV) {
+        const w = window as any;
+        if (typeof w.$RefreshReg$ !== "function") {
+          w.$RefreshReg$ = () => {};
+        }
+        if (typeof w.$RefreshSig$ !== "function") {
+          w.$RefreshSig$ = () => (type: unknown) => type;
+        }
+      }
+
+      // Dynamic import so it isn't hoisted and executed before the $RefreshReg$/$RefreshSig$
+      // shims operate under `dev` (which crashes pure-Astro pages in `@astrojs/react` apps),
+      // and so disabled pages never fetch the overlay bundle.
+      Promise.all([
+        import("@sanity/visual-editing/enable-visual-editing"),
+        import("./history.js"),
+      ]).then(
+        ([
+           { enableVisualEditing },
+           {
+             applyPresentationHistoryUpdate,
+             getPresentationUrl,
+             shouldPublishUrl,
+           },
+         ]) => {
+          const cleanup = enableVisualEditing({
+            ...(config.zIndex !== undefined ? { zIndex: config.zIndex } : {}),
+            ...(config.keepStegaOnCopy !== undefined
+              ? { keepStegaOnCopy: config.keepStegaOnCopy }
+              : {}),
+            history: {
+              subscribe: (navigate) => {
+                let lastUrl = "";
+
+                const publishUrl = (nextUrl: string) => {
+                  if (!shouldPublishUrl(nextUrl, lastUrl)) {
+                    return;
+                  }
+                  lastUrl = nextUrl;
+                  navigate({
+                    type: "push",
+                    title: document.title,
+                    url: nextUrl,
+                  });
+                };
+
+                const publishCurrentUrl = () => {
+                  publishUrl(getPresentationUrl(window.location));
+                };
+
+                // Observe programmatic History API navigation from client routers or islands
+                const originalPushState = window.history.pushState;
+                const originalReplaceState = window.history.replaceState;
+
+                window.history.pushState = function (
+                  this: History,
+                  ...args: Parameters<History["pushState"]>
+                ) {
+                  originalPushState.apply(this, args);
+                  publishCurrentUrl();
+                };
+
+                window.history.replaceState = function (
+                  this: History,
+                  ...args: Parameters<History["replaceState"]>
+                ) {
+                  originalReplaceState.apply(this, args);
+                  publishCurrentUrl();
+                };
+
+                const onClick = (event: MouseEvent) => {
+                  if (event.defaultPrevented || event.button !== 0) return;
+                  if (
+                    event.metaKey ||
+                    event.ctrlKey ||
+                    event.altKey ||
+                    event.shiftKey
+                  ) {
+                    return;
+                  }
+                  const target = event.target;
+                  if (!(target instanceof Element)) return;
+                  const anchor = target.closest("a[href]");
+                  if (!(anchor instanceof HTMLAnchorElement)) return;
+                  if (anchor.target && anchor.target !== "_self") return;
+                  if (anchor.hasAttribute("download")) return;
+
+                  let targetUrl: URL;
                   try {
-                    sessionStorage.removeItem(flagKey)
-                  } catch {}
-                  window.location.reload()
-                }, followUpDelayMs)
-              }
-            }
-          })
+                    targetUrl = new URL(anchor.href, window.location.href);
+                  } catch {
+                    return;
+                  }
+                  if (targetUrl.origin !== window.location.origin) return;
 
-          // 2. RECONCILE: Check for missed updates on page arrival and consume sessionStorage immediately.
-          window.addEventListener('load', function () {
-            var storedHref = null
-            try {
-              storedHref = sessionStorage.getItem(flagKey)
-              if (storedHref !== null) {
-                sessionStorage.removeItem(flagKey)
-              }
-            } catch {}
+                  publishUrl(getPresentationUrl(targetUrl));
+                };
 
-            if (storedHref === window.location.href) {
-              window.__sanityPendingFollowUpUrl = window.location.href
-              if (!window.__sanityFallbackTimer) {
-                window.__sanityFallbackTimer = setTimeout(function () {
-                  window.__sanityFallbackTimer = null
-                  window.__sanityPendingFollowUpUrl = null
-                  window.location.reload()
-                }, followUpDelayMs)
-              }
-            }
-          })
-        })()
-      </script>
-      <sanity-astro-visual-editing hidden data-config={JSON.stringify(config)}
-      ></sanity-astro-visual-editing>
-    </>
-  ) : null
-}
-<script>
-  import {install} from './bootstrap'
+                publishCurrentUrl();
 
-  install()
-</script>
+                window.addEventListener("popstate", publishCurrentUrl);
+                window.addEventListener("hashchange", publishCurrentUrl);
+                document.addEventListener("click", onClick, true);
+                document.addEventListener("astro:page-load", publishCurrentUrl);
+
+                return () => {
+                  window.history.pushState = originalPushState;
+                  window.history.replaceState = originalReplaceState;
+                  window.removeEventListener("popstate", publishCurrentUrl);
+                  window.removeEventListener("hashchange", publishCurrentUrl);
+                  document.removeEventListener("click", onClick, true);
+                  document.removeEventListener(
+                    "astro:page-load",
+                    publishCurrentUrl,
+                  );
+                };
+              },
+              update: (update) => {
+                applyPresentationHistoryUpdate(update, window.location.href, {
+                  assign: (url) => window.location.assign(url),
+                  replace: (url) => window.location.replace(url),
+                  back: () => window.history.back(),
+                });
+              },
+            },
+            onPerspectiveChange: (perspective) => {
+              config.syncPerspective?.(perspective);
+            },
+            refresh: (payload) => {
+              if (payload.source === "manual") {
+                config.triggerImmediateReload?.();
+                return Promise.resolve();
+              }
+              if (payload.source === "mutation") {
+                config.onMutationRefresh?.();
+                return Promise.resolve();
+              }
+              return false;
+            },
+          });
+
+          // Tear down Comlink only when the document actually unloads, keeping the channel open
+          // for snapshot-event messages while Astro SSR is fetching the next page over the network.
+          window.addEventListener("pagehide", () => cleanup(), { once: true });
+        },
+      );
+    }
+  </script>
+</>
+)}

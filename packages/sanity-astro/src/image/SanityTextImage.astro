@@ -1,0 +1,17 @@
+---
+/**
+  Adapter to allow SanityImage be used with node instead
+  of src prop, for exampl as PortableText internals require.
+  Apparently in Astro, this is the only way to do it.
+*/
+import { SanityImage } from "./index";
+
+const { node } = Astro.props;
+---
+  {node?.asset && (
+  <SanityImage
+      src={node}
+      alt={node.alt ?? ""}
+      width={800}
+  />
+)}

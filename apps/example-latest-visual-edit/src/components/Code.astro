@@ -1,0 +1,13 @@
+---
+import {Prism} from '@astrojs/prism'
+// prism-themes offers the 40 community themes; to use any of the
+// official eight, begin the import with prismjs instead of prism-themes
+import 'prism-themes/themes/prism-gruvbox-dark.css'
+
+
+const {node} = Astro.props
+const code = node?.code ?? ''
+const lang = node?.language ?? 'plaintext'
+---
+
+{code && <Prism lang={lang} code={code} />}

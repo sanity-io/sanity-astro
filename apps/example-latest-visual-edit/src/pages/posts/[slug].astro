@@ -1,0 +1,68 @@
+---
+import {stegaClean} from '@sanity/client/stega'
+import {createDataAttribute} from '@sanity/astro/visual-editing'
+import {sanityClient} from 'sanity:client'
+import {getPost, POSTS_QUERY} from '../../utils/sanity.ts'
+import Layout from '../../layouts/Layout.astro'
+import PortableText from '../../components/PortableText.astro'
+import {SanityImage} from '@sanity/astro/image'
+import YouTube from '../../components/YouTube.astro'
+
+// getStaticPaths() is provided for static builds also used
+export async function getStaticPaths() {
+
+  const posts = await sanityClient.fetch(POSTS_QUERY)
+
+  return posts.map((post: any) => ({
+    params: {slug: post.slug.current},
+    props: {post},
+  }))
+}
+
+const { slug } = Astro.params;
+const post = slug ? await getPost(slug) : null;
+if (!post) {
+  return new Response(null, { status: 404, statusText: 'Not Found' });
+}
+
+const visualEditingEnabled =
+  import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED === 'true'
+const studioUrl =
+  (typeof sanityClient.config().stega?.studioUrl === 'string'
+    ? sanityClient.config().stega?.studioUrl
+    : undefined) ||
+  import.meta.env.PUBLIC_SANITY_STUDIO_URL ||
+  '/admin'
+
+const byline = (post.authors || [])
+  .map((a) => stegaClean(a?.name))
+  .filter(Boolean)
+  .join(', ')
+
+const authorsDataSanity = visualEditingEnabled
+  ? createDataAttribute({
+    baseUrl: studioUrl,
+    id: post._id,
+    type: post._type,
+    path: 'authors',
+  }).toString()
+  : undefined
+---
+<Layout title={post.title ?? ''}>
+  <article>
+    <h1>{post.title}</h1>
+    <p data-sanity={authorsDataSanity}>Written by {byline}</p>
+    {post.mainImage && (
+      <SanityImage
+        src={post.mainImage}
+        alt={post.mainImage.alt ?? ''}
+        width="600"
+      />
+    )}
+    <pre>{post.mainImage?.caption ?? ''}</pre>
+    <h2>{post.excerpt}</h2>
+    <PortableText value={post.description} />
+    <PortableText value={post.body} />
+    <YouTube node={{ url: 'https://www.youtube.com/watch?v=dg2kSwFLrUs'}}> </YouTube>
+  </article>
+</Layout>
