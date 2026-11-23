@@ -282,7 +282,6 @@ describe('sanity integration live loaders', () => {
       'sanity:module-dedupe',
       'sanity:client',
       'sanity:studio',
-      'sanity:studio-hash-router',
       'sanity:studio-runtime-env',
       'vite-plugin-sanity-studio-chunk-warning',
     ])
@@ -332,6 +331,20 @@ describe('sanity integration live loaders', () => {
 })
 
 describe('sanity integration vite config', () => {
+  it('registers exactly the plugins the integration owns', async () => {
+    const {updateConfig} = await runSetup()
+
+    const plugins: Array<{name?: string}> = updateConfig.mock.calls[0][0].vite.plugins
+
+    expect(plugins.map((plugin) => plugin.name)).toEqual([
+      'sanity:module-dedupe',
+      'sanity:client',
+      'sanity:studio',
+      'sanity:studio-runtime-env',
+      'vite-plugin-sanity-studio-chunk-warning',
+    ])
+  })
+
   it('registers module dedupe plugin (#406)', async () => {
     const {updateConfig} = await runSetup()
 

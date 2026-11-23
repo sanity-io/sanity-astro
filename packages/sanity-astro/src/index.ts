@@ -14,7 +14,6 @@ import {vitePluginSanityLoader} from './vite-plugin-sanity-loader'
 import {vitePluginSanityModuleDedupe} from './vite-plugin-sanity-module-dedupe'
 import {vitePluginSanityStudio} from './vite-plugin-sanity-studio'
 import {vitePluginSanityStudioChunkWarning} from './vite-plugin-sanity-studio-chunk-warning'
-import {vitePluginSanityStudioHashRouter} from './vite-plugin-sanity-studio-hash-router'
 import {
   type RuntimeEnvOption,
   vitePluginSanityStudioRuntimeEnv,
@@ -223,7 +222,6 @@ export default function sanityIntegration(options: IntegrationOptions = {}): Ast
             studioBasePath: normalizedStudioBasePath,
             studioRouterHistory,
           }),
-          vitePluginSanityStudioHashRouter(),
           vitePluginSanityStudioRuntimeEnv(env),
           vitePluginSanityStudioChunkWarning(),
           ...(visualEditingStandalone ? [vitePluginSanityVisualEditingStandalone()] : []),
