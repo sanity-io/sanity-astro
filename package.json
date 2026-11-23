@@ -42,5 +42,5 @@
     "rimraf": "^5.0.7",
     "turbo": "^2.10.12"
   },
-  "packageManager": "pnpm@12.15.0"
+  "packageManager": "pnpm@12.21.0"
 }
