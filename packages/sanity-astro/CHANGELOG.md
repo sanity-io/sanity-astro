@@ -1,5 +1,13 @@
 # @sanity/astro
 
+## 4.1.1
+
+### Patch Changes
+
+- [#548](https://github.com/sanity-io/sanity-astro/pull/548) [`4de1c90`](https://github.com/sanity-io/sanity-astro/commit/4de1c9054f6abef2985c52c7fa17d5eabcd2ee94) Thanks [@stipsan](https://github.com/stipsan)! - Allow top-level await when `astro dev` pre-bundles the embedded Studio's dependencies on Vite 6 and older (Astro 5 and older). `@sanity/vision` depends on `@sanity-labs/groq-wasm`, which awaits its WASM at the top level, and esbuild's default `es2020` dev target rejected it, so pre-bundling a `sanity.config` with `visionTool()` failed and left the page's islands unhydrated.
+
+- [#546](https://github.com/sanity-io/sanity-astro/pull/546) [`04e245b`](https://github.com/sanity-io/sanity-astro/commit/04e245bf296a8b31ea11545df479463f19740818) Thanks [@gasparoff](https://github.com/gasparoff)! - Pre-bundle the embedded Studio's dependencies when `astro dev` starts, so the first visit to the Studio no longer triggers a dependency re-optimization and page reload that can leave chunks failing with `504 Outdated Optimize Dep`
+
 ## 4.1.0
 
 ### Minor Changes
