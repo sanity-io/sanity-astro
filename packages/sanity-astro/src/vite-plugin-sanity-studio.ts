@@ -20,6 +20,27 @@ export const STUDIO_OPTIMIZE_DEPS_ENTRIES = ['sanity.config.{js,jsx,mjs,mts,ts,t
  */
 export const STUDIO_OPTIMIZE_DEPS_INCLUDE = ['@sanity/client', '@sanity/astro > history']
 
+/**
+ * Vite 6 and older pre-bundle for `es2020`/`chrome87`, and esbuild refuses top-level await for
+ * that target. `@sanity/vision` depends on `@sanity-labs/groq-wasm`, which awaits its WASM fetch
+ * at the top level, so pre-bundling a `sanity.config` with `visionTool()` fails; since the scan
+ * reaches `sanity.config` at startup, that failure takes every page's client modules down with
+ * it. Vite 7 raised the target to browsers that support top-level await, and Vite 8 pre-bundles
+ * with Rolldown and warns when `esbuildOptions` is set, so only older Vite gets the override.
+ */
+export const STUDIO_OPTIMIZE_DEPS_ESBUILD_OPTIONS = {supported: {'top-level-await': true}}
+
+/**
+ * Vite 7 is the first to call `config` hooks with a plugin context, so a missing `viteVersion`
+ * means Vite 6 or older.
+ */
+export function preBundlesWithLegacyEsbuildTarget(viteVersion: string | undefined): boolean {
+  const major = Number(viteVersion?.split('.')[0])
+  return Number.isNaN(major) || major < 7
+}
+
+type ConfigHookContext = {meta?: {viteVersion?: string}}
+
 export function vitePluginSanityStudio(resolvedOptions: {
   studioBasePath?: string
   studioRouterHistory?: 'browser' | 'hash'
@@ -29,7 +50,7 @@ export function vitePluginSanityStudio(resolvedOptions: {
 
   return {
     name: 'sanity:studio',
-    config(_config: UserConfig, {command}: ConfigEnv) {
+    config(this: ConfigHookContext | undefined, _config: UserConfig, {command}: ConfigEnv) {
       if (command !== 'serve' || !resolvedOptions.studioBasePath) {
         return
       }
@@ -37,6 +58,9 @@ export function vitePluginSanityStudio(resolvedOptions: {
         optimizeDeps: {
           entries: STUDIO_OPTIMIZE_DEPS_ENTRIES,
           include: STUDIO_OPTIMIZE_DEPS_INCLUDE,
+          ...(preBundlesWithLegacyEsbuildTarget(this?.meta?.viteVersion)
+            ? {esbuildOptions: STUDIO_OPTIMIZE_DEPS_ESBUILD_OPTIONS}
+            : {}),
         },
       }
     },
