@@ -538,8 +538,8 @@ importers:
   packages/ailf:
     devDependencies:
       '@sanity/ailf':
-        specifier: ^7.36.0
-        version: 7.36.0(@aws-sdk/credential-provider-node@3.972.79)(@noble/hashes@2.2.0)(@smithy/signature-v4@5.7.0)(@swc/helpers@0.5.17)(@types/json-schema@7.0.15)(@types/node@22.13.4)(@types/react@19.2.7)(debug@4.4.3(supports-color@8.1.1))(pg@8.23.0)(playwright-core@1.62.1)(supports-color@8.1.1)
+        specifier: ^7.42.2
+        version: 7.42.2(@aws-sdk/credential-provider-node@3.972.79)(@noble/hashes@2.2.0)(@smithy/signature-v4@5.7.0)(@swc/helpers@0.5.17)(@types/json-schema@7.0.15)(@types/node@22.13.4)(@types/react@19.2.7)(debug@4.4.3(supports-color@8.1.1))(pg@8.23.0)(playwright-core@1.62.1)(supports-color@8.1.1)
       '@sanity/astro':
         specifier: workspace:^
         version: link:../sanity-astro
@@ -3277,10 +3277,6 @@ packages:
     resolution: {integrity: sha512-S8qNSZiYzFd0wAcyG5AXCvUHC5Sr7xpZ9wZ2py9XR88jUz8wooStVx5M6dRzczbBWjic9NP7+rY0Xi7qqK/aMQ==}
     engines: {node: '>=18'}
 
-  '@inquirer/ansi@2.0.7':
-    resolution: {integrity: sha512-3eTuUO1vH2cZm2ZKHeQxnOqlTi9EfZDGgIe3BL3I4u+rJHocr9Fz86M4fjYABPvFnQG/gGK551HqDiIcETwU6Q==}
-    engines: {node: '>=23.5.0 || ^22.13.0 || ^20.17.0'}
-
   '@inquirer/ansi@2.0.9':
     resolution: {integrity: sha512-0Ywt3S8tqM6TWUcsRlBFQ1x+X3/o8kktX0ZiKAnByYb9GFDknnOhse1PVtfiD2BXPI8ar+BWx9PV9R0lQIcygw==}
     engines: {node: '>=23.5.0 || ^22.13.0 || ^20.17.0'}
@@ -3288,15 +3284,6 @@ packages:
   '@inquirer/checkbox@4.3.2':
     resolution: {integrity: sha512-VXukHf0RR1doGe6Sm4F0Em7SWYLTHSsbGfJdS9Ja2bX5/D5uwVOEjr07cncLROdBvmnvCATYEWlHqYmXv2IlQA==}
     engines: {node: '>=18'}
-    peerDependencies:
-      '@types/node': '>=18'
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-
-  '@inquirer/checkbox@5.2.1':
-    resolution: {integrity: sha512-b6xmA/VlTe0ZgDQHDui+Nav470u7u49nRd8/iuhOcQPO9Ch7lGuogydhi2VOmNlZ+zXcM8IcPuNSwQcdJaF/kw==}
-    engines: {node: '>=23.5.0 || ^22.13.0 || ^20.17.0'}
     peerDependencies:
       '@types/node': '>=18'
     peerDependenciesMeta:
@@ -3315,15 +3302,6 @@ packages:
   '@inquirer/confirm@5.1.21':
     resolution: {integrity: sha512-KR8edRkIsUayMXV+o3Gv+q4jlhENF9nMYUZs9PA2HzrXeHI8M5uDag70U7RJn9yyiMZSbtF5/UexBtAVtZGSbQ==}
     engines: {node: '>=18'}
-    peerDependencies:
-      '@types/node': '>=18'
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-
-  '@inquirer/confirm@6.1.1':
-    resolution: {integrity: sha512-eb8DBZcz/2qHWQda4rk2JiQk5h9QV/cVHi1yjt0f69WFZMRFn0sJTye3EAP8icut8UDMjQPsaH5KbcOogefrFQ==}
-    engines: {node: '>=23.5.0 || ^22.13.0 || ^20.17.0'}
     peerDependencies:
       '@types/node': '>=18'
     peerDependenciesMeta:
@@ -3375,15 +3353,6 @@ packages:
       '@types/node':
         optional: true
 
-  '@inquirer/editor@5.2.2':
-    resolution: {integrity: sha512-ZRVd/oD+sYsUd5zVm0NflqEzlqfYCyHNsqkHl2oWXEUHs12tCbcSFi+wVFEvD8+LGRaMUsVrE7qeo6lSG/S1Vg==}
-    engines: {node: '>=23.5.0 || ^22.13.0 || ^20.17.0'}
-    peerDependencies:
-      '@types/node': '>=18'
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-
   '@inquirer/editor@5.3.5':
     resolution: {integrity: sha512-6lU3/pPx5z3lHWejFW061MV4qZooBQYv/+EeGhNOPiP/i+hrYsHfxxBnnDGsAfg8YdLUd69YckoeOjtr3QuAUg==}
     engines: {node: '>=23.5.0 || ^22.13.0 || ^20.17.0'}
@@ -3396,15 +3365,6 @@ packages:
   '@inquirer/expand@4.0.23':
     resolution: {integrity: sha512-nRzdOyFYnpeYTTR2qFwEVmIWypzdAx/sIkCMeTNTcflFOovfqUk+HcFhQQVBftAh9gmGrpFj6QcGEqrDMDOiew==}
     engines: {node: '>=18'}
-    peerDependencies:
-      '@types/node': '>=18'
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-
-  '@inquirer/expand@5.1.1':
-    resolution: {integrity: sha512-YmQpenjbFSHAK3sOd44puHh3V1KXXr+JiNpUztoSQ4drLh2rTVzTap/YtlAVu/5xavifIlBfNEzJ/neZJ1a/1g==}
-    engines: {node: '>=23.5.0 || ^22.13.0 || ^20.17.0'}
     peerDependencies:
       '@types/node': '>=18'
     peerDependenciesMeta:
@@ -3429,15 +3389,6 @@ packages:
       '@types/node':
         optional: true
 
-  '@inquirer/external-editor@3.0.3':
-    resolution: {integrity: sha512-6thf5I8q7lZwzGLAxPaaGEREEkZ3nyePPDQ1oyobblxmEE8mqTLguScP7pDjUTAibiyb4hfXl+qjUEJ+di/aNA==}
-    engines: {node: '>=23.5.0 || ^22.13.0 || ^20.17.0'}
-    peerDependencies:
-      '@types/node': '>=18'
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-
   '@inquirer/external-editor@3.1.0':
     resolution: {integrity: sha512-27JAkF38nXqXaoveU28iA/+Z8nutnF8B3JsbdToPHn9WnkrsMtZ0/YoJ29YwbtFexYIo+tIy6ikMvTdHKjjmGA==}
     engines: {node: ^22.22.2 || ^24.15.0 || >=26.0.0}
@@ -3451,10 +3402,6 @@ packages:
     resolution: {integrity: sha512-t2IEY+unGHOzAaVM5Xx6DEWKeXlDDcNPeDyUpsRc6CUhBfU3VQOEl+Vssh7VNp1dR8MdUJBWhuObjXCsVpjN5g==}
     engines: {node: '>=18'}
 
-  '@inquirer/figures@2.0.7':
-    resolution: {integrity: sha512-aJ8TBPOGB6f/2qziPfElISTCEd5XOYTFckA2SGjhNmiKzfK/u4ot3v0DUzGVdUnKjN10EqnnEPck36BkyfLnJw==}
-    engines: {node: '>=23.5.0 || ^22.13.0 || ^20.17.0'}
-
   '@inquirer/figures@2.0.9':
     resolution: {integrity: sha512-EAWgUTGQ/Umgga51dE3B2PUHbufuXarDfg86uVgoSgNHNNQnyFKcOrQLWVqYMghuSyHh8+2HUH0Js9cTC1WAdg==}
     engines: {node: '>=23.5.0 || ^22.13.0 || ^20.17.0'}
@@ -3462,15 +3409,6 @@ packages:
   '@inquirer/input@4.3.1':
     resolution: {integrity: sha512-kN0pAM4yPrLjJ1XJBjDxyfDduXOuQHrBB8aLDMueuwUGn+vNpF7Gq7TvyVxx8u4SHlFFj4trmj+a2cbpG4Jn1g==}
     engines: {node: '>=18'}
-    peerDependencies:
-      '@types/node': '>=18'
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-
-  '@inquirer/input@5.1.2':
-    resolution: {integrity: sha512-9K/DDBSQpOyZSkt6sOVP9Vo0TR7atX2kuILsUu0x3wVcVbe97lJwIJKMLdMw25tDYuXl/qp6erT0Xs1rfmcfZg==}
-    engines: {node: '>=23.5.0 || ^22.13.0 || ^20.17.0'}
     peerDependencies:
       '@types/node': '>=18'
     peerDependenciesMeta:
@@ -3495,15 +3433,6 @@ packages:
       '@types/node':
         optional: true
 
-  '@inquirer/number@4.1.1':
-    resolution: {integrity: sha512-XF4IXAbPnGPgw0wsbC/i2tPcyfdZgDpUlhsqU0SfT4IRIGWha6Xm9VRgN5yYxJq+jnyXlfXI/nQ3ulfk0iEICA==}
-    engines: {node: '>=23.5.0 || ^22.13.0 || ^20.17.0'}
-    peerDependencies:
-      '@types/node': '>=18'
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-
   '@inquirer/number@4.2.5':
     resolution: {integrity: sha512-lEy7LWsdF5qHx5QjHZqabUqM9P7i5uTMCt8GRzqxmwXXKbapKJDA+ucVflVVPAyj4snD5DTAD4L+sct85XOlOQ==}
     engines: {node: '>=23.5.0 || ^22.13.0 || ^20.17.0'}
@@ -3516,15 +3445,6 @@ packages:
   '@inquirer/password@4.0.23':
     resolution: {integrity: sha512-zREJHjhT5vJBMZX/IUbyI9zVtVfOLiTO66MrF/3GFZYZ7T4YILW5MSkEYHceSii/KtRk+4i3RE7E1CUXA2jHcA==}
     engines: {node: '>=18'}
-    peerDependencies:
-      '@types/node': '>=18'
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-
-  '@inquirer/password@5.1.1':
-    resolution: {integrity: sha512-3XBfF7DAsp5qeDsvN5Rd1HmbNokVvEQoUM0QLrRcybC9nX96w3Pbmu7qUsb3IT3J3jBvs2+mTXaKHOUsgHMLzg==}
-    engines: {node: '>=23.5.0 || ^22.13.0 || ^20.17.0'}
     peerDependencies:
       '@types/node': '>=18'
     peerDependenciesMeta:
@@ -3549,15 +3469,6 @@ packages:
       '@types/node':
         optional: true
 
-  '@inquirer/prompts@8.5.2':
-    resolution: {integrity: sha512-IYR/3C/paEVVQYQvdDlFZVjRCJVYHHON0XXMH91KO9GSxs0TdKYWlUdvfQl2EfAHDxUaN3IBffkE/BDTh5nJ6g==}
-    engines: {node: '>=23.5.0 || ^22.13.0 || ^20.17.0'}
-    peerDependencies:
-      '@types/node': '>=18'
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-
   '@inquirer/prompts@8.7.4':
     resolution: {integrity: sha512-SAJt+QhY5rOJAIgZBw9TrHWfgrp6wsb9cqRCyqax+Hl6EiFfRXmD9EsIWkST8yq/dQ8H46Is2Sr/JG7Ls/LQ+Q==}
     engines: {node: '>=23.5.0 || ^22.13.0 || ^20.17.0'}
@@ -3570,15 +3481,6 @@ packages:
   '@inquirer/rawlist@4.1.11':
     resolution: {integrity: sha512-+LLQB8XGr3I5LZN/GuAHo+GpDJegQwuPARLChlMICNdwW7OwV2izlCSCxN6cqpL0sMXmbKbFcItJgdQq5EBXTw==}
     engines: {node: '>=18'}
-    peerDependencies:
-      '@types/node': '>=18'
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-
-  '@inquirer/rawlist@5.3.1':
-    resolution: {integrity: sha512-QqdTqQddL3qPX/PPrjobpsO25NZ4dWXgTLenrR445L2ptLEYE6Z+PD5c5CNDJNx4ugRgELAIpSIJxZaO2jJ2Og==}
-    engines: {node: '>=23.5.0 || ^22.13.0 || ^20.17.0'}
     peerDependencies:
       '@types/node': '>=18'
     peerDependenciesMeta:
@@ -3603,15 +3505,6 @@ packages:
       '@types/node':
         optional: true
 
-  '@inquirer/search@4.2.1':
-    resolution: {integrity: sha512-xJj8QWKRSrfKoBIITLZK61dD3zwo0Rz11fgDImku30/Oe81zMdIdGgrLY2h6RkJ+KZ/GhNYIRMKnH/62qBTA5g==}
-    engines: {node: '>=23.5.0 || ^22.13.0 || ^20.17.0'}
-    peerDependencies:
-      '@types/node': '>=18'
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-
   '@inquirer/search@4.3.5':
     resolution: {integrity: sha512-kIUecMugEN2YTvTmff+uYz0nAE0f9RFNDVZknfrh264vAQM9P8tnsXiUp7z8XbGuNIBEtFMJhvc9QquawpC46A==}
     engines: {node: '>=23.5.0 || ^22.13.0 || ^20.17.0'}
@@ -3630,15 +3523,6 @@ packages:
       '@types/node':
         optional: true
 
-  '@inquirer/select@5.2.1':
-    resolution: {integrity: sha512-FlDndEUww8m7BfukO2nJa25vhD+H5jxxCv4oGioKqzyWz3nPHhhw4LKdYRSlXuAx7DsdWia7iyaBPKKS95Evfw==}
-    engines: {node: '>=23.5.0 || ^22.13.0 || ^20.17.0'}
-    peerDependencies:
-      '@types/node': '>=18'
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-
   '@inquirer/select@5.2.7':
     resolution: {integrity: sha512-pRDWO4dTqSAvFQdO8yclKMtXNDm9K9HmvWB5UZmT3clw2OlOBNXveHzhyFmO/0d0yJMqlPcNITus1Jtpm6t8VQ==}
     engines: {node: '>=23.5.0 || ^22.13.0 || ^20.17.0'}
@@ -3651,15 +3535,6 @@ packages:
   '@inquirer/type@3.0.10':
     resolution: {integrity: sha512-BvziSRxfz5Ov8ch0z/n3oijRSEcEsHnhggm4xFZe93DHcUCTlutlq9Ox4SVENAfcRD22UQq7T/atg9Wr3k09eA==}
     engines: {node: '>=18'}
-    peerDependencies:
-      '@types/node': '>=18'
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-
-  '@inquirer/type@4.0.7':
-    resolution: {integrity: sha512-t28inv14nMQ1PhKpsJPY+kEs/c00qzeCOS2gTNRyTjG5d6qsVA2fItxW4hkvGZ5lvanGLdtCzVIx5dwdRpN1+g==}
-    engines: {node: '>=23.5.0 || ^22.13.0 || ^20.17.0'}
     peerDependencies:
       '@types/node': '>=18'
     peerDependenciesMeta:
@@ -5183,8 +5058,8 @@ packages:
     peerDependencies:
       react: ^19.2.2
 
-  '@sanity/ailf@7.36.0':
-    resolution: {integrity: sha512-OTQWf8rlvfPew0z7ByqdaDXIPTdn/fuyfBitAJAkeLWQnuzGz3NrJYvjR1jnSIn8PsbJLaYwP0nrDD2K8ATXYg==}
+  '@sanity/ailf@7.42.2':
+    resolution: {integrity: sha512-J5dxR6OqBDuU3Rqzl4yY7YlUWMXNyeH5I2mat+7KCo75mX+XsVuVw6kevwUZGLi+pxoX+YS44ylbaNsdGcd7LQ==}
     hasBin: true
 
   '@sanity/asset-utils@2.3.0':
@@ -8020,10 +7895,6 @@ packages:
     resolution: {integrity: sha512-v0eOBUbiaFojBu2s2NPBfYUoRR9GjcDNvCXVaqEf5vVfpIAh9f8RCo4vXTP8c63QRKCFwoLpMpTdPwwhEKVgzA==}
     engines: {node: '>=14.18'}
 
-  eventsource-parser@3.0.2:
-    resolution: {integrity: sha512-6RxOBZ/cYgd8usLwsEl+EC09Au/9BcmCKYF2/xbml6DNczf7nv0MQb+7BA2F+li6//I+28VNlQR37XfQtcAJuA==}
-    engines: {node: '>=18.0.0'}
-
   eventsource-parser@3.1.1:
     resolution: {integrity: sha512-EKN1vKAMcZ8MlYMpaNuxN6R9yakzH6uajHcHVTqWJzvu5pWw9DyhbP35HH8MVBQ+dZjAfDxk+A8NiR9KWaXiyQ==}
     engines: {node: '>=18.0.0'}
@@ -8240,10 +8111,6 @@ packages:
   form-data@2.5.6:
     resolution: {integrity: sha512-Ogz/E85h9tlfJzpI6TuFpGcHZFhLrb9Gw8wq9v40CxSCPnv7ahKr6Xgtkn0KYCDQJ8DNn5VoMO8EXr9V5PadyA==}
     engines: {node: '>= 0.12'}
-
-  form-data@4.0.5:
-    resolution: {integrity: sha512-8RipRLol37bNs2bhoV67fiTEvdTrbMUYcFTiy3+wuuOnUog2QBHCZWXDRijWQfAkhBj2Uf5UnVaiWwA5vdd82w==}
-    engines: {node: '>= 6'}
 
   form-data@4.0.6:
     resolution: {integrity: sha512-vKatAh4SlVfgbv+YtmhiRjhEMJsYpsG1Y2rMQtR+SVSbytsSD1YGzDIcrAJmdFec88u/+VoGmxnl+80gL1tRCQ==}
@@ -10529,10 +10396,6 @@ packages:
     engines: {node: '>=14'}
     hasBin: true
 
-  pretty-ms@9.3.0:
-    resolution: {integrity: sha512-gjVS5hOP+M3wMm5nmNOucbIrqudzs9v/57bWRHQWLYklXqoXKrVfYW2W9+glfGsqtPgpiz5WwyEEB+ksXIx3gQ==}
-    engines: {node: '>=18'}
-
   pretty-ms@9.3.1:
     resolution: {integrity: sha512-HzMy3Geq23nVALD/M2LliU+F+M+gVNsvkQWWqeBZ8HDiCgzo6YPJ/Omrmtq24EFrIsk0a3EkQGEd7bDOo+IhGA==}
     engines: {node: '>=18'}
@@ -12613,18 +12476,6 @@ packages:
   wrappy@1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
 
-  ws@8.21.0:
-    resolution: {integrity: sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g==}
-    engines: {node: '>=10.0.0'}
-    peerDependencies:
-      bufferutil: ^4.0.1
-      utf-8-validate: '>=5.0.2'
-    peerDependenciesMeta:
-      bufferutil:
-        optional: true
-      utf-8-validate:
-        optional: true
-
   ws@8.21.3:
     resolution: {integrity: sha512-201TZ/kPWxoPr/OKWjquZR1SWKXcvxdH+e1xrx89b3YbmzLMFCLfnaG1HFIgWzJOEWZ7MvpK++odZufgYR50Rw==}
     engines: {node: '>=10.0.0'}
@@ -12859,20 +12710,20 @@ snapshots:
 
   '@acemir/cssom@0.9.31': {}
 
-  '@ai-sdk/gateway@3.0.172(zod@4.4.3)':
+  '@ai-sdk/gateway@3.0.172(zod@4.6.7)':
     dependencies:
       '@ai-sdk/provider': 3.0.15
-      '@ai-sdk/provider-utils': 4.0.45(zod@4.4.3)
+      '@ai-sdk/provider-utils': 4.0.45(zod@4.6.7)
       '@vercel/oidc': 3.2.0
-      zod: 4.4.3
+      zod: 4.6.7
 
-  '@ai-sdk/provider-utils@4.0.45(zod@4.4.3)':
+  '@ai-sdk/provider-utils@4.0.45(zod@4.6.7)':
     dependencies:
       '@ai-sdk/provider': 3.0.15
       '@standard-schema/spec': 1.1.0
       eventsource-parser: 3.1.1
       undici: 5.29.0
-      zod: 4.4.3
+      zod: 4.6.7
 
   '@ai-sdk/provider@3.0.15':
     dependencies:
@@ -12887,7 +12738,7 @@ snapshots:
 
   '@alcalzone/ansi-tokenize@0.2.5':
     dependencies:
-      ansi-styles: 6.2.1
+      ansi-styles: 6.2.3
       is-fullwidth-code-point: 5.1.0
 
   '@algorithm.ts/lcs@4.0.6': {}
@@ -12918,11 +12769,11 @@ snapshots:
   '@anthropic-ai/claude-agent-sdk-win32-x64@0.2.141':
     optional: true
 
-  '@anthropic-ai/claude-agent-sdk@0.2.141(supports-color@8.1.1)(zod@4.4.3)':
+  '@anthropic-ai/claude-agent-sdk@0.2.141(supports-color@8.1.1)(zod@4.6.7)':
     dependencies:
-      '@anthropic-ai/sdk': 0.93.0(zod@4.4.3)
-      '@modelcontextprotocol/sdk': 1.30.0(supports-color@8.1.1)(zod@4.4.3)
-      zod: 4.4.3
+      '@anthropic-ai/sdk': 0.93.0(zod@4.6.7)
+      '@modelcontextprotocol/sdk': 1.30.0(supports-color@8.1.1)(zod@4.6.7)
+      zod: 4.6.7
     optionalDependencies:
       '@anthropic-ai/claude-agent-sdk-darwin-arm64': 0.2.141
       '@anthropic-ai/claude-agent-sdk-darwin-x64': 0.2.141
@@ -12937,17 +12788,17 @@ snapshots:
       - supports-color
     optional: true
 
-  '@anthropic-ai/sdk@0.78.0(zod@4.4.3)':
+  '@anthropic-ai/sdk@0.78.0(zod@4.6.7)':
     dependencies:
       json-schema-to-ts: 3.1.1
     optionalDependencies:
-      zod: 4.4.3
+      zod: 4.6.7
 
-  '@anthropic-ai/sdk@0.93.0(zod@4.4.3)':
+  '@anthropic-ai/sdk@0.93.0(zod@4.6.7)':
     dependencies:
       json-schema-to-ts: 3.1.1
     optionalDependencies:
-      zod: 4.4.3
+      zod: 4.6.7
     optional: true
 
   '@apidevtools/json-schema-ref-parser@15.5.1(@types/json-schema@7.0.15)':
@@ -13868,7 +13719,7 @@ snapshots:
       - supports-color
     optional: true
 
-  '@azure/ai-projects@1.0.1(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(supports-color@8.1.1)(ws@8.21.0)(zod@4.4.3)':
+  '@azure/ai-projects@1.0.1(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(supports-color@8.1.1)(ws@8.22.0)(zod@4.6.7)':
     dependencies:
       '@azure-rest/core-client': 2.8.0(supports-color@8.1.1)
       '@azure/abort-controller': 2.2.0
@@ -13882,7 +13733,7 @@ snapshots:
       '@azure/core-util': 1.14.0(supports-color@8.1.1)
       '@azure/logger': 1.4.0(supports-color@8.1.1)
       '@azure/storage-blob': 12.33.0(supports-color@8.1.1)
-      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(ws@8.21.0)(zod@4.4.3)
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(ws@8.22.0)(zod@4.6.7)
       tslib: 2.8.1
     transitivePeerDependencies:
       - '@aws-sdk/credential-provider-node'
@@ -15680,7 +15531,7 @@ snapshots:
 
   '@ibm-cloud/watsonx-ai@1.7.16(supports-color@8.1.1)':
     dependencies:
-      form-data: 4.0.5
+      form-data: 4.0.6
       ibm-cloud-sdk-core: 5.6.0(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
@@ -15693,7 +15544,7 @@ snapshots:
       http-status-codes: 2.3.0
       openapi-fetch: 0.8.2
       p-queue-compat: 1.0.225
-      yaml: 2.9.0
+      yaml: 2.9.1
     transitivePeerDependencies:
       - encoding
     optional: true
@@ -15975,8 +15826,6 @@ snapshots:
 
   '@inquirer/ansi@1.0.2': {}
 
-  '@inquirer/ansi@2.0.7': {}
-
   '@inquirer/ansi@2.0.9': {}
 
   '@inquirer/checkbox@4.3.2(@types/node@22.13.4)':
@@ -15986,15 +15835,6 @@ snapshots:
       '@inquirer/figures': 1.0.15
       '@inquirer/type': 3.0.10(@types/node@22.13.4)
       yoctocolors-cjs: 2.1.3
-    optionalDependencies:
-      '@types/node': 22.13.4
-
-  '@inquirer/checkbox@5.2.1(@types/node@22.13.4)':
-    dependencies:
-      '@inquirer/ansi': 2.0.7
-      '@inquirer/core': 11.2.1(@types/node@22.13.4)
-      '@inquirer/figures': 2.0.7
-      '@inquirer/type': 4.0.7(@types/node@22.13.4)
     optionalDependencies:
       '@types/node': 22.13.4
 
@@ -16011,13 +15851,6 @@ snapshots:
     dependencies:
       '@inquirer/core': 10.3.2(@types/node@22.13.4)
       '@inquirer/type': 3.0.10(@types/node@22.13.4)
-    optionalDependencies:
-      '@types/node': 22.13.4
-
-  '@inquirer/confirm@6.1.1(@types/node@22.13.4)':
-    dependencies:
-      '@inquirer/core': 11.2.1(@types/node@22.13.4)
-      '@inquirer/type': 4.0.7(@types/node@22.13.4)
     optionalDependencies:
       '@types/node': 22.13.4
 
@@ -16043,9 +15876,9 @@ snapshots:
 
   '@inquirer/core@11.2.1(@types/node@22.13.4)':
     dependencies:
-      '@inquirer/ansi': 2.0.7
-      '@inquirer/figures': 2.0.7
-      '@inquirer/type': 4.0.7(@types/node@22.13.4)
+      '@inquirer/ansi': 2.0.9
+      '@inquirer/figures': 2.0.9
+      '@inquirer/type': 4.2.0(@types/node@22.13.4)
       cli-width: 4.1.0
       fast-wrap-ansi: 0.2.2
       mute-stream: 3.0.0
@@ -16073,14 +15906,6 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.13.4
 
-  '@inquirer/editor@5.2.2(@types/node@22.13.4)':
-    dependencies:
-      '@inquirer/core': 11.2.1(@types/node@22.13.4)
-      '@inquirer/external-editor': 3.0.3(@types/node@22.13.4)
-      '@inquirer/type': 4.0.7(@types/node@22.13.4)
-    optionalDependencies:
-      '@types/node': 22.13.4
-
   '@inquirer/editor@5.3.5(@types/node@22.13.4)':
     dependencies:
       '@inquirer/core': 12.0.5(@types/node@22.13.4)
@@ -16094,13 +15919,6 @@ snapshots:
       '@inquirer/core': 10.3.2(@types/node@22.13.4)
       '@inquirer/type': 3.0.10(@types/node@22.13.4)
       yoctocolors-cjs: 2.1.3
-    optionalDependencies:
-      '@types/node': 22.13.4
-
-  '@inquirer/expand@5.1.1(@types/node@22.13.4)':
-    dependencies:
-      '@inquirer/core': 11.2.1(@types/node@22.13.4)
-      '@inquirer/type': 4.0.7(@types/node@22.13.4)
     optionalDependencies:
       '@types/node': 22.13.4
 
@@ -16118,13 +15936,6 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.13.4
 
-  '@inquirer/external-editor@3.0.3(@types/node@22.13.4)':
-    dependencies:
-      chardet: 2.1.1
-      iconv-lite: 0.7.2
-    optionalDependencies:
-      '@types/node': 22.13.4
-
   '@inquirer/external-editor@3.1.0(@types/node@22.13.4)':
     dependencies:
       chardet: 2.1.1
@@ -16134,21 +15945,12 @@ snapshots:
 
   '@inquirer/figures@1.0.15': {}
 
-  '@inquirer/figures@2.0.7': {}
-
   '@inquirer/figures@2.0.9': {}
 
   '@inquirer/input@4.3.1(@types/node@22.13.4)':
     dependencies:
       '@inquirer/core': 10.3.2(@types/node@22.13.4)
       '@inquirer/type': 3.0.10(@types/node@22.13.4)
-    optionalDependencies:
-      '@types/node': 22.13.4
-
-  '@inquirer/input@5.1.2(@types/node@22.13.4)':
-    dependencies:
-      '@inquirer/core': 11.2.1(@types/node@22.13.4)
-      '@inquirer/type': 4.0.7(@types/node@22.13.4)
     optionalDependencies:
       '@types/node': 22.13.4
 
@@ -16166,13 +15968,6 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.13.4
 
-  '@inquirer/number@4.1.1(@types/node@22.13.4)':
-    dependencies:
-      '@inquirer/core': 11.2.1(@types/node@22.13.4)
-      '@inquirer/type': 4.0.7(@types/node@22.13.4)
-    optionalDependencies:
-      '@types/node': 22.13.4
-
   '@inquirer/number@4.2.5(@types/node@22.13.4)':
     dependencies:
       '@inquirer/core': 12.0.5(@types/node@22.13.4)
@@ -16185,14 +15980,6 @@ snapshots:
       '@inquirer/ansi': 1.0.2
       '@inquirer/core': 10.3.2(@types/node@22.13.4)
       '@inquirer/type': 3.0.10(@types/node@22.13.4)
-    optionalDependencies:
-      '@types/node': 22.13.4
-
-  '@inquirer/password@5.1.1(@types/node@22.13.4)':
-    dependencies:
-      '@inquirer/ansi': 2.0.7
-      '@inquirer/core': 11.2.1(@types/node@22.13.4)
-      '@inquirer/type': 4.0.7(@types/node@22.13.4)
     optionalDependencies:
       '@types/node': 22.13.4
 
@@ -16219,21 +16006,6 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.13.4
 
-  '@inquirer/prompts@8.5.2(@types/node@22.13.4)':
-    dependencies:
-      '@inquirer/checkbox': 5.2.1(@types/node@22.13.4)
-      '@inquirer/confirm': 6.1.1(@types/node@22.13.4)
-      '@inquirer/editor': 5.2.2(@types/node@22.13.4)
-      '@inquirer/expand': 5.1.1(@types/node@22.13.4)
-      '@inquirer/input': 5.1.2(@types/node@22.13.4)
-      '@inquirer/number': 4.1.1(@types/node@22.13.4)
-      '@inquirer/password': 5.1.1(@types/node@22.13.4)
-      '@inquirer/rawlist': 5.3.1(@types/node@22.13.4)
-      '@inquirer/search': 4.2.1(@types/node@22.13.4)
-      '@inquirer/select': 5.2.1(@types/node@22.13.4)
-    optionalDependencies:
-      '@types/node': 22.13.4
-
   '@inquirer/prompts@8.7.4(@types/node@22.13.4)':
     dependencies:
       '@inquirer/checkbox': 5.2.7(@types/node@22.13.4)
@@ -16257,13 +16029,6 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.13.4
 
-  '@inquirer/rawlist@5.3.1(@types/node@22.13.4)':
-    dependencies:
-      '@inquirer/core': 11.2.1(@types/node@22.13.4)
-      '@inquirer/type': 4.0.7(@types/node@22.13.4)
-    optionalDependencies:
-      '@types/node': 22.13.4
-
   '@inquirer/rawlist@5.3.7(@types/node@22.13.4)':
     dependencies:
       '@inquirer/core': 12.0.5(@types/node@22.13.4)
@@ -16277,14 +16042,6 @@ snapshots:
       '@inquirer/figures': 1.0.15
       '@inquirer/type': 3.0.10(@types/node@22.13.4)
       yoctocolors-cjs: 2.1.3
-    optionalDependencies:
-      '@types/node': 22.13.4
-
-  '@inquirer/search@4.2.1(@types/node@22.13.4)':
-    dependencies:
-      '@inquirer/core': 11.2.1(@types/node@22.13.4)
-      '@inquirer/figures': 2.0.7
-      '@inquirer/type': 4.0.7(@types/node@22.13.4)
     optionalDependencies:
       '@types/node': 22.13.4
 
@@ -16306,15 +16063,6 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.13.4
 
-  '@inquirer/select@5.2.1(@types/node@22.13.4)':
-    dependencies:
-      '@inquirer/ansi': 2.0.7
-      '@inquirer/core': 11.2.1(@types/node@22.13.4)
-      '@inquirer/figures': 2.0.7
-      '@inquirer/type': 4.0.7(@types/node@22.13.4)
-    optionalDependencies:
-      '@types/node': 22.13.4
-
   '@inquirer/select@5.2.7(@types/node@22.13.4)':
     dependencies:
       '@inquirer/ansi': 2.0.9
@@ -16325,10 +16073,6 @@ snapshots:
       '@types/node': 22.13.4
 
   '@inquirer/type@3.0.10(@types/node@22.13.4)':
-    optionalDependencies:
-      '@types/node': 22.13.4
-
-  '@inquirer/type@4.0.7(@types/node@22.13.4)':
     optionalDependencies:
       '@types/node': 22.13.4
 
@@ -16446,16 +16190,16 @@ snapshots:
     optionalDependencies:
       markdown-it: 14.2.0
 
-  '@modelcontextprotocol/sdk@1.30.0(supports-color@8.1.1)(zod@4.4.3)':
+  '@modelcontextprotocol/sdk@1.30.0(supports-color@8.1.1)(zod@4.6.7)':
     dependencies:
       '@hono/node-server': 2.1.0(hono@4.13.1)
-      ajv: 8.17.1
-      ajv-formats: 3.0.1(ajv@8.17.1)
+      ajv: 8.20.0
+      ajv-formats: 3.0.1(ajv@8.20.0)
       content-type: 1.0.5
       cors: 2.8.6
       cross-spawn: 7.0.6
       eventsource: 3.0.7
-      eventsource-parser: 3.0.2
+      eventsource-parser: 3.1.1
       express: 5.2.1(supports-color@8.1.1)
       express-rate-limit: 8.6.2(express@5.2.1(supports-color@8.1.1))(supports-color@8.1.1)
       hono: 4.13.1
@@ -16463,8 +16207,8 @@ snapshots:
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
       raw-body: 3.0.2
-      zod: 4.4.3
-      zod-to-json-schema: 3.25.2(zod@4.4.3)
+      zod: 4.6.7
+      zod-to-json-schema: 3.25.2(zod@4.6.7)
     transitivePeerDependencies:
       - supports-color
 
@@ -16665,13 +16409,6 @@ snapshots:
       '@napi-rs/canvas-win32-x64-msvc': 0.1.80
     optional: true
 
-  '@napi-rs/wasm-runtime@1.1.6(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)':
-    dependencies:
-      '@emnapi/core': 1.10.0
-      '@emnapi/runtime': 1.10.0
-      '@tybys/wasm-util': 0.10.3
-    optional: true
-
   '@napi-rs/wasm-runtime@1.1.6(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)':
     dependencies:
       '@emnapi/core': 1.11.1
@@ -16703,6 +16440,13 @@ snapshots:
     dependencies:
       '@emnapi/core': 1.11.3
       '@emnapi/runtime': 1.11.3
+      '@tybys/wasm-util': 0.10.3
+    optional: true
+
+  '@napi-rs/wasm-runtime@1.2.6(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)':
+    dependencies:
+      '@emnapi/core': 1.10.0
+      '@emnapi/runtime': 1.10.0
       '@tybys/wasm-util': 0.10.3
     optional: true
 
@@ -16765,13 +16509,13 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@openai/agents-core@0.5.4(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(supports-color@8.1.1)(ws@8.21.0)(zod@4.4.3)':
+  '@openai/agents-core@0.5.4(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(supports-color@8.1.1)(ws@8.22.0)(zod@4.6.7)':
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
-      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(ws@8.21.0)(zod@4.4.3)
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(ws@8.22.0)(zod@4.6.7)
     optionalDependencies:
-      '@modelcontextprotocol/sdk': 1.30.0(supports-color@8.1.1)(zod@4.4.3)
-      zod: 4.4.3
+      '@modelcontextprotocol/sdk': 1.30.0(supports-color@8.1.1)(zod@4.6.7)
+      zod: 4.6.7
     transitivePeerDependencies:
       - '@aws-sdk/credential-provider-node'
       - '@cfworker/json-schema'
@@ -16780,12 +16524,12 @@ snapshots:
       - supports-color
       - ws
 
-  '@openai/agents-openai@0.5.4(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(supports-color@8.1.1)(ws@8.21.0)(zod@4.4.3)':
+  '@openai/agents-openai@0.5.4(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(supports-color@8.1.1)(ws@8.22.0)(zod@4.6.7)':
     dependencies:
-      '@openai/agents-core': 0.5.4(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(supports-color@8.1.1)(ws@8.21.0)(zod@4.4.3)
+      '@openai/agents-core': 0.5.4(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(supports-color@8.1.1)(ws@8.22.0)(zod@4.6.7)
       debug: 4.4.3(supports-color@8.1.1)
-      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(ws@8.21.0)(zod@4.4.3)
-      zod: 4.4.3
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(ws@8.22.0)(zod@4.6.7)
+      zod: 4.6.7
     transitivePeerDependencies:
       - '@aws-sdk/credential-provider-node'
       - '@cfworker/json-schema'
@@ -16794,13 +16538,13 @@ snapshots:
       - supports-color
       - ws
 
-  '@openai/agents-realtime@0.5.4(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(supports-color@8.1.1)(zod@4.4.3)':
+  '@openai/agents-realtime@0.5.4(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(supports-color@8.1.1)(zod@4.6.7)':
     dependencies:
-      '@openai/agents-core': 0.5.4(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(supports-color@8.1.1)(ws@8.21.0)(zod@4.4.3)
+      '@openai/agents-core': 0.5.4(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(supports-color@8.1.1)(ws@8.22.0)(zod@4.6.7)
       '@types/ws': 8.18.1
       debug: 4.4.3(supports-color@8.1.1)
-      ws: 8.21.0
-      zod: 4.4.3
+      ws: 8.22.0
+      zod: 4.6.7
     transitivePeerDependencies:
       - '@aws-sdk/credential-provider-node'
       - '@cfworker/json-schema'
@@ -16810,14 +16554,14 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@openai/agents@0.5.4(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(supports-color@8.1.1)(ws@8.21.0)(zod@4.4.3)':
+  '@openai/agents@0.5.4(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(supports-color@8.1.1)(ws@8.22.0)(zod@4.6.7)':
     dependencies:
-      '@openai/agents-core': 0.5.4(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(supports-color@8.1.1)(ws@8.21.0)(zod@4.4.3)
-      '@openai/agents-openai': 0.5.4(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(supports-color@8.1.1)(ws@8.21.0)(zod@4.4.3)
-      '@openai/agents-realtime': 0.5.4(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(supports-color@8.1.1)(zod@4.4.3)
+      '@openai/agents-core': 0.5.4(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(supports-color@8.1.1)(ws@8.22.0)(zod@4.6.7)
+      '@openai/agents-openai': 0.5.4(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(supports-color@8.1.1)(ws@8.22.0)(zod@4.6.7)
+      '@openai/agents-realtime': 0.5.4(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(supports-color@8.1.1)(zod@4.6.7)
       debug: 4.4.3(supports-color@8.1.1)
-      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(ws@8.21.0)(zod@4.4.3)
-      zod: 4.4.3
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(ws@8.22.0)(zod@4.6.7)
+      zod: 4.6.7
     transitivePeerDependencies:
       - '@aws-sdk/credential-provider-node'
       - '@cfworker/json-schema'
@@ -17021,7 +16765,7 @@ snapshots:
     dependencies:
       '@emnapi/core': 1.10.0
       '@emnapi/runtime': 1.10.0
-      '@napi-rs/wasm-runtime': 1.1.6(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)
+      '@napi-rs/wasm-runtime': 1.2.6(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)
     optional: true
 
   '@oxc-parser/binding-win32-arm64-msvc@0.129.0':
@@ -17838,16 +17582,16 @@ snapshots:
       - styled-components
       - vitest
 
-  '@sanity/ailf@7.36.0(@aws-sdk/credential-provider-node@3.972.79)(@noble/hashes@2.2.0)(@smithy/signature-v4@5.7.0)(@swc/helpers@0.5.17)(@types/json-schema@7.0.15)(@types/node@22.13.4)(@types/react@19.2.7)(debug@4.4.3(supports-color@8.1.1))(pg@8.23.0)(playwright-core@1.62.1)(supports-color@8.1.1)':
+  '@sanity/ailf@7.42.2(@aws-sdk/credential-provider-node@3.972.79)(@noble/hashes@2.2.0)(@smithy/signature-v4@5.7.0)(@swc/helpers@0.5.17)(@types/json-schema@7.0.15)(@types/node@22.13.4)(@types/react@19.2.7)(debug@4.4.3(supports-color@8.1.1))(pg@8.23.0)(playwright-core@1.62.1)(supports-color@8.1.1)':
     dependencies:
       '@google-cloud/bigquery': 8.3.1(supports-color@8.1.1)
       '@google-cloud/storage': 7.22.0(supports-color@8.1.1)
       '@googleapis/drive': 20.2.0(supports-color@8.1.1)
-      '@inquirer/prompts': 8.5.2(@types/node@22.13.4)
-      '@modelcontextprotocol/sdk': 1.30.0(supports-color@8.1.1)(zod@4.4.3)
+      '@inquirer/prompts': 8.7.4(@types/node@22.13.4)
+      '@modelcontextprotocol/sdk': 1.30.0(supports-color@8.1.1)(zod@4.6.7)
       '@portabletext/markdown': 1.4.2
-      '@sanity/client': 7.24.0
-      ajv: 8.17.1
+      '@sanity/client': 7.26.2
+      ajv: 8.20.0
       commander: 14.0.3
       dotenv: 16.6.1
       dotenv-cli: 11.0.0
@@ -17857,7 +17601,7 @@ snapshots:
       js-yaml: 4.3.0
       oxc-parser: 0.129.0
       promptfoo: 0.120.27(@aws-sdk/credential-provider-node@3.972.79)(@noble/hashes@2.2.0)(@smithy/signature-v4@5.7.0)(@swc/helpers@0.5.17)(@types/json-schema@7.0.15)(@types/node@22.13.4)(@types/react@19.2.7)(debug@4.4.3(supports-color@8.1.1))(pg@8.23.0)(playwright-core@1.62.1)(supports-color@8.1.1)
-      zod: 4.4.3
+      zod: 4.6.7
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
       - '@aws-sdk/credential-provider-node'
@@ -21369,7 +21113,7 @@ snapshots:
       '@types/retry': 0.12.0
       axios: 1.19.0(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)
       eventemitter3: 5.0.4
-      form-data: 4.0.5
+      form-data: 4.0.6
       is-electron: 2.2.2
       is-stream: 2.0.1
       p-queue: 6.6.2
@@ -22285,21 +22029,17 @@ snapshots:
 
   agent-base@7.1.3: {}
 
-  ai@6.0.253(zod@4.4.3):
+  ai@6.0.253(zod@4.6.7):
     dependencies:
-      '@ai-sdk/gateway': 3.0.172(zod@4.4.3)
+      '@ai-sdk/gateway': 3.0.172(zod@4.6.7)
       '@ai-sdk/provider': 3.0.15
-      '@ai-sdk/provider-utils': 4.0.45(zod@4.4.3)
+      '@ai-sdk/provider-utils': 4.0.45(zod@4.6.7)
       '@opentelemetry/api': 1.9.1
-      zod: 4.4.3
+      zod: 4.6.7
 
   ajv-draft-04@1.0.0(ajv@8.20.0):
     optionalDependencies:
       ajv: 8.20.0
-
-  ajv-formats@3.0.1(ajv@8.17.1):
-    optionalDependencies:
-      ajv: 8.17.1
 
   ajv-formats@3.0.1(ajv@8.20.0):
     optionalDependencies:
@@ -23727,7 +23467,7 @@ snapshots:
       '@socket.io/component-emitter': 3.1.2
       debug: 4.4.3(supports-color@8.1.1)
       engine.io-parser: 5.2.3
-      ws: 8.21.0
+      ws: 8.21.3
       xmlhttprequest-ssl: 2.1.2
     transitivePeerDependencies:
       - bufferutil
@@ -23747,7 +23487,7 @@ snapshots:
       cors: 2.8.6
       debug: 4.4.3(supports-color@8.1.1)
       engine.io-parser: 5.2.3
-      ws: 8.21.0
+      ws: 8.21.3
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -23942,8 +23682,6 @@ snapshots:
   eventsource-parser@1.1.2:
     optional: true
 
-  eventsource-parser@3.0.2: {}
-
   eventsource-parser@3.1.1: {}
 
   eventsource-parser@4.1.2: {}
@@ -23995,10 +23733,10 @@ snapshots:
       is-plain-obj: 4.1.0
       is-stream: 4.0.1
       npm-run-path: 6.0.0
-      pretty-ms: 9.3.0
+      pretty-ms: 9.3.1
       signal-exit: 4.1.0
       strip-final-newline: 4.0.0
-      yoctocolors: 2.1.1
+      yoctocolors: 2.2.0
 
   exif-component@1.0.1: {}
 
@@ -24228,15 +23966,6 @@ snapshots:
       hasown: 2.0.4
       mime-types: 2.1.35
       safe-buffer: 5.2.1
-
-  form-data@4.0.5:
-    dependencies:
-      asynckit: 0.4.0
-      combined-stream: 1.0.8
-      es-set-tostringtag: 2.1.0
-      hasown: 2.0.2
-      mime-types: 2.1.35
-    optional: true
 
   form-data@4.0.6:
     dependencies:
@@ -24904,7 +24633,7 @@ snapshots:
     dependencies:
       '@alcalzone/ansi-tokenize': 0.2.5
       ansi-escapes: 7.3.0
-      ansi-styles: 6.2.1
+      ansi-styles: 6.2.3
       auto-bind: 5.0.1
       chalk: 5.6.2
       cli-boxes: 3.0.0
@@ -24925,8 +24654,8 @@ snapshots:
       terminal-size: 4.0.1
       type-fest: 5.7.0
       widest-line: 6.0.0
-      wrap-ansi: 9.0.0
-      ws: 8.21.0
+      wrap-ansi: 9.0.2
+      ws: 8.22.0
       yoga-layout: 3.2.1
     optionalDependencies:
       '@types/react': 19.2.7
@@ -26369,12 +26098,12 @@ snapshots:
       powershell-utils: 0.1.0
       wsl-utils: 0.3.1
 
-  openai@6.49.0(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(ws@8.21.0)(zod@4.4.3):
+  openai@6.49.0(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(ws@8.22.0)(zod@4.6.7):
     optionalDependencies:
       '@aws-sdk/credential-provider-node': 3.972.79
       '@smithy/signature-v4': 5.7.0
-      ws: 8.21.0
-      zod: 4.4.3
+      ws: 8.22.0
+      zod: 4.6.7
 
   openapi-fetch@0.8.2:
     dependencies:
@@ -26859,10 +26588,6 @@ snapshots:
 
   prettier@3.9.1: {}
 
-  pretty-ms@9.3.0:
-    dependencies:
-      parse-ms: 4.0.0
-
   pretty-ms@9.3.1:
     dependencies:
       parse-ms: 4.0.0
@@ -26879,17 +26604,17 @@ snapshots:
 
   promptfoo@0.120.27(@aws-sdk/credential-provider-node@3.972.79)(@noble/hashes@2.2.0)(@smithy/signature-v4@5.7.0)(@swc/helpers@0.5.17)(@types/json-schema@7.0.15)(@types/node@22.13.4)(@types/react@19.2.7)(debug@4.4.3(supports-color@8.1.1))(pg@8.23.0)(playwright-core@1.62.1)(supports-color@8.1.1):
     dependencies:
-      '@anthropic-ai/sdk': 0.78.0(zod@4.4.3)
+      '@anthropic-ai/sdk': 0.78.0(zod@4.6.7)
       '@apidevtools/json-schema-ref-parser': 15.5.1(@types/json-schema@7.0.15)
       '@googleapis/sheets': 13.0.2(supports-color@8.1.1)
-      '@inquirer/checkbox': 5.2.1(@types/node@22.13.4)
-      '@inquirer/confirm': 6.1.1(@types/node@22.13.4)
+      '@inquirer/checkbox': 5.2.7(@types/node@22.13.4)
+      '@inquirer/confirm': 6.3.4(@types/node@22.13.4)
       '@inquirer/core': 11.2.1(@types/node@22.13.4)
-      '@inquirer/editor': 5.2.2(@types/node@22.13.4)
-      '@inquirer/input': 5.1.2(@types/node@22.13.4)
-      '@inquirer/select': 5.2.1(@types/node@22.13.4)
-      '@modelcontextprotocol/sdk': 1.30.0(supports-color@8.1.1)(zod@4.4.3)
-      '@openai/agents': 0.5.4(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(supports-color@8.1.1)(ws@8.21.0)(zod@4.4.3)
+      '@inquirer/editor': 5.3.5(@types/node@22.13.4)
+      '@inquirer/input': 5.1.8(@types/node@22.13.4)
+      '@inquirer/select': 5.2.7(@types/node@22.13.4)
+      '@modelcontextprotocol/sdk': 1.30.0(supports-color@8.1.1)(zod@4.6.7)
+      '@openai/agents': 0.5.4(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(supports-color@8.1.1)(ws@8.22.0)(zod@4.6.7)
       '@opencode-ai/sdk': 1.18.16
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/core': 2.10.0(@opentelemetry/api@1.9.1)
@@ -26899,7 +26624,7 @@ snapshots:
       '@opentelemetry/sdk-trace-node': 2.10.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/semantic-conventions': 1.43.0
       '@types/ws': 8.18.1
-      ai: 6.0.253(zod@4.4.3)
+      ai: 6.0.253(zod@4.6.7)
       ajv: 8.20.0
       ajv-formats: 3.0.1(ajv@8.20.0)
       async: 3.2.6
@@ -26941,7 +26666,7 @@ snapshots:
       mathjs: 15.2.0
       minimatch: 10.2.5
       nunjucks: 3.2.4(chokidar@5.0.0)
-      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(ws@8.21.0)(zod@4.4.3)
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(ws@8.22.0)(zod@4.6.7)
       opener: 1.5.2
       ora: 9.4.1
       pem: 1.14.8
@@ -26959,18 +26684,18 @@ snapshots:
       socket.io-client: 4.8.3(supports-color@8.1.1)
       text-extensions: 3.1.0
       tsx: 4.22.4
-      undici: 7.28.0
+      undici: 7.30.1
       winston: 3.19.0
-      ws: 8.21.0
-      zod: 4.4.3
+      ws: 8.22.0
+      zod: 4.6.7
     optionalDependencies:
-      '@anthropic-ai/claude-agent-sdk': 0.2.141(supports-color@8.1.1)(zod@4.4.3)
+      '@anthropic-ai/claude-agent-sdk': 0.2.141(supports-color@8.1.1)(zod@4.6.7)
       '@aws-sdk/client-bedrock-agent-runtime': 3.1109.0
       '@aws-sdk/client-bedrock-runtime': 3.1109.0
       '@aws-sdk/client-s3': 3.1109.0
       '@aws-sdk/client-sagemaker-runtime': 3.1109.0
       '@aws-sdk/credential-provider-sso': 3.973.12
-      '@azure/ai-projects': 1.0.1(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(supports-color@8.1.1)(ws@8.21.0)(zod@4.4.3)
+      '@azure/ai-projects': 1.0.1(@aws-sdk/credential-provider-node@3.972.79)(@smithy/signature-v4@5.7.0)(supports-color@8.1.1)(ws@8.22.0)(zod@4.6.7)
       '@azure/identity': 4.13.1(supports-color@8.1.1)
       '@azure/msal-node': 5.5.0
       '@azure/openai-assistants': 1.0.0-beta.6(supports-color@8.1.1)
@@ -29067,7 +28792,7 @@ snapshots:
   socket.io-adapter@2.5.8(supports-color@8.1.1):
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
-      ws: 8.21.0
+      ws: 8.21.3
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -30475,8 +30200,6 @@ snapshots:
 
   wrappy@1.0.2: {}
 
-  ws@8.21.0: {}
-
   ws@8.21.3: {}
 
   ws@8.22.0: {}
@@ -30652,9 +30375,9 @@ snapshots:
     dependencies:
       zod: 3.25.76
 
-  zod-to-json-schema@3.25.2(zod@4.4.3):
+  zod-to-json-schema@3.25.2(zod@4.6.7):
     dependencies:
-      zod: 4.4.3
+      zod: 4.6.7
 
   zod-to-ts@1.2.0(typescript@5.9.3)(zod@3.25.76):
     dependencies:
