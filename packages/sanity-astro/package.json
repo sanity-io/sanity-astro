@@ -61,7 +61,7 @@
     "@sanity/image-url": "^2.2.0",
     "@sanity/visual-editing": "^6.1.1",
     "@vercel/stega": "^1.1.0",
-    "groq-js": "^2.0.0",
+    "groq-js": "^2.0.3",
     "history": "^5.3.0",
     "idiomorph": "^0.7.4"
   },
