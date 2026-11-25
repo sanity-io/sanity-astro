@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@astro-community/astro-embed-youtube": "^0.5.7",
-    "@astrojs/prism": "^3.3.0",
+    "@astrojs/prism": "^4.1.2",
     "@astrojs/react": "^4.4.1",
     "@sanity/astro": "workspace:^",
     "@sanity/client": "^8.11.0",
