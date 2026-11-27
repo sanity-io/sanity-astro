@@ -16,9 +16,6 @@ vi.mock('sanity:studio', () => ({
   get config() {
     return studio.config
   },
-}))
-
-vi.mock('sanity', () => ({
   Studio: (props: StudioProps) => {
     studioRenders.push(props)
     return React.createElement('div', {'data-testid': 'studio'})

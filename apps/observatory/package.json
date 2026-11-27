@@ -19,7 +19,7 @@
     "@sanity/visual-editing-standalone": "^2.0.0",
     "@vercel/functions": "^3.9.3",
     "astro": "^7.2.1",
-    "groq": "^6.9.2"
+    "groq": "^7.0.0-next-major.20261127112435"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
