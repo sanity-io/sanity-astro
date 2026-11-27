@@ -1,7 +1,38 @@
+import {existsSync, readFileSync} from 'node:fs'
+import path from 'node:path'
+
 import type {PartialDeep} from 'type-fest'
-import type {ConfigEnv, PluginOption, UserConfig} from 'vite'
+import type {ConfigEnv, PluginOption, ResolvedConfig, UserConfig} from 'vite'
 
 import {normalizeStudioBasePath} from './studio-base-path'
+
+const STUDIO_FIRST_LOAD_SUBPATH = './_dangerously_use_private_internals_that_do_not_follow_semver-1'
+
+/**
+ * Sanity Studio v7 exports `Studio` only from this entry and types the root export as `never`.
+ * Earlier majors do not have the entry and export `Studio` from the root.
+ */
+export const STUDIO_FIRST_LOAD_ENTRY = `sanity/${STUDIO_FIRST_LOAD_SUBPATH.slice(2)}`
+
+/**
+ * The module that exports `Studio` for the `sanity` version installed in `projectRoot`. Looks in
+ * `node_modules` directories like Vite does, since `require.resolve` also follows the `NODE_PATH`
+ * that pnpm's bin shims point at its hidden hoist directory.
+ */
+export function resolveStudioEntry(projectRoot: string): string {
+  for (let dir = path.resolve(projectRoot); ; dir = path.dirname(dir)) {
+    const manifestPath = path.join(dir, 'node_modules', 'sanity', 'package.json')
+    if (existsSync(manifestPath)) {
+      const {exports} = JSON.parse(readFileSync(manifestPath, 'utf8')) as {exports?: unknown}
+      return exports && typeof exports === 'object' && STUDIO_FIRST_LOAD_SUBPATH in exports
+        ? STUDIO_FIRST_LOAD_ENTRY
+        : 'sanity'
+    }
+    if (path.dirname(dir) === dir) {
+      return 'sanity'
+    }
+  }
+}
 
 /**
  * Lets Vite's dependency scan reach the embedded Studio (#435). The Studio route lives in
@@ -47,22 +78,31 @@ export function vitePluginSanityStudio(resolvedOptions: {
 }) {
   const virtualModuleId = 'sanity:studio'
   const resolvedVirtualModuleId = virtualModuleId
+  let projectRoot = process.cwd()
 
   return {
     name: 'sanity:studio',
-    config(this: ConfigHookContext | undefined, _config: UserConfig, {command}: ConfigEnv) {
+    config(this: ConfigHookContext | undefined, config: UserConfig, {command}: ConfigEnv) {
       if (command !== 'serve' || !resolvedOptions.studioBasePath) {
         return
       }
+      // The dependency scan never sees the virtual module's `Studio` import.
+      const studioEntry = resolveStudioEntry(config.root ?? process.cwd())
       return {
         optimizeDeps: {
           entries: STUDIO_OPTIMIZE_DEPS_ENTRIES,
-          include: STUDIO_OPTIMIZE_DEPS_INCLUDE,
+          include:
+            studioEntry === STUDIO_FIRST_LOAD_ENTRY
+              ? [...STUDIO_OPTIMIZE_DEPS_INCLUDE, studioEntry]
+              : STUDIO_OPTIMIZE_DEPS_INCLUDE,
           ...(preBundlesWithLegacyEsbuildTarget(this?.meta?.viteVersion)
             ? {esbuildOptions: STUDIO_OPTIMIZE_DEPS_ESBUILD_OPTIONS}
             : {}),
         },
       }
+    },
+    configResolved(config: ResolvedConfig) {
+      projectRoot = config.root
     },
     resolveId(id: string) {
       if (id === virtualModuleId) {
@@ -93,6 +133,7 @@ export function vitePluginSanityStudio(resolvedOptions: {
           resolvedOptions.studioRouterHistory === 'hash' ? 'hash' : 'browser'
         return `
         import studioConfig from "${studioConfig.id}";
+        export {Studio} from "${resolveStudioEntry(projectRoot)}";
 
         const embeddedStudioBasePath = "${studioBasePath}";
         const historyMode = "${studioRouterHistory}";

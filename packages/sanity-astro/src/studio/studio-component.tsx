@@ -1,8 +1,7 @@
 import {createHashHistory, type History, type Listener} from 'history'
 import React from 'react'
-import {Studio} from 'sanity'
 // @ts-ignore
-import {config} from 'sanity:studio'
+import {config, Studio} from 'sanity:studio'
 
 if (!config) {
   throw new Error(
@@ -115,7 +114,9 @@ export function StudioComponent(props: {
         overflow: 'auto',
       }}
     >
-      <Studio config={resolvedConfig} unstable_history={history} />
+      <React.Suspense fallback={null}>
+        <Studio config={resolvedConfig} unstable_history={history} />
+      </React.Suspense>
     </div>
   )
 }

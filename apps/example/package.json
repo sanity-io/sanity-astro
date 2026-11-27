@@ -16,13 +16,13 @@
     "@astrojs/react": "^4.4.1",
     "@sanity/astro": "workspace:^",
     "@sanity/client": "^8.11.0",
-    "@sanity/vision": "^6.20.0",
+    "@sanity/vision": "^7.0.0-next-major.20261127112435",
     "astro": "5.4.1",
     "astro-portabletext": "^0.11.3",
     "prismjs": "^1.30.0",
-    "react": "^19.2.3",
-    "react-dom": "^19.2.3",
-    "sanity": "^6.20.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "sanity": "^7.0.0-next-major.20261127112435",
     "styled-components": "^6.4.3"
   },
   "devDependencies": {
